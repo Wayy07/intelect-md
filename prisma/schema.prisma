@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Model pentru utilizatori
+model Utilizator {
+  id            String           @id @default(cuid())
+  email         String           @unique
+  nume          String?
+  imagine       String?
+  rol           RolUtilizator    @default(CLIENT)
+  tipAuth       TipAutentificare @default(GOOGLE)
+  parola        String?          // Hash-ul parolei - doar pentru admini
+  comenzi       Comanda[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@map("utilizatori")
+}
+
+// Model pentru categorii principale
+model CategoriePrincipala {
+  id              String    @id @default(cuid())
+  nume            String    @unique
+  descriere       String?
+  imagine         String?
+  subcategorii    Subcategorie[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  activ          Boolean   @default(true)
+
+  @@map("categorii_principale")
+}
+
+// Model pentru subcategorii
+model Subcategorie {
+  id                    String    @id @default(cuid())
+  nume                  String
+  descriere             String?
+  imagine               String?
+  categoriePrincipalaId String
+  categoriePrincipala   CategoriePrincipala @relation(fields: [categoriePrincipalaId], references: [id], onDelete: Cascade)
+  produse               Produs[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  activ                Boolean   @default(true)
+
+  @@unique([nume, categoriePrincipalaId])
+  @@map("subcategorii")
+}
+
+// Model pentru produse
+model Produs {
+  id              String    @id @default(cuid())
+  cod             String    @unique // Cod unic produs
+  nume            String
+  descriere       String
+  pret            Float
+  pretRedus       Float?
+  stoc            Int       @default(0)
+  stare           StareProdus @default(NOU)
+  imagini         String[] // Array de URL-uri pentru imagini
+  specificatii    Json? // Specificații tehnice ca JSON
+  subcategorieId  String
+  subcategorie    Subcategorie @relation(fields: [subcategorieId], references: [id])
+  detaliiComenzi  DetaliuComanda[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  activ          Boolean   @default(true)
+
+  @@map("produse")
+}
+
+// Model pentru comenzi
+model Comanda {
+  id              String    @id @default(cuid())
+  utilizatorId    String
+  utilizator      Utilizator @relation(fields: [utilizatorId], references: [id])
+  numarComanda    String    @unique
+  status          StatusComanda @default(IN_ASTEPTARE)
+  adresaLivrare   String
+  telefon         String
+  email           String
+  metodaPlata     MetodaPlata
+  totalComanda    Float
+  detaliiComenzi  DetaliuComanda[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("comenzi")
+}
+
+// Model pentru detaliile comenzii
+model DetaliuComanda {
+  id          String    @id @default(cuid())
+  comandaId   String
+  comanda     Comanda   @relation(fields: [comandaId], references: [id])
+  produsId    String
+  produs      Produs    @relation(fields: [produsId], references: [id])
+  cantitate   Int
+  pretUnitar  Float
+  subtotal    Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("detalii_comenzi")
+}
+
+enum RolUtilizator {
+  ADMIN
+  CLIENT
+}
+
+enum StatusComanda {
+  IN_ASTEPTARE
+  CONFIRMATA
+  IN_PROCESARE
+  EXPEDIATA
+  LIVRATA
+  ANULATA
+}
+
+enum MetodaPlata {
+  CARD
+  RAMBURS
+  TRANSFER_BANCAR
+}
+
+enum TipAutentificare {
+  EMAIL_PAROLA  // Pentru admini
+  GOOGLE        // Pentru clienti
+}
+
+enum StareProdus {
+  NOU
+  UTILIZAT
+}
