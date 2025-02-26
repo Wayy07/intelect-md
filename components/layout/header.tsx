@@ -139,20 +139,25 @@ export default function Header() {
     }
   }, [isMobileMenuOpen])
 
-  // Handle click outside for both dropdowns
+  // Add useEffect for click outside detection
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (catalogRef.current && !catalogRef.current.contains(event.target as Node)) {
-        setIsDesktopCatalogOpen(false)
-      }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsDesktopUserMenuOpen(false)
       }
+      if (catalogRef.current && !catalogRef.current.contains(event.target as Node)) {
+        setIsDesktopCatalogOpen(false)
+      }
     }
 
+    // Add the event listener
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, []) // Empty dependency array since we don't need to re-add listeners
 
   const handleDragEnd = (info: PanInfo, menuType: "catalog" | "user" | "menu") => {
     const threshold = 50 // minimum distance to trigger close
@@ -325,7 +330,6 @@ export default function Header() {
                       exit={{ opacity: 0, y: 5 }}
                       transition={{ duration: 0.2 }}
                       className="absolute right-0 mt-2 w-72 origin-top-right rounded-lg border bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-
                     >
                       <div className="p-4">
                         <div className="flex items-center gap-4">

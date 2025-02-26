@@ -9,6 +9,7 @@ import Link from "next/link"
 import ProductDialog from "../../components/product-dialog"
 import DeleteAlert from "../../components/delete-alert"
 import SearchBar from "../../components/search-bar"
+import { cn } from "@/lib/utils"
 
 interface ProductsPageProps {
   params: Promise<{
@@ -176,84 +177,75 @@ export default function ProductsPage({ params }: ProductsPageProps) {
         </div>
       </div>
 
-      {/* Grid of products */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {subcategory.produse.map((produs) => (
-          <div
-            key={produs.id}
-            className="bg-white rounded-lg shadow border p-3 sm:p-4 space-y-3 sm:space-y-4"
-          >
-            {produs.imagini[0] && (
-              <div className="aspect-video rounded-lg overflow-hidden">
-                <img
-                  src={produs.imagini[0]}
-                  alt={produs.nume}
-                  className="object-cover w-full h-full"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://placehold.co/600x400?text=Image+Error"
-                  }}
-                />
+      {/* Search bar */}
+      <div className="max-w-md w-full">
+        <SearchBar />
+      </div>
+
+      {/* List of products */}
+      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div className="grid grid-cols-[1fr,100px,120px,100px,120px] gap-4 p-4 border-b bg-muted/50 text-sm font-medium text-muted-foreground">
+          <div>Produs</div>
+          <div>Cod</div>
+          <div className="text-right">Preț</div>
+          <div className="text-right">Stoc</div>
+          <div></div>
+        </div>
+        <div className="divide-y">
+          {subcategory.produse.map((produs) => (
+            <div
+              key={produs.id}
+              className="grid grid-cols-[1fr,100px,120px,100px,120px] gap-4 p-4 items-center hover:bg-muted/50 transition-colors"
+            >
+              <div className="min-w-0">
+                <h3 className="font-medium truncate">{produs.nume}</h3>
+                <p className="text-sm text-muted-foreground truncate">{produs.descriere}</p>
               </div>
-            )}
-            <div>
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{produs.nume}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{produs.descriere}</p>
-                </div>
-                <p className="text-sm font-medium shrink-0">Cod: {produs.cod}</p>
+              <div className="text-sm">{produs.cod}</div>
+              <div className="text-right">
+                {produs.pretRedus ? (
+                  <div className="space-y-0.5">
+                    <span className="text-sm font-medium text-destructive">
+                      {produs.pretRedus} MDL
+                    </span>
+                    <span className="block text-xs text-muted-foreground line-through">
+                      {produs.pret} MDL
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium">{produs.pret} MDL</span>
+                )}
               </div>
-              <div className="mt-3 sm:mt-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="space-y-1 w-full sm:w-auto">
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <p className="text-sm font-medium">
-                        {produs.pretRedus ? (
-                          <>
-                            <span className="text-destructive font-bold">
-                              {produs.pretRedus} MDL
-                            </span>
-                            <span className="ml-2 text-gray-500 line-through">
-                              {produs.pret} MDL
-                            </span>
-                            <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
-                              -{Math.round(((produs.pret - produs.pretRedus) / produs.pret) * 100)}%
-                            </span>
-                          </>
-                        ) : (
-                          <span>{produs.pret} MDL</span>
-                        )}
-                      </p>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Stoc: {produs.stoc} buc.
-                    </p>
-                  </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditProduct(produs)}
-                      className="flex-1 sm:flex-initial"
-                    >
-                      <Edit className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Editează</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive flex-1 sm:flex-initial"
-                      onClick={() => handleDeleteClick(produs)}
-                    >
-                      <Trash2 className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Șterge</span>
-                    </Button>
-                  </div>
-                </div>
+              <div className="text-right">
+                <span className={cn(
+                  "text-sm font-medium",
+                  produs.stoc === 0 ? "text-destructive" :
+                  produs.stoc < 5 ? "text-orange-500" :
+                  "text-emerald-600"
+                )}>
+                  {produs.stoc} buc
+                </span>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEditProduct(produs)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive"
+                  onClick={() => handleDeleteClick(produs)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <ProductDialog
