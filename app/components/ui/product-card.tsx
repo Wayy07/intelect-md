@@ -8,6 +8,7 @@ import { Package, Heart, ShoppingCart, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/app/components/ui/use-toast"
+import { useCart } from "@/app/contexts/cart-context"
 
 interface Product {
   id: string
@@ -29,24 +30,30 @@ interface Product {
 
 interface ProductCardProps {
   product: Product
-  onAddToCart?: (product: Product) => void
   onAddToFavorites?: (product: Product) => void
 }
 
-function ProductCard({ product, onAddToCart, onAddToFavorites }: ProductCardProps) {
+function ProductCard({ product, onAddToFavorites }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
   const { toast } = useToast()
+  const { addItem } = useCart()
+
+  // Debug logging for category data
+  console.log(`ProductCard ${product.id} category data:`, {
+    categoryName: product.subcategorie?.categoriePrincipala?.nume,
+    subcategoryName: product.subcategorie?.nume,
+    hasSubcategory: !!product.subcategorie,
+    hasMainCategory: !!product.subcategorie?.categoriePrincipala
+  });
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (onAddToCart) {
-      onAddToCart(product)
-      toast({
-        title: "Adăugat în coș",
-        description: "Produsul a fost adăugat în coșul tău",
-      })
-    }
+    addItem(product)
+    toast({
+      title: "Adăugat în coș",
+      description: "Produsul a fost adăugat în coșul tău",
+    })
   }
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -73,7 +80,7 @@ function ProductCard({ product, onAddToCart, onAddToFavorites }: ProductCardProp
       className="group h-full"
     >
       <Link
-        href={`/catalog/${product.subcategorie.categoriePrincipala.id}/${product.subcategorie.id}/${product.id}`}
+        href={`/catalog/${product.subcategorie?.categoriePrincipala?.id || 'all'}/${product.subcategorie?.id || 'all'}/${product.id}`}
         className="relative flex h-full flex-col overflow-hidden rounded-xl bg-white transition-all duration-300
                  hover:shadow-xl hover:shadow-primary/10 border border-gray-100"
       >
@@ -156,7 +163,11 @@ function ProductCard({ product, onAddToCart, onAddToFavorites }: ProductCardProp
             animate={{ opacity: 1, x: 0 }}
             className="rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-white"
           >
-            {product.subcategorie.categoriePrincipala.nume}
+            {product.subcategorie?.categoriePrincipala?.nume
+              ? product.subcategorie.categoriePrincipala.nume
+              : product.subcategorie?.nume
+                ? product.subcategorie.nume
+                : 'Categorie'}
           </motion.div>
           {product.stoc < 5 && (
             <motion.div
@@ -201,7 +212,11 @@ function ProductCard({ product, onAddToCart, onAddToFavorites }: ProductCardProp
             className="mb-2"
           >
             <div className="text-xs text-primary font-medium mb-1">
-              {product.subcategorie.nume}
+              {product.subcategorie?.categoriePrincipala?.nume
+                ? product.subcategorie.categoriePrincipala.nume
+                : product.subcategorie?.nume
+                  ? product.subcategorie.nume
+                  : 'Subcategorie'}
             </div>
             <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors duration-300">
               {product.nume}
@@ -263,19 +278,18 @@ function ProductCard({ product, onAddToCart, onAddToFavorites }: ProductCardProp
   )
 }
 
-function ProductCardCompact({ product, onAddToCart, onAddToFavorites }: ProductCardProps) {
+function ProductCardCompact({ product, onAddToFavorites }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false)
   const { toast } = useToast()
+  const { addItem } = useCart()
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (onAddToCart) {
-      onAddToCart(product)
-      toast({
-        title: "Adăugat în coș",
-        description: "Produsul a fost adăugat în coșul tău",
-      })
-    }
+    addItem(product)
+    toast({
+      title: "Adăugat în coș",
+      description: "Produsul a fost adăugat în coșul tău",
+    })
   }
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -294,7 +308,7 @@ function ProductCardCompact({ product, onAddToCart, onAddToFavorites }: ProductC
 
   return (
     <Link
-      href={`/catalog/${product.subcategorie.categoriePrincipala.id}/${product.subcategorie.id}/${product.id}`}
+      href={`/catalog/${product.subcategorie?.categoriePrincipala?.id || 'all'}/${product.subcategorie?.id || 'all'}/${product.id}`}
       className="group flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors"
     >
       {/* Image */}

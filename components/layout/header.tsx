@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronDown, Menu, Search, ShoppingCart, User, ChevronRight, LayoutGrid, LogIn, X, Phone, Clock, Package } from "lucide-react"
+import { ChevronDown, Menu, Search, ShoppingCart, User, ChevronRight, LayoutGrid, LogIn, X, Phone, Clock, Package, Minus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { CategoriePrincipala, Subcategorie, Produs } from "@prisma/client"
@@ -12,6 +12,7 @@ import { useLanguage } from "@/lib/language-context"
 import { useRouter, usePathname } from "next/navigation"
 import { ProductCard } from "@/app/components/ui/product-card"
 import { ProductCardCompact } from "@/app/components/ui/product-card"
+import { useCart } from "@/app/contexts/cart-context"
 
 interface CategoryWithSubcategories extends CategoriePrincipala {
   subcategorii: (Subcategorie & {
@@ -44,9 +45,11 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export default function Header() {
   const { language, setLanguage, t } = useLanguage()
+  const { totalItems, items, removeItem, updateQuantity, totalPrice } = useCart()
   // Desktop states
   const [isDesktopCatalogOpen, setIsDesktopCatalogOpen] = useState(false)
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false)
+  const [isDesktopCartOpen, setIsDesktopCartOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
 
   // Mobile states
@@ -88,6 +91,7 @@ export default function Header() {
   // Add refs for click outside detection
   const catalogRef = React.useRef<HTMLDivElement>(null)
   const userMenuRef = React.useRef<HTMLDivElement>(null)
+  const cartMenuRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Debounce search
@@ -146,6 +150,11 @@ export default function Header() {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsDesktopUserMenuOpen(false)
+      }
+
+      // Close cart menu if click is outside
+      if (cartMenuRef.current && !cartMenuRef.current.contains(event.target as Node)) {
+        setIsDesktopCartOpen(false)
       }
 
       // Only close catalog if click is outside both the menu content AND the catalog button
@@ -301,29 +310,213 @@ export default function Header() {
             {/* Center section - Search */}
             <div className="hidden md:flex flex-1 max-w-2xl mx-4">
               <div className="relative w-full">
-                <div className="relative">
+                <form
+                  className="relative"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchTerm.trim()) {
+                      // Redirect to catalog page with search query
+                      const params = new URLSearchParams();
+                      params.set('q', searchTerm);
+
+                      // If already on catalog page, use replace to update URL without navigation
+                      if (pathname === '/catalog') {
+                        router.replace(`/catalog?${params.toString()}`, {
+                          scroll: false // Prevent scrolling to top
+                        });
+                      } else {
+                        // Otherwise navigate to catalog
+                        router.push(`/catalog?${params.toString()}`);
+                      }
+                    }
+                  }}
+                >
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                   <input
                     type="text"
                     placeholder={t("searchPlaceholder")}
                     className="w-full h-12 pl-12 pr-4 text-base rounded-full border border-input bg-accent/50 transition-all duration-200 focus:bg-background focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/70"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                </div>
+                  <button
+                    type="submit"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary h-7 w-7 flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                    aria-label="Search"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </form>
               </div>
             </div>
 
             {/* Right section - Cart and User */}
             <div className="hidden md:flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="lg"
-                className="relative hover:bg-accent/80 h-12 px-4"
-              >
-                <ShoppingCart className="h-6 w-6" />
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                  0
-                </span>
-              </Button>
+              <div className="relative" ref={cartMenuRef}>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="relative hover:bg-accent/80 h-12 px-4"
+                  onClick={() => setIsDesktopCartOpen(!isDesktopCartOpen)}
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                      {totalItems}
+                    </span>
+                  )}
+                </Button>
+
+                {/* Desktop Cart Dropdown */}
+                <AnimatePresence>
+                  {isDesktopCartOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 top-full mt-2 w-96 rounded-xl bg-white shadow-xl z-50 overflow-hidden"
+                    >
+                      <div className="p-4 border-b">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-lg">Coșul meu</h3>
+                          {totalItems > 0 && (
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                              {totalItems}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {items.length === 0 ? (
+                        <div className="p-6 text-center">
+                          <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-accent text-muted-foreground mb-4">
+                            <ShoppingCart className="h-8 w-8" />
+                          </div>
+                          <h4 className="font-medium mb-2">Coșul tău este gol</h4>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Adaugă produse din catalogul nostru.
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="text-sm h-9"
+                            onClick={() => {
+                              setIsDesktopCartOpen(false)
+                              setIsDesktopCatalogOpen(true)
+                            }}
+                          >
+                            <LayoutGrid className="h-4 w-4 mr-2" />
+                            Explorează catalogul
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="max-h-96 overflow-y-auto p-4">
+                            <div className="space-y-3">
+                              {items.map((item) => (
+                                <div
+                                  key={item.product.id}
+                                  className="flex gap-3 p-2 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                                >
+                                  <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-accent/50">
+                                    {item.product.imagini[0] && (
+                                      <Image
+                                        src={item.product.imagini[0]}
+                                        alt={item.product.nume}
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, 768px"
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-sm truncate">
+                                      {item.product.nume}
+                                    </h4>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Cod: {item.product.cod}
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                      <div className="text-sm font-medium">
+                                        {(item.product.pretRedus || item.product.pret).toLocaleString()} MDL
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-6 w-6 rounded-md"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            updateQuantity(item.product.id, item.quantity - 1)
+                                          }}
+                                        >
+                                          <Minus className="h-3 w-3" />
+                                        </Button>
+                                        <span className="text-sm w-6 text-center">
+                                          {item.quantity}
+                                        </span>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-6 w-6 rounded-md"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            updateQuantity(item.product.id, item.quantity + 1)
+                                          }}
+                                        >
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 flex-shrink-0 self-start text-muted-foreground hover:text-destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      removeItem(item.product.id)
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="p-4 border-t bg-white">
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="font-medium text-muted-foreground">Total</span>
+                              <span className="font-semibold">{totalPrice.toLocaleString()} MDL</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                className="flex-1 text-sm"
+                                onClick={() => {
+                                  setIsDesktopCartOpen(false)
+                                  window.location.href = "/cart"
+                                }}
+                              >
+                                Vezi coșul
+                              </Button>
+                              <Button
+                                className="flex-1 text-sm"
+                                onClick={() => {
+                                  setIsDesktopCartOpen(false)
+                                  window.location.href = "/checkout"
+                                }}
+                              >
+                                Finalizează
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               <div className="relative" ref={userMenuRef}>
                 <Button
                   variant="ghost"
@@ -473,10 +666,6 @@ export default function Header() {
                                 <ProductCardCompact
                                   key={product.id}
                                   product={product}
-                                  onAddToCart={(product) => {
-                                    // TODO: Implement cart functionality
-                                    console.log("Add to cart:", product)
-                                  }}
                                   onAddToFavorites={(product) => {
                                     // TODO: Implement favorites functionality
                                     console.log("Add to favorites:", product)
@@ -502,17 +691,20 @@ export default function Header() {
                   className="group flex flex-col items-center justify-center py-2"
                 >
                   <div className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200",
+                    "flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200",
                     pathname === "/" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                   )}>
-                    <LayoutGrid className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
+                    <div className="relative h-12 w-12 rounded-full">
+                      <Image
+                        src="/logo.jpg"
+                        alt="Intelect MD"
+                        fill
+                        className="object-contain h-10 w-10 rounded-full"
+                        priority
+                      />
+                    </div>
                   </div>
-                  <span className={cn(
-                    "text-xs font-medium mt-1 transition-colors",
-                    pathname === "/" ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                  )}>
-                    Acasă
-                  </span>
+
                 </button>
 
                 <button
@@ -560,6 +752,11 @@ export default function Header() {
                     isCartOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                   )}>
                     <ShoppingCart className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
+                    {totalItems > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                        {totalItems}
+                      </span>
+                    )}
                   </div>
                   <span className={cn(
                     "text-xs font-medium mt-1 transition-colors",
@@ -615,7 +812,7 @@ export default function Header() {
                 >
                   {/* Menu header */}
                   <div className="flex items-center justify-between px-4 h-16 border-b">
-                    <h2 className="font-semibold text-lg">{t("catalog")}</h2>
+                    <h2 className="font-semibold text-2xl">{t("catalog")}</h2>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -816,16 +1013,47 @@ export default function Header() {
 
                   {/* Search input */}
                   <div className="p-4 border-b">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder={t("searchPlaceholder")}
-                        className="w-full h-11 pl-10 pr-4 text-base rounded-lg border border-input bg-accent/50 transition-all duration-200 focus:bg-white focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/70"
-                      />
-                    </div>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (searchTerm.trim()) {
+                          // Redirect to catalog page with search query
+                          const params = new URLSearchParams();
+                          params.set('q', searchTerm);
+
+                          // Hide the mobile search panel first
+                          setShowMobileSearch(false);
+
+                          // If already on catalog page, use replace to update URL without navigation
+                          if (pathname === '/catalog') {
+                            router.replace(`/catalog?${params.toString()}`, {
+                              scroll: false // Prevent scrolling to top
+                            });
+                          } else {
+                            // Otherwise navigate to catalog
+                            router.push(`/catalog?${params.toString()}`);
+                          }
+                        }
+                      }}
+                    >
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <input
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          placeholder={t("searchPlaceholder")}
+                          className="w-full h-11 pl-10 pr-12 text-base rounded-lg border border-input bg-accent/50 transition-all duration-200 focus:bg-white focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/70"
+                        />
+                        <button
+                          type="submit"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary h-7 w-7 flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                          aria-label="Search"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </form>
                   </div>
 
                   {/* Search results */}
@@ -1030,57 +1258,142 @@ export default function Header() {
                     </Button>
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg font-semibold">Coșul meu</h2>
+                      {totalItems > 0 && (
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                          {totalItems}
+                        </span>
+                      )}
                     </div>
                     <div className="w-10" /> {/* Spacer for alignment */}
                   </div>
 
-                  {/* Empty cart state */}
-                  <div className="flex-1 flex flex-col items-center justify-center px-6">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-accent text-muted-foreground mb-6">
-                      <ShoppingCart className="h-12 w-12" />
-                    </div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="text-center space-y-2 mb-8"
-                    >
-                      <h3 className="text-xl font-semibold">
-                        Coșul tău este gol
-                      </h3>
-                      <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-                        Se pare că nu ai adăugat încă niciun produs în coș. Începe să explorezi catalogul nostru!
-                      </p>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="w-full max-w-sm"
-                    >
-                      <Button
-                        onClick={() => {
-                          setIsCartOpen(false)
-                          setIsMobileMenuOpen(true)
-                        }}
-                        className="w-full h-12 rounded-xl"
+                  {items.length === 0 ? (
+                    // Empty cart state
+                    <div className="flex-1 flex flex-col items-center justify-center px-6">
+                      <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-accent text-muted-foreground mb-6">
+                        <ShoppingCart className="h-12 w-12" />
+                      </div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-center space-y-2 mb-8"
                       >
-                        <LayoutGrid className="h-5 w-5 mr-2" />
-                        Explorează catalogul
-                      </Button>
-                    </motion.div>
-                  </div>
+                        <h3 className="text-xl font-semibold">
+                          Coșul tău este gol
+                        </h3>
+                        <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
+                          Se pare că nu ai adăugat încă niciun produs în coș. Începe să explorezi catalogul nostru!
+                        </p>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="w-full max-w-sm"
+                      >
+                        <Button
+                          onClick={() => {
+                            setIsCartOpen(false)
+                            setIsMobileMenuOpen(true)
+                          }}
+                          className="w-full h-12 rounded-xl"
+                        >
+                          <LayoutGrid className="h-5 w-5 mr-2" />
+                          Explorează catalogul
+                        </Button>
+                      </motion.div>
+                    </div>
+                  ) : (
+                    // Cart with items
+                    <div className="flex-1 overflow-auto p-4">
+                      <div className="space-y-4">
+                        {items.map((item) => (
+                          <motion.div
+                            key={item.product.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                          >
+                            <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-accent/50">
+                              {item.product.imagini[0] && (
+                                <Image
+                                  src={item.product.imagini[0]}
+                                  alt={item.product.nume}
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 100vw, 768px"
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm truncate">
+                                {item.product.nume}
+                              </h4>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Cod: {item.product.cod}
+                              </div>
+                              <div className="flex justify-between items-center mt-2">
+                                <div className="text-sm font-medium">
+                                  {(item.product.pretRedus || item.product.pret).toLocaleString()} MDL
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6 rounded-md"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      updateQuantity(item.product.id, item.quantity - 1)
+                                    }}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="text-sm w-6 text-center">
+                                    {item.quantity}
+                                  </span>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6 rounded-md"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      updateQuantity(item.product.id, item.quantity + 1)
+                                    }}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 flex-shrink-0 self-start text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeItem(item.product.id)
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Cart footer */}
                   <div className="border-t p-4 bg-white">
                     <div className="space-y-4 max-w-sm mx-auto">
                       <div className="flex items-center justify-between text-base">
                         <span className="font-medium text-muted-foreground">Total</span>
-                        <span className="font-semibold text-lg">0 MDL</span>
+                        <span className="font-semibold text-lg">{totalPrice.toLocaleString()} MDL</span>
                       </div>
                       <Button
                         className="w-full h-12 rounded-xl"
-                        disabled
+                        disabled={items.length === 0}
+                        onClick={() => window.location.href = "/cart"}
                       >
                         Finalizează comanda
                       </Button>

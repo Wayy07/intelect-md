@@ -266,7 +266,6 @@ export default function LatestProducts() {
                 <div key={`${product.id}-${index}`} className="min-w-[300px] px-3">
                   <ProductCard
                     product={product}
-                    onAddToCart={handleAddToCart}
                     onAddToFavorites={handleAddToFavorites}
                   />
                 </div>
@@ -351,7 +350,6 @@ export default function LatestProducts() {
                       <div className="h-[380px]">
                         <ProductCard
                           product={product}
-                          onAddToCart={handleAddToCart}
                           onAddToFavorites={handleAddToFavorites}
                         />
                       </div>

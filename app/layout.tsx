@@ -5,6 +5,8 @@ import HeaderWrapper from "@/components/layout/header-wrapper";
 import { cn } from "@/lib/utils";
 import { CookieConsent } from "@/components/cookie-consent";
 import { LanguageProvider } from "@/lib/language-context";
+import { CartProvider } from "@/app/contexts/cart-context";
+import Footer from "@/app/components/ui/footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,11 +22,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ro">
-      <body className={cn(inter.className, "min-h-screen bg-background")}>
+      <body className={cn(inter.className, "min-h-screen bg-background flex flex-col")}>
         <LanguageProvider>
-          <HeaderWrapper />
-          {children}
-          <CookieConsent />
+          <CartProvider>
+            <HeaderWrapper />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+            <CookieConsent />
+          </CartProvider>
         </LanguageProvider>
       </body>
     </html>
