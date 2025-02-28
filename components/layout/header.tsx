@@ -10,6 +10,8 @@ import { CategoriePrincipala, Subcategorie, Produs } from "@prisma/client"
 import { motion, AnimatePresence, PanInfo, useAnimationFrame, useMotionValue, useTransform } from "framer-motion"
 import { useLanguage } from "@/lib/language-context"
 import { useRouter, usePathname } from "next/navigation"
+import { ProductCard } from "@/app/components/ui/product-card"
+import { ProductCardCompact } from "@/app/components/ui/product-card"
 
 interface CategoryWithSubcategories extends CategoriePrincipala {
   subcategorii: (Subcategorie & {
@@ -145,8 +147,17 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsDesktopUserMenuOpen(false)
       }
-      if (catalogRef.current && !catalogRef.current.contains(event.target as Node)) {
-        setIsDesktopCatalogOpen(false)
+
+      // Only close catalog if click is outside both the menu content AND the catalog button
+      if (catalogRef.current) {
+        const catalogButton = catalogRef.current.querySelector('button')
+        const menuContent = document.querySelector('.desktop-catalog-menu')
+        const isClickInsideMenu = menuContent?.contains(event.target as Node)
+        const isClickOnButton = catalogButton?.contains(event.target as Node)
+
+        if (!isClickInsideMenu && !isClickOnButton && !catalogRef.current.contains(event.target as Node)) {
+          setIsDesktopCatalogOpen(false)
+        }
       }
     }
 
@@ -157,7 +168,7 @@ export default function Header() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, []) // Empty dependency array since we don't need to re-add listeners
+  }, [])
 
   const handleDragEnd = (info: PanInfo, menuType: "catalog" | "user" | "menu") => {
     const threshold = 50 // minimum distance to trigger close
@@ -269,7 +280,8 @@ export default function Header() {
                     "flex items-center gap-2 px-5 py-6 h-12 text-base transition-all duration-200 rounded-lg hover:bg-accent/80",
                     isDesktopCatalogOpen ? "bg-accent text-accent-foreground shadow-sm" : "hover:shadow-sm"
                   )}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent event from bubbling
                     setIsDesktopCatalogOpen(!isDesktopCatalogOpen)
                     if (!isDesktopCatalogOpen) {
                       setHoveredCategory(categories[0]?.id || null)
@@ -329,7 +341,7 @@ export default function Header() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 5 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-72 origin-top-right rounded-lg border bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                      className="absolute right-0 mt-2 w-72 origin-top-right rounded-lg border bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 desktop-catalog-menu"
                     >
                       <div className="p-4">
                         <div className="flex items-center gap-4">
@@ -369,7 +381,7 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 5 }}
                 transition={{ duration: 0.2 }}
-                className="absolute inset-x-0 top-full bg-white border-b shadow-lg backdrop-blur-sm bg-white/95 z-50"
+                className="absolute inset-x-0 top-full bg-white border-b shadow-lg backdrop-blur-sm bg-white/95 z-50 desktop-catalog-menu"
               >
                 <div className="container mx-auto py-8">
                   <div className="grid grid-cols-[280px,1fr,400px] divide-x divide-gray-100">
@@ -444,62 +456,32 @@ export default function Header() {
                           <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground mb-4">
                             {t("popularProducts")}
                           </h3>
-                          <div className="space-y-4">
+                          <div className="space-y-2">
                             {categories
                               .find((cat) => cat.id === hoveredCategory)
-                              ?.subcategorii.flatMap((sub) => sub.produse)
+                              ?.subcategorii.flatMap((sub) =>
+                                sub.produse.map(product => ({
+                                  ...product,
+                                  subcategorie: {
+                                    ...sub,
+                                    categoriePrincipala: categories.find(c => c.id === hoveredCategory)!
+                                  }
+                                }))
+                              )
                               .slice(0, 2)
                               .map((product) => (
-                                <Link
+                                <ProductCardCompact
                                   key={product.id}
-                                  href={`/produs/${product.id}`}
-                                  className="group relative flex gap-4 rounded-xl border bg-white p-3 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 hover:border-indigo-500/20"
-                                >
-                                  {/* Product Image */}
-                                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-50">
-                                    {product.imagini && product.imagini.length > 0 ? (
-                                      <Image
-                                        src={product.imagini[0]}
-                                        alt={product.nume}
-                                        fill
-                                        className="object-cover transition-transform duration-300 group-hover:scale-110"
-                                      />
-                                    ) : (
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <Package className="h-6 w-6 text-muted-foreground" />
-                                      </div>
-                                    )}
-                                    {product.pretRedus && (
-                                      <div className="absolute left-0 top-0">
-                                        <span className="inline-flex items-center rounded-br-lg bg-indigo-500 px-1.5 py-0.5 text-xs font-medium text-white">
-                                          -{Math.round(((product.pret - product.pretRedus) / product.pret) * 100)}%
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  {/* Product Info */}
-                                  <div className="flex-1 min-w-0 space-y-1">
-                                    <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                                      {product.nume}
-                                    </h4>
-                                    <div className="flex flex-col">
-                                      {product.pretRedus ? (
-                                        <>
-                                          <span className="text-xs text-muted-foreground line-through">
-                                            {product.pret} MDL
-                                          </span>
-                                          <span className="font-medium text-sm text-indigo-500">
-                                            {product.pretRedus} MDL
-                                          </span>
-                                        </>
-                                      ) : (
-                                        <span className="font-medium text-sm text-indigo-500">
-                                          {product.pret} MDL
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </Link>
+                                  product={product}
+                                  onAddToCart={(product) => {
+                                    // TODO: Implement cart functionality
+                                    console.log("Add to cart:", product)
+                                  }}
+                                  onAddToFavorites={(product) => {
+                                    // TODO: Implement favorites functionality
+                                    console.log("Add to favorites:", product)
+                                  }}
+                                />
                               ))}
                           </div>
                         </div>
@@ -858,7 +840,7 @@ export default function Header() {
                           <Link
                             key={product.id}
                             href={`/produs/${product.id}`}
-                            className="group relative flex gap-4 rounded-xl border bg-white p-3 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 hover:border-indigo-500/20"
+                            className="group relative flex gap-4 rounded-xl border bg-white p-3 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 hover:border-primary/20"
                             onClick={() => setShowMobileSearch(false)}
                           >
                             {/* Product Image */}
@@ -879,7 +861,7 @@ export default function Header() {
                               )}
                               {product.pretRedus && product.pret && (
                                 <div className="absolute left-0 top-0">
-                                  <span className="inline-flex items-center rounded-br-lg bg-indigo-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                                  <span className="inline-flex items-center rounded-br-lg bg-primary px-1.5 py-0.5 text-xs font-medium text-white">
                                     -{Math.round(((product.pret - product.pretRedus) / product.pret) * 100)}%
                                   </span>
                                 </div>
@@ -898,12 +880,12 @@ export default function Header() {
                                         <span className="block text-xs text-gray-500 line-through">
                                           {product.pret.toLocaleString()} MDL
                                         </span>
-                                        <span className="block font-medium text-sm text-indigo-600">
+                                        <span className="block font-medium text-sm text-primary">
                                           {product.pretRedus.toLocaleString()} MDL
                                         </span>
                                       </>
                                     ) : (
-                                      <span className="block font-medium text-sm text-indigo-600">
+                                      <span className="block font-medium text-sm text-primary">
                                         {product.pret.toLocaleString()} MDL
                                       </span>
                                     )}

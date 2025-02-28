@@ -27,10 +27,12 @@ export async function GET(
       return new NextResponse("Forbidden", { status: 403 })
     }
 
+    const { categoryId, subcategoryId } = await Promise.resolve(params)
+
     const subcategory = await prisma.subcategorie.findUnique({
       where: {
-        id: params.subcategoryId,
-        categoriePrincipalaId: params.categoryId,
+        id: subcategoryId,
+        categoriePrincipalaId: categoryId,
       },
       include: {
         categoriePrincipala: true,
@@ -68,6 +70,8 @@ export async function PATCH(
       return new NextResponse("Forbidden", { status: 403 })
     }
 
+    const { categoryId, subcategoryId } = await Promise.resolve(params)
+
     const body = await req.json()
     const validatedFields = subcategorySchema.safeParse(body)
 
@@ -79,8 +83,8 @@ export async function PATCH(
 
     const subcategory = await prisma.subcategorie.update({
       where: {
-        id: params.subcategoryId,
-        categoriePrincipalaId: params.categoryId,
+        id: subcategoryId,
+        categoriePrincipalaId: categoryId,
       },
       data: {
         nume,

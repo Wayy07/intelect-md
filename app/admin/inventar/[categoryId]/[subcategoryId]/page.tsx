@@ -192,9 +192,9 @@ export default function ProductsPage({ params }: ProductsPageProps) {
           <div></div>
         </div>
         <div className="divide-y">
-          {subcategory.produse.map((produs) => (
-            <div
-              key={produs.id}
+        {subcategory.produse.map((produs) => (
+          <div
+            key={produs.id}
               className="grid grid-cols-[1fr,100px,120px,100px,120px] gap-4 p-4 items-center hover:bg-muted/50 transition-colors"
             >
               <div className="min-w-0">
@@ -203,14 +203,14 @@ export default function ProductsPage({ params }: ProductsPageProps) {
               </div>
               <div className="text-sm">{produs.cod}</div>
               <div className="text-right">
-                {produs.pretRedus ? (
+                        {produs.pretRedus ? (
                   <div className="space-y-0.5">
                     <span className="text-sm font-medium text-destructive">
-                      {produs.pretRedus} MDL
-                    </span>
+                              {produs.pretRedus} MDL
+                            </span>
                     <span className="block text-xs text-muted-foreground line-through">
-                      {produs.pret} MDL
-                    </span>
+                              {produs.pret} MDL
+                            </span>
                   </div>
                 ) : (
                   <span className="text-sm font-medium">{produs.pret} MDL</span>
@@ -227,25 +227,25 @@ export default function ProductsPage({ params }: ProductsPageProps) {
                 </span>
               </div>
               <div className="flex justify-end gap-2">
-                <Button
+                    <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleEditProduct(produs)}
-                >
+                      onClick={() => handleEditProduct(produs)}
+                    >
                   <Edit className="h-4 w-4" />
-                </Button>
-                <Button
+                    </Button>
+                    <Button
                   variant="ghost"
                   size="icon"
                   className="text-destructive"
-                  onClick={() => handleDeleteClick(produs)}
-                >
+                      onClick={() => handleDeleteClick(produs)}
+                    >
                   <Trash2 className="h-4 w-4" />
-                </Button>
+                    </Button>
               </div>
             </div>
           ))}
-        </div>
+          </div>
       </div>
 
       <ProductDialog

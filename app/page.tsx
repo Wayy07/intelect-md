@@ -1,44 +1,11 @@
-import { BentoGrid } from "@/components/bento-grid"
-import { PrismaClient } from "@prisma/client"
+import HeroGrid from "@/app/components/hero-grid"
+import LatestProducts from "@/app/components/latest-products"
 
-const prisma = new PrismaClient()
-
-export default async function Home() {
-  const subcategories = await prisma.subcategorie.findMany({
-    where: {
-      activ: true,
-      imagine: {
-        not: null
-      }
-    },
-    include: {
-      categoriePrincipala: true,
-      produse: {
-        where: {
-          activ: true
-        }
-      },
-      _count: {
-        select: {
-          produse: true
-        }
-      }
-    },
-    take: 8,
-    orderBy: [
-      {
-        produse: {
-          _count: 'desc'
-        }
-      },
-      {
-        nume: 'asc'
-      }
-    ]
-  })
-
+export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col">
+    <main className="min-h-screen">
+      <HeroGrid />
+      <LatestProducts />
     </main>
   )
 }

@@ -64,8 +64,11 @@ model Produs {
   pretRedus       Float?
   stoc            Int       @default(0)
   stare           StareProdus @default(NOU)
+  culoare         String?   // Culoarea produsului
+  dimensiuni      Json?     // Dimensiunile produsului (lungime, lățime, înălțime)
+  greutate        Float?    // Greutatea în kg
   imagini         String[] // Array de URL-uri pentru imagini
-  specificatii    Json? // Specificații tehnice ca JSON
+  specificatii    Json?     // Specificații tehnice grupate pe categorii
   subcategorieId  String
   subcategorie    Subcategorie @relation(fields: [subcategorieId], references: [id])
   detaliiComenzi  DetaliuComanda[]
