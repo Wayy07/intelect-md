@@ -5,7 +5,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import { prisma } from "@/lib/prisma";
 
-export const authOptions: NextAuthOptions = {
+// Define authOptions but don't export it directly from this file
+const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -73,5 +74,14 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 };
 
+// Create the NextAuth handler
 const handler = NextAuth(authOptions);
+
+// Only export the handler functions
 export { handler as GET, handler as POST };
+
+// Export authOptions via a separate function to maintain compatibility
+// with other files that might be importing authOptions
+export function getAuthOptions() {
+  return authOptions;
+}

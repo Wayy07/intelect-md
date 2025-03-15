@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { getAuthOptions } from "../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmation, sendOrderNotification } from "@/app/lib/email";
 
@@ -25,7 +25,7 @@ interface CustomerData {
 export async function POST(request: NextRequest) {
   try {
     // Get the session (if user is logged in)
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(getAuthOptions());
 
     // Parse request body
     const body = await request.json();

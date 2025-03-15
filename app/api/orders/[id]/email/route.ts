@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthOptions } from "@/app/api/auth/[...nextauth]/route";
 import { db } from "@/lib/db";
 import { sendOrderConfirmation, sendOrderNotification, sendShippingNotification, sendCreditInfo } from "@/lib/email";
 
@@ -15,7 +15,7 @@ export async function POST(
     console.log(`[Email API] Processing request for order ID: ${orderId}`);
 
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(getAuthOptions());
     if (!session || !session.user) {
       console.log('[Email API] Unauthorized request');
       return NextResponse.json(

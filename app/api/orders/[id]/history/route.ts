@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
 // Define types for timeline events
@@ -23,7 +23,7 @@ export async function GET(
 ) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(getAuthOptions());
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
