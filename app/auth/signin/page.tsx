@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,8 @@ function FacebookIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export default function SignInPage() {
+// Sign-in content component that uses useSearchParams
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -76,53 +77,83 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="container max-w-md py-24">
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold mb-2">Conectare la cont</h1>
-          <p className="text-gray-600">
-            Conectează-te pentru a continua la Intelect.md
-          </p>
-        </div>
-
-        {errorMessage && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-md p-4 mb-6">
-            {errorMessage}
-          </div>
-        )}
-
-        <Button
-          onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center gap-2 mb-4"
-          variant="outline"
-          size="lg"
-          disabled={isRedirecting}
-        >
-          <div className="bg-white rounded-full p-1">
-            <GoogleIcon className="h-5 w-5" />
-          </div>
-          <span>{isRedirecting ? "Se conectează..." : "Continuă cu Google"}</span>
-        </Button>
-
-        <Button
-          onClick={handleFacebookSignIn}
-          className="w-full flex items-center justify-center gap-2 mb-2"
-          variant="outline"
-          size="lg"
-          disabled={isRedirecting}
-        >
-          <div className="bg-white rounded-full p-1">
-            <FacebookIcon className="h-5 w-5" />
-          </div>
-          <span>{isRedirecting ? "Se conectează..." : "Continuă cu Facebook"}</span>
-        </Button>
-
-        <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">
-            Prin conectare, accepți <a href="/termeni" className="text-primary hover:underline">Termenii și Condițiile</a> și <a href="/confidentialitate" className="text-primary hover:underline">Politica de Confidențialitate</a>.
-          </p>
-        </div>
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-8">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold mb-2">Conectare la cont</h1>
+        <p className="text-gray-600">
+          Conectează-te pentru a continua la Intelect.md
+        </p>
       </div>
+
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-md p-4 mb-6">
+          {errorMessage}
+        </div>
+      )}
+
+      <Button
+        onClick={handleGoogleSignIn}
+        className="w-full flex items-center justify-center gap-2 mb-4"
+        variant="outline"
+        size="lg"
+        disabled={isRedirecting}
+      >
+        <div className="bg-white rounded-full p-1">
+          <GoogleIcon className="h-5 w-5" />
+        </div>
+        <span>{isRedirecting ? "Se conectează..." : "Continuă cu Google"}</span>
+      </Button>
+
+      <Button
+        onClick={handleFacebookSignIn}
+        className="w-full flex items-center justify-center gap-2 mb-2"
+        variant="outline"
+        size="lg"
+        disabled={isRedirecting}
+      >
+        <div className="bg-white rounded-full p-1">
+          <FacebookIcon className="h-5 w-5" />
+        </div>
+        <span>{isRedirecting ? "Se conectează..." : "Continuă cu Facebook"}</span>
+      </Button>
+
+      <div className="text-center mt-6">
+        <p className="text-sm text-gray-500">
+          Prin conectare, accepți <a href="/termeni" className="text-primary hover:underline">Termenii și Condițiile</a> și <a href="/confidentialitate" className="text-primary hover:underline">Politica de Confidențialitate</a>.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Loading fallback component for Suspense
+function SignInLoading() {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-8">
+      <div className="text-center mb-6">
+        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mx-auto mb-2"></div>
+        <div className="h-4 w-64 bg-gray-200 rounded animate-pulse mx-auto"></div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="h-12 bg-gray-100 rounded animate-pulse"></div>
+        <div className="h-12 bg-gray-100 rounded animate-pulse"></div>
+      </div>
+
+      <div className="text-center mt-6">
+        <div className="h-3 w-full bg-gray-100 rounded animate-pulse"></div>
+      </div>
+    </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function SignInPage() {
+  return (
+    <div className="container max-w-md py-24">
+      <Suspense fallback={<SignInLoading />}>
+        <SignInContent />
+      </Suspense>
     </div>
   );
 }
