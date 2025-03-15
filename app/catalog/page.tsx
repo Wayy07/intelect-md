@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useRouter } from "next/navigation"
 import { ChevronDown, Filter, Search, X, PackageOpen, SlidersHorizontal, ArrowUpDown } from "lucide-react"
@@ -84,6 +84,66 @@ interface Subcategory {
 }
 
 export default function CatalogPage() {
+  return (
+    <Suspense fallback={<CatalogLoading />}>
+      <CatalogContent />
+    </Suspense>
+  );
+}
+
+// Loading skeleton component for Suspense boundary
+function CatalogLoading() {
+  return (
+    <div className="container py-8">
+      {/* Header skeleton */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div className="w-48 h-8 bg-gray-200 rounded animate-pulse mb-4 md:mb-0"></div>
+        <div className="flex gap-2">
+          <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+
+      {/* Filter and products skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Filters */}
+        <div className="hidden lg:block">
+          <div className="h-12 bg-gray-200 rounded animate-pulse mb-4"></div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i}>
+                <div className="h-8 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="space-y-2">
+                  {[1, 2, 3].map((j) => (
+                    <div key={j} className="h-6 bg-gray-100 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Products grid */}
+        <div className="col-span-1 lg:col-span-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[1, 2, 3, 4, 5, 6, 8].map((i) => (
+              <div key={i} className="border rounded-lg p-3 h-[300px]">
+                <div className="h-40 bg-gray-200 rounded animate-pulse mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-8 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main content component that uses useSearchParams
+function CatalogContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { favorites, toggleFavorite } = useFavorites()
