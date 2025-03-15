@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/app/contexts/cart-context"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/lib/language-context"
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalItems, totalPrice } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { t } = useLanguage()
 
   const handleCheckout = () => {
     setIsSubmitting(true)
@@ -23,10 +25,10 @@ export default function CartPage() {
   return (
     <div className="container max-w-7xl py-10">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold md:text-3xl">Coșul meu</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">{t('cart_title')}</h1>
         <Link href="/catalog" className="flex items-center text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Continuă cumpărăturile
+          {t('cart_continue_shopping')}
         </Link>
       </div>
 
@@ -35,13 +37,13 @@ export default function CartPage() {
           <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent text-muted-foreground">
             <ShoppingCart className="h-12 w-12" />
           </div>
-          <h2 className="mb-2 text-xl font-semibold">Coșul tău este gol</h2>
+          <h2 className="mb-2 text-xl font-semibold">{t('cart_empty')}</h2>
           <p className="mb-8 max-w-md text-center text-muted-foreground">
-            Nu ai niciun produs în coș. Explorează catalogul nostru pentru a găsi produsele de care ai nevoie.
+            {t('cart_empty_description')}
           </p>
           <Button asChild size="lg" className="min-w-[200px]">
             <Link href="/catalog">
-              Explorează catalogul
+              {t('cart_explore_catalog')}
             </Link>
           </Button>
         </div>
@@ -94,7 +96,7 @@ export default function CartPage() {
                     </div>
 
                     <div className="mt-1 text-sm text-muted-foreground">
-                      Cod: {item.product.cod}
+                      {t('cart_product_code')}: {item.product.cod}
                     </div>
 
                     <div className="mt-auto flex items-center justify-between pt-4">
@@ -128,6 +130,11 @@ export default function CartPage() {
                             {(item.product.pret * item.quantity).toLocaleString()} MDL
                           </div>
                         )}
+                        {item.product.creditOption && (
+                          <div className="text-sm text-primary mt-1">
+                            {item.product.creditOption.months} {t('cart_monthly_payment')} {item.product.creditOption.monthlyPayment.toLocaleString()} {t('cart_per_month')}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -139,24 +146,24 @@ export default function CartPage() {
           <div>
             <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
               <div className="p-6">
-                <h2 className="mb-4 text-lg font-semibold">Sumar comandă</h2>
+                <h2 className="mb-4 text-lg font-semibold">{t('cart_order_summary')}</h2>
 
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Produse ({totalItems})</span>
+                    <span className="text-muted-foreground">{t('cart_products')} ({totalItems})</span>
                     <span>{totalPrice.toLocaleString()} MDL</span>
                   </div>
 
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Livrare</span>
-                    <span>Gratuită</span>
+                    <span className="text-muted-foreground">{t('cart_delivery')}</span>
+                    <span>{t('cart_free')}</span>
                   </div>
                 </div>
 
                 <Separator className="my-4" />
 
                 <div className="flex justify-between font-semibold">
-                  <span>Total</span>
+                  <span>{t('cart_total')}</span>
                   <span>{totalPrice.toLocaleString()} MDL</span>
                 </div>
               </div>
@@ -173,10 +180,10 @@ export default function CartPage() {
                     {isSubmitting ? (
                       <div className="flex items-center">
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
-                        Se procesează...
+                        {t('cart_processing')}
                       </div>
                     ) : (
-                      "Finalizează comanda"
+                      t('cart_checkout')
                     )}
                   </Link>
                 </Button>
@@ -184,11 +191,11 @@ export default function CartPage() {
                 <div className="mt-4 flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Truck className="h-3 w-3" />
-                    <span>Livrare gratuită pentru toate comenzile</span>
+                    <span>{t('cart_free_delivery')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Store className="h-3 w-3" />
-                    <span>Plată la livrare sau ridicare din magazin</span>
+                    <span>{t('cart_payment_options')}</span>
                   </div>
                 </div>
               </div>
@@ -197,34 +204,7 @@ export default function CartPage() {
         </div>
       )}
 
-      {items.length > 0 && (
-        <div className="mt-6 md:hidden">
-          <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="mb-2 text-sm font-medium text-gray-700">Sumar comandă</h3>
-            <div className="flex justify-between text-sm">
-              <span>Total produse ({totalItems})</span>
-              <span>{totalPrice.toLocaleString()} MDL</span>
-            </div>
-          </div>
-          <Button
-            onClick={handleCheckout}
-            className="w-full"
-            disabled={isSubmitting}
-            asChild
-          >
-            <Link href="/checkout">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Se procesează...
-                </>
-              ) : (
-                <>Finalizează comanda</>
-              )}
-            </Link>
-          </Button>
-        </div>
-      )}
+
     </div>
   )
 }

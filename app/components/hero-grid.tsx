@@ -6,12 +6,24 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Package } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Subcategorie } from "@prisma/client"
+import { useLanguage } from "@/lib/language-context"
+
+// Local interface to replace Prisma import
+interface Subcategorie {
+  id: string
+  nume: string  // Displayed name (translated)
+  numeKey: string  // Translation key
+  descriere?: string | null
+  imagine?: string | null
+  categoriePrincipalaId: string
+  activ: boolean
+}
 
 interface SubcategoryWithCategory extends Subcategorie {
   categoriePrincipala: {
     id: string
     nume: string
+    numeKey: string  // Translation key
   }
 }
 
@@ -30,6 +42,7 @@ const SubcategoryTags = ({ heroSubcategories, subcategories }: {
   heroSubcategories: SubcategoryWithCategory[]
   subcategories: SubcategoryWithCategory[]
 }) => {
+  const { t } = useLanguage()
   // Combine hero subcategories and remaining subcategories
   const allTags = [...heroSubcategories, ...subcategories]
 
@@ -39,13 +52,13 @@ const SubcategoryTags = ({ heroSubcategories, subcategories }: {
         {allTags.map((subcategory) => (
           <Link
             key={subcategory.id}
-            href={`/catalog/${subcategory.categoriePrincipala.id}/${subcategory.id}`}
+            href={`/catalog?category=${subcategory.categoriePrincipala.id}&subcategory=${subcategory.id}`}
             className="inline-flex items-center px-4 py-2 rounded-full
                      bg-white shadow-sm border border-gray-200
                      hover:bg-primary hover:border-primary hover:text-primary-foreground
                      transition-all duration-300 hover:scale-105 hover:shadow-md"
           >
-            <span className="text-sm font-medium">{subcategory.nume}</span>
+            <span className="text-sm font-medium">{t(subcategory.numeKey)}</span>
           </Link>
         ))}
       </div>
@@ -54,6 +67,7 @@ const SubcategoryTags = ({ heroSubcategories, subcategories }: {
 }
 
 export default function HeroSection() {
+  const { t } = useLanguage()
   const [subcategories, setSubcategories] = useState<SubcategoryWithCategory[]>([])
   const [heroSubcategories, setHeroSubcategories] = useState<SubcategoryWithCategory[]>([])
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -72,52 +86,149 @@ export default function HeroSection() {
   useEffect(() => {
     const fetchSubcategories = async () => {
       try {
-        const response = await fetch("/api/catalog")
-        if (!response.ok) throw new Error("Failed to fetch categories")
-        const data = await response.json()
-
-        const allSubcategories = data.flatMap((category: any) =>
-          category.subcategorii.map((sub: any) => ({
-            ...sub,
+        // Mock data instead of API call
+        // This would be replaced with a call to your custom API
+        const mockSubcategories: SubcategoryWithCategory[] = [
+          {
+            id: "sub1",
+            nume: "Laptopuri",
+            numeKey: "subcategory_laptops",
+            descriere: "Laptopuri performante pentru orice buget",
+            imagine: "https://images.unsplash.com/photo-1651614422777-d92444842a65?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            categoriePrincipalaId: "cat1",
+            activ: true,
             categoriePrincipala: {
-              id: category.id,
-              nume: category.nume
+              id: "cat1",
+              nume: "Computere",
+              numeKey: "category_computers"
             }
-          }))
-        )
+          },
+          {
+            id: "sub2",
+            nume: "Smartphone-uri",
+            numeKey: "subcategory_smartphones",
+            descriere: "Telefoane inteligente de la branduri de top",
+            imagine: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?q=80&w=3928&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            categoriePrincipalaId: "cat2",
+            activ: true,
+            categoriePrincipala: {
+              id: "cat2",
+              nume: "Telefoane",
+              numeKey: "category_phones"
+            }
+          },
+          {
+            id: "sub3",
+            nume: "Tablete",
+            numeKey: "subcategory_tablets",
+            descriere: "Tablete pentru muncă și divertisment",
+            imagine: "https://images.unsplash.com/photo-1546868871-0f936769675e?q=80&w=3928&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            categoriePrincipalaId: "cat2",
+            activ: true,
+            categoriePrincipala: {
+              id: "cat2",
+              nume: "Telefoane",
+              numeKey: "category_phones"
+            }
+          },
+          {
+            id: "sub4",
+            nume: "Televizoare",
+            numeKey: "subcategory_tvs",
+            descriere: "Televizoare Smart de ultimă generație",
+            imagine: "https://i.insider.com/6744c031fa0140cdd5654236?width=900&format=jpeg&auto=webp",
+            categoriePrincipalaId: "cat3",
+            activ: true,
+            categoriePrincipala: {
+              id: "cat3",
+              nume: "Electronice",
+              numeKey: "category_electronics"
+            }
+          },
+          {
+            id: "sub5",
+            nume: "Căști",
+            numeKey: "subcategory_headphones",
+            descriere: "Căști wireless cu sunet de calitate",
+            imagine: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=3865&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            categoriePrincipalaId: "cat4",
+            activ: true,
+            categoriePrincipala: {
+              id: "cat4",
+              nume: "Accesorii",
+              numeKey: "category_accessories"
+            }
+          },
+          {
+            id: "sub6",
+            nume: "Smartwatch-uri",
+            numeKey: "subcategory_smartwatches",
+            descriere: "Ceasuri inteligente pentru monitorizarea activității",
+            imagine: "",
+            categoriePrincipalaId: "cat4",
+            activ: true,
+            categoriePrincipala: {
+              id: "cat4",
+              nume: "Accesorii",
+              numeKey: "category_accessories"
+            }
+          },
+          {
+            id: "sub7",
+            nume: "Console",
+            numeKey: "subcategory_consoles",
+            descriere: "Console de gaming pentru pasionați",
+            imagine: "",
+            categoriePrincipalaId: "cat5",
+            activ: true,
+            categoriePrincipala: {
+              id: "cat5",
+              nume: "Gaming",
+              numeKey: "category_gaming"
+            }
+          },
+          {
+            id: "sub8",
+            nume: "Aspiratoare",
+            numeKey: "subcategory_vacuums",
+            descriere: "Aspiratoare inteligente pentru casa ta",
+            imagine: "",
+            categoriePrincipalaId: "cat6",
+            activ: true,
+            categoriePrincipala: {
+              id: "cat6",
+              nume: "Electrocasnice",
+              numeKey: "category_appliances"
+            }
+          }
+        ];
 
-        // Define the desired subcategory names in order
-        const desiredOrder = ['Telefoane', 'Laptopuri', 'Căști', 'Boxe', 'Tastaturi']
+        // Before setting the state, apply translations to the names
+        const translatedSubcategories = mockSubcategories.map(subcat => ({
+          ...subcat,
+          nume: t(subcat.numeKey),
+          categoriePrincipala: {
+            ...subcat.categoriePrincipala,
+            nume: t(subcat.categoriePrincipala.numeKey)
+          }
+        }));
 
-        // Filter and sort subcategories according to the desired order
-        const heroItems = desiredOrder
-          .map(name => allSubcategories.find((sub: SubcategoryWithCategory) =>
-            sub.nume.toLowerCase().includes(name.toLowerCase())
-          ))
-          .filter((item): item is SubcategoryWithCategory => item !== undefined)
+        // Use first 8 for hero grid
+        const heroSubcats = translatedSubcategories.slice(0, 8);
+        setHeroSubcategories(heroSubcats);
 
-        // If we don't find all items, fill with other subcategories
-        if (heroItems.length < 5) {
-          const remainingItems = allSubcategories
-            .filter((sub: SubcategoryWithCategory) => !heroItems.some(hero => hero.id === sub.id))
-            .slice(0, 5 - heroItems.length)
-          heroItems.push(...remainingItems)
-        }
+        // Use rest for tags
+        const remainingSubcats = translatedSubcategories.slice(8);
+        setSubcategories(remainingSubcats);
 
-        // Get remaining subcategories for tags (excluding hero items)
-        const remainingSubcategories = allSubcategories
-          .filter((sub: SubcategoryWithCategory) => !heroItems.some(hero => hero.id === sub.id))
-          .slice(0, 7) // Get exactly 7 more to make total of 12 with the 5 hero items
-
-        setHeroSubcategories(heroItems)
-        setSubcategories(remainingSubcategories)
       } catch (error) {
-        console.error("Error fetching subcategories:", error)
+        console.error("Error setting mock subcategories:", error);
       }
-    }
+    };
 
-    fetchSubcategories()
-  }, [])
+    // Simulate loading delay
+    setTimeout(fetchSubcategories, 500);
+  }, [t]); // Add t as a dependency to update when language changes
 
   // Mobile grid positions (4 items)
   const mobileGridPositions = [
@@ -132,10 +243,10 @@ export default function HeroSection() {
       <section className="container mx-auto py-8 sm:py-16">
         <div className="text-center mb-8 sm:mb-12 space-y-2 sm:space-y-3 px-4 sm:px-0">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
-            Tehnica pentru toată lumea
+            {t("techForEveryone")}
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Descoperă o gamă largă de produse în categoriile noastre populare
+            {t("discoverProducts")}
           </p>
         </div>
 
@@ -143,7 +254,7 @@ export default function HeroSection() {
           {heroSubcategories.slice(0, isMobile ? 4 : 5).map((subcategory, index) => (
             <Link
               key={subcategory.id}
-              href={`/catalog/${subcategory.categoriePrincipala.id}/${subcategory.id}`}
+              href={`/catalog?category=${subcategory.categoriePrincipala.id}&subcategory=${subcategory.id}`}
               className={cn(
                 "relative group",
                 isMobile ? mobileGridPositions[index] : gridPositions[index]

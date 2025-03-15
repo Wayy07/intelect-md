@@ -1,0 +1,15 @@
+# https://intelect.md/robots.txt
+# Allow all search engine robots to crawl and index the site
+
+User-agent: *
+Allow: /
+
+# Disallow specific areas that shouldn't be indexed
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /_next/
+Disallow: /*?ref=
+Disallow: /*&ref=
+
+# Sitemap location
+Sitemap: https://intelect.md/sitemap.xml

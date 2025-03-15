@@ -31,9 +31,10 @@ interface Product {
 interface ProductCardProps {
   product: Product
   onAddToFavorites?: (product: Product) => void
+  disableLink?: boolean
 }
 
-function ProductCard({ product, onAddToFavorites }: ProductCardProps) {
+function ProductCard({ product, onAddToFavorites, disableLink = false }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
   const { toast } = useToast()
@@ -70,7 +71,7 @@ function ProductCard({ product, onAddToFavorites }: ProductCardProps) {
     }
   }
 
-  return (
+  const content = (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -79,8 +80,7 @@ function ProductCard({ product, onAddToFavorites }: ProductCardProps) {
       onHoverEnd={() => setIsHovered(false)}
       className="group h-full"
     >
-      <Link
-        href={`/catalog/${product.subcategorie?.categoriePrincipala?.id || 'all'}/${product.subcategorie?.id || 'all'}/${product.id}`}
+      <div
         className="relative flex h-full flex-col overflow-hidden rounded-xl bg-white transition-all duration-300
                  hover:shadow-xl hover:shadow-primary/10 border border-gray-100"
       >
@@ -273,12 +273,21 @@ function ProductCard({ product, onAddToFavorites }: ProductCardProps) {
             </div>
           </div>
         </div>
-      </Link>
+      </div>
     </motion.div>
-  )
+  );
+
+  return disableLink ? content : (
+    <Link
+      href={`/catalog/${product.subcategorie?.categoriePrincipala?.id || 'all'}/${product.subcategorie?.id || 'all'}/${product.id}`}
+      className="block h-full"
+    >
+      {content}
+    </Link>
+  );
 }
 
-function ProductCardCompact({ product, onAddToFavorites }: ProductCardProps) {
+function ProductCardCompact({ product, onAddToFavorites, disableLink = false }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false)
   const { toast } = useToast()
   const { addItem } = useCart()
@@ -306,11 +315,8 @@ function ProductCardCompact({ product, onAddToFavorites }: ProductCardProps) {
     }
   }
 
-  return (
-    <Link
-      href={`/catalog/${product.subcategorie?.categoriePrincipala?.id || 'all'}/${product.subcategorie?.id || 'all'}/${product.id}`}
-      className="group flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors"
-    >
+  const content = (
+    <div className="group flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors">
       {/* Image */}
       <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
         {product.imagini?.[0] ? (
@@ -375,8 +381,17 @@ function ProductCardCompact({ product, onAddToFavorites }: ProductCardProps) {
           </Button>
         )}
       </div>
+    </div>
+  );
+
+  return disableLink ? content : (
+    <Link
+      href={`/catalog/${product.subcategorie?.categoriePrincipala?.id || 'all'}/${product.subcategorie?.id || 'all'}/${product.id}`}
+      className="block"
+    >
+      {content}
     </Link>
-  )
+  );
 }
 
 export { ProductCard, ProductCardCompact }

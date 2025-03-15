@@ -11,6 +11,10 @@ export default withAuth(
     const requestHeaders = new Headers(req.headers)
     requestHeaders.set("x-pathname", req.nextUrl.pathname)
 
+    // Add a timestamp to force token revalidation on each request
+    // This helps prevent the "No valid session" error on first login
+    requestHeaders.set("x-middleware-cache", Date.now().toString())
+
     // If not logged in and trying to access admin routes (except login)
     if (!token && isAdminRoute && !isLoginPage) {
       return NextResponse.redirect(new URL("/admin/login", req.url))

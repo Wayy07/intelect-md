@@ -9,6 +9,8 @@ import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
 
 interface Product {
   id: string
@@ -29,6 +31,8 @@ interface Product {
 }
 
 export default function LatestProducts() {
+  const { t } = useLanguage()
+
   // Add style tag for CSS
   useEffect(() => {
     // Add CSS for hiding scrollbars
@@ -68,26 +72,73 @@ export default function LatestProducts() {
   useEffect(() => {
     const fetchLatestProducts = async () => {
       try {
-        const response = await fetch("/api/products/latest")
-        if (!response.ok) throw new Error("Failed to fetch products")
-        const data = await response.json()
-        setProducts(data)
+        // Mock data instead of API call
+        // This would be replaced with a call to your custom API
+        const mockProducts: Product[] = [
+          {
+            id: "1",
+            nume: "Laptop Example Pro",
+            cod: "LP-001",
+            pret: 12999,
+            pretRedus: 11499,
+            imagini: ["https://i.pinimg.com/736x/00/78/23/007823f23f707b60490c82f6544475f2.jpg"],
+            stoc: 10,
+            subcategorie: {
+              id: "sub1",
+              nume: "Laptopuri",
+              categoriePrincipala: {
+                id: "cat1",
+                nume: "Computere"
+              }
+            }
+          },
+          {
+            id: "2",
+            nume: "Smartphone Example S",
+            cod: "SP-002",
+            pret: 8999,
+            pretRedus: null,
+            imagini: ["https://i.pinimg.com/736x/7e/f6/02/7ef602c6b66304adc65fdfc3afa8cb15.jpg"],
+            stoc: 15,
+            subcategorie: {
+              id: "sub2",
+              nume: "Smartphones",
+              categoriePrincipala: {
+                id: "cat2",
+                nume: "Telefoane"
+              }
+            }
+          },
+          {
+            id: "3",
+            nume: "Tablet Example X",
+            cod: "TX-003",
+            pret: 5999,
+            pretRedus: 4999,
+            imagini: ["https://i.pinimg.com/736x/36/7e/61/367e61a9bfa273e1fe40de05be697b79.jpg"],
+            stoc: 8,
+            subcategorie: {
+              id: "sub3",
+              nume: "Tablete",
+              categoriePrincipala: {
+                id: "cat2",
+                nume: "Tablete"
+              }
+            }
+          }
+        ];
+
+        setProducts(mockProducts);
       } catch (error) {
-        console.error("Error fetching latest products:", error)
+        console.error("Error setting mock products:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchLatestProducts()
-
-    // Clean up the timer when component unmounts
-    return () => {
-      if (autoScrollTimerRef.current) {
-        clearTimeout(autoScrollTimerRef.current)
-      }
-    }
-  }, [])
+    // Simulate loading delay for mock data
+    setTimeout(fetchLatestProducts, 500);
+  }, []);
 
   // Calculate total width of carousel items for infinite scroll
   const itemWidth = 300; // approx width of each product card with gap
@@ -124,8 +175,8 @@ export default function LatestProducts() {
     // TODO: Implement cart functionality
     console.log("Add to cart:", product)
     toast({
-      title: "Adăugat în coș",
-      description: "Produsul a fost adăugat în coșul tău",
+      title: t("addedToCart"),
+      description: t("productAddedToCart"),
     })
   }
 
@@ -133,8 +184,8 @@ export default function LatestProducts() {
     // TODO: Implement favorites functionality
     console.log("Add to favorites:", product)
     toast({
-      title: "Adăugat la favorite",
-      description: "Produsul a fost adăugat în lista ta de favorite",
+      title: t("addedToFavorites"),
+      description: t("productAddedToFavorites"),
     })
   }
 
@@ -220,15 +271,21 @@ export default function LatestProducts() {
         <div className="mb-8 hidden md:flex justify-between items-end">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Produse Noi
+              {t("newProducts")}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Descoperă cele mai recente produse adăugate în magazin
+              {t("discoverLatestProducts")}
             </p>
           </div>
 
           {/* Desktop navigation controls */}
           <div className="hidden md:flex items-center gap-2">
+            <Link
+              href="/catalog?latest=true"
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors mr-4"
+            >
+              {t("seeAllNewProducts")}
+            </Link>
             <Button
               variant="outline"
               size="icon"
@@ -264,10 +321,13 @@ export default function LatestProducts() {
             >
               {extendedProducts.map((product, index) => (
                 <div key={`${product.id}-${index}`} className="min-w-[300px] px-3">
-                  <ProductCard
-                    product={product}
-                    onAddToFavorites={handleAddToFavorites}
-                  />
+                  <Link href={`/produs/${product.id}`} className="block h-full">
+                    <ProductCard
+                      product={product}
+                      onAddToFavorites={handleAddToFavorites}
+                      disableLink={true}
+                    />
+                  </Link>
                 </div>
               ))}
             </motion.div>
@@ -321,7 +381,7 @@ export default function LatestProducts() {
 
             {/* Section title */}
             <div className="px-6 mb-6 relative">
-              <h3 className="text-white text-lg font-semibold">Noutăți</h3>
+              <h3 className="text-white text-lg font-semibold">{t("newItems")}</h3>
               <div className="w-16 h-1 bg-gradient-to-r from-primary to-primary/70 mt-2 rounded-full"></div>
             </div>
 
@@ -345,21 +405,33 @@ export default function LatestProducts() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden shadow-xl border border-gray-800 h-full">
-                      {/* Use a wrapper div with fixed height for consistent card sizes */}
-                      <div className="h-[380px]">
-                        <ProductCard
-                          product={product}
-                          onAddToFavorites={handleAddToFavorites}
-                        />
+                    <Link href={`/produs/${product.id}`} className="block h-full">
+                      <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden shadow-xl border border-gray-800 h-full">
+                        {/* Use a wrapper div with fixed height for consistent card sizes */}
+                        <div className="h-[380px]">
+                          <ProductCard
+                            product={product}
+                            onAddToFavorites={handleAddToFavorites}
+                            disableLink={true}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   </motion.div>
                 ))}
               </div>
             </div>
 
-            {/* Scroll indicator */}
+            {/* View all link for mobile */}
+            <div className="px-6 mt-6 text-center">
+              <Link
+                href="/catalog?latest=true"
+                className="inline-flex items-center justify-center text-sm font-medium text-white/80 hover:text-white transition-colors"
+              >
+                {t("seeAllNewProducts")}
+                <span className="ml-1 text-xs">→</span>
+              </Link>
+            </div>
 
           </div>
         </div>

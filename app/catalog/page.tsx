@@ -35,6 +35,17 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
+import Link from "next/link"
+import { Grid, Package, List, Sliders, Heart } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useFavorites } from "@/app/contexts/favorites-context"
+import { useToast } from "@/app/components/ui/use-toast"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
+import { useLanguage } from "@/lib/language-context"
 
 interface Product {
   id: string
@@ -52,26 +63,32 @@ interface Product {
       nume: string
     }
   }
+  stare?: string
 }
 
 interface Category {
   id: string
   nume: string
-  activ: boolean
+  descriere?: string | null
+  imagine?: string | null
   subcategorii: Subcategory[]
 }
 
 interface Subcategory {
   id: string
   nume: string
-  activ: boolean
-  produse: Product[]
+  descriere?: string | null
+  imagine?: string | null
   categoriePrincipalaId: string
+  produse?: Product[]
 }
 
 export default function CatalogPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { favorites, toggleFavorite } = useFavorites()
+  const { toast } = useToast()
+  const { t } = useLanguage()
   const categoryParam = searchParams.get('category')
   const subcategoryParam = searchParams.get('subcategory')
   const searchQuery = searchParams.get('q') || ''
@@ -82,8 +99,9 @@ export default function CatalogPage() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(subcategoryParam)
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
-  const [sortOption, setSortOption] = useState<string>("newest")
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 10000 })
+  const [sortOption, setSortOption] = useState<string>("featured")
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000])
+  const [activePriceRange, setActivePriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 50000 })
   const [inputPriceRange, setInputPriceRange] = useState<{ min: string; max: string }>({ min: '0', max: '10000' })
   const [searchTerm, setSearchTerm] = useState(searchQuery)
 
@@ -94,22 +112,148 @@ export default function CatalogPage() {
   const productsPerPageMax = 30 // Maximum products per page
   const initialProductsToShow = 20 // Initial products to show
 
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [availableFilters, setAvailableFilters] = useState({
+    inStock: false,
+    onSale: false,
+    freeShipping: false
+  })
+
   useEffect(() => {
     const fetchCatalog = async () => {
       setIsLoading(true)
       try {
-        const response = await fetch('/api/catalog')
-        const data: Category[] = await response.json()
+        // Mock data instead of API call
+        // This would be replaced with a call to your custom API
+        const mockCategories: Category[] = [
+          {
+            id: "cat1",
+            nume: "Computere",
+            descriere: "Laptopuri, desktop-uri și componente",
+            imagine: "https://images.unsplash.com/photo-1625842268584-8f3296236761?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            subcategorii: [
+              {
+                id: "sub1",
+                nume: "Laptopuri",
+                descriere: "Laptopuri performante pentru orice buget",
+                imagine: "https://images.unsplash.com/photo-1651614422777-d92444842a65?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                categoriePrincipalaId: "cat1"
+              },
+              {
+                id: "sub2",
+                nume: "Desktop",
+                categoriePrincipalaId: "cat1"
+              },
+              {
+                id: "sub3",
+                nume: "Monitoare",
+                categoriePrincipalaId: "cat1"
+              }
+            ]
+          },
+          {
+            id: "cat2",
+            nume: "Telefoane",
+            descriere: "Smartphones, tablete și accesorii",
+            imagine: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?q=80&w=3928&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            subcategorii: [
+              {
+                id: "sub4",
+                nume: "Smartphones",
+                descriere: "Telefoane inteligente de la branduri de top",
+                imagine: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?q=80&w=3928&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                categoriePrincipalaId: "cat2"
+              },
+              {
+                id: "sub5",
+                nume: "Accesorii telefoane",
+                categoriePrincipalaId: "cat2"
+              },
+              {
+                id: "sub6",
+                nume: "Tablete",
+                descriere: "Tablete pentru muncă și divertisment",
+                imagine: "https://images.unsplash.com/photo-1546868871-0f936769675e?q=80&w=3928&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                categoriePrincipalaId: "cat2"
+              }
+            ]
+          },
+          {
+            id: "cat3",
+            nume: "Electronice",
+            descriere: "Televizoare, audio și video",
+            imagine: "https://i.insider.com/6744c031fa0140cdd5654236?width=900&format=jpeg&auto=webp",
+            subcategorii: [
+              {
+                id: "sub7",
+                nume: "Televizoare",
+                descriere: "Televizoare Smart de ultimă generație",
+                imagine: "https://i.insider.com/6744c031fa0140cdd5654236?width=900&format=jpeg&auto=webp",
+                categoriePrincipalaId: "cat3"
+              },
+              {
+                id: "sub9",
+                nume: "Foto & Video",
+                categoriePrincipalaId: "cat3"
+              }
+            ]
+          },
+          {
+            id: "cat4",
+            nume: "Accesorii",
+            descriere: "Căști, smartwatch-uri și periferice",
+            imagine: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=3865&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            subcategorii: [
+              {
+                id: "sub8",
+                nume: "Căști",
+                descriere: "Căști wireless cu sunet de calitate",
+                imagine: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=3865&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                categoriePrincipalaId: "cat4"
+              },
+              {
+                id: "sub10",
+                nume: "Smartwatch-uri",
+                categoriePrincipalaId: "cat4"
+              }
+            ]
+          },
+          {
+            id: "cat5",
+            nume: "Gaming",
+            descriere: "Console și accesorii pentru gaming",
+            imagine: "",
+            subcategorii: [
+              {
+                id: "sub11",
+                nume: "Console",
+                categoriePrincipalaId: "cat5"
+              }
+            ]
+          },
+          {
+            id: "cat6",
+            nume: "Electrocasnice",
+            descriere: "Aparate pentru casă modernă",
+            imagine: "",
+            subcategorii: [
+              {
+                id: "sub12",
+                nume: "Aspiratoare",
+                categoriePrincipalaId: "cat6"
+              }
+            ]
+          }
+        ];
 
-        console.log('Categories fetched:', data.length);
-
-        setCategories(data)
+        setCategories(mockCategories);
 
         // Extract all products from all categories and subcategories
-        const allProducts = data.flatMap(category =>
+        const allProducts = mockCategories.flatMap(category =>
           category.subcategorii.flatMap(subcategory => {
             // Set the subcategorie property for each product if it's not already set
-            return subcategory.produse.map(product => ({
+            return (subcategory.produse || []).map((product: any) => ({
               ...product,
               // Ensure subcategorie is properly set
               subcategorie: product.subcategorie || {
@@ -122,15 +266,9 @@ export default function CatalogPage() {
               }
             }));
           })
-        )
+        );
 
-        console.log('Total products found:', allProducts.length);
-
-        // Log products without category information
-        const productsWithoutCategory = allProducts.filter(p => !p.subcategorie?.categoriePrincipala);
-        console.log('Products without category info:', productsWithoutCategory.length);
-
-        setProducts(allProducts)
+        setProducts(allProducts);
 
         // Apply only subcategory filter from URL if present
         // Default to showing all products
@@ -138,25 +276,35 @@ export default function CatalogPage() {
 
         if (subcategoryParam) {
           filtered = filtered.filter(p => p.subcategorie?.id === subcategoryParam);
-          console.log(`Filtered by subcategory ${subcategoryParam}:`, filtered.length);
         }
 
-        setFilteredProducts(filtered)
+        setFilteredProducts(filtered);
       } catch (error) {
-        console.error("Error fetching catalog:", error)
+        console.error("Error with mock catalog data:", error);
+        toast({
+          title: "Eroare",
+          description: "Nu s-au putut încărca produsele",
+          variant: "destructive"
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchCatalog()
-  }, [subcategoryParam])
+    // Simulate loading delay
+    setTimeout(fetchCatalog, 500);
+  }, [subcategoryParam, toast]);
 
   // Initialize the input price range when actual price range or product prices change
   useEffect(() => {
     setInputPriceRange({
-      min: priceRange.min.toString(),
-      max: priceRange.max.toString()
+      min: priceRange[0].toString(),
+      max: priceRange[1].toString()
+    });
+    // Also initialize the active price range when products are loaded
+    setActivePriceRange({
+      min: priceRange[0],
+      max: priceRange[1]
     });
   }, [products.length]); // Only update when products are loaded
 
@@ -172,7 +320,7 @@ export default function CatalogPage() {
     if (products.length > 0) {
       applyFilters()
     }
-  }, [selectedSubcategory, sortOption, priceRange, searchTerm, products, currentPage])
+  }, [selectedSubcategory, sortOption, activePriceRange, searchTerm, products, currentPage])
 
   // Update displayed products when filtered products or pagination changes
   useEffect(() => {
@@ -208,7 +356,7 @@ export default function CatalogPage() {
     // Apply price range filter
     filtered = filtered.filter(product => {
       const price = product.pretRedus || product.pret
-      return price >= priceRange.min && price <= priceRange.max
+      return price >= activePriceRange.min && price <= activePriceRange.max
     })
 
     // Apply search filter
@@ -222,27 +370,27 @@ export default function CatalogPage() {
 
     // Apply sorting
     switch (sortOption) {
-      case "newest":
+      case "featured":
         // Assuming products are already sorted by date in the API
         break
-      case "priceAsc":
+      case "price-asc":
         filtered.sort((a, b) => {
           const priceA = a.pretRedus || a.pret
           const priceB = b.pretRedus || b.pret
           return priceA - priceB
         })
         break
-      case "priceDesc":
+      case "price-desc":
         filtered.sort((a, b) => {
           const priceA = a.pretRedus || a.pret
           const priceB = b.pretRedus || b.pret
           return priceB - priceA
         })
         break
-      case "nameAsc":
+      case "name-asc":
         filtered.sort((a, b) => a.nume.localeCompare(b.nume))
         break
-      case "nameDesc":
+      case "name-desc":
         filtered.sort((a, b) => b.nume.localeCompare(a.nume))
         break
     }
@@ -298,7 +446,8 @@ export default function CatalogPage() {
   }
 
   const handlePriceRangeChange = (min: number, max: number) => {
-    setPriceRange({ min, max })
+    setPriceRange([min, max])
+    // Don't automatically update activePriceRange here anymore
   }
 
   const validateAndApplyPriceFilter = () => {
@@ -308,14 +457,17 @@ export default function CatalogPage() {
 
     // Validate min and max - default to 0 for min
     const validMin = !isNaN(minValue) && minValue >= 0 ? minValue : 0;
-    const validMax = !isNaN(maxValue) && maxValue <= maxPrice ? maxValue : maxPrice;
+    const validMax = !isNaN(maxValue) && maxValue <= priceRange[1] ? maxValue : priceRange[1];
 
     // Make sure min is not greater than max
     const finalMin = Math.min(validMin, validMax);
     const finalMax = Math.max(validMin, validMax);
 
-    // Update the actual price range state
-    setPriceRange({ min: finalMin, max: finalMax });
+    // Update the price range state
+    setPriceRange([finalMin, finalMax]);
+
+    // Update the active price range state to apply the filter
+    setActivePriceRange({ min: finalMin, max: finalMax });
 
     // Update the input state to match validated values
     setInputPriceRange({
@@ -325,16 +477,20 @@ export default function CatalogPage() {
   }
 
   const handleAddToFavorites = (product: Product) => {
-    // Implement favorites functionality
-    console.log("Add to favorites:", product)
+    toggleFavorite(product.id);
   }
 
   const handleClearFilters = () => {
     setSelectedCategory(null)
     setSelectedSubcategory(null)
-    setSortOption("newest")
-    setPriceRange({ min: 0, max: 10000 })
+    setSortOption("featured")
     setSearchTerm('')
+    setPriceRange([0, 50000])
+    setAvailableFilters({
+      inStock: false,
+      onSale: false,
+      freeShipping: false
+    })
     router.push('/catalog')
   }
 
@@ -370,6 +526,143 @@ export default function CatalogPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Sidebar filters (desktop)
+  const FiltersSidebar = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">{t('catalog_categories')}</h3>
+        <div className="mt-4 space-y-3">
+          {categories.map(category => (
+            <div key={category.id} className="space-y-2">
+              <Link
+                href={`/catalog?category=${category.id}`}
+                className={cn(
+                  "block font-medium hover:text-primary transition-colors",
+                  selectedCategory === category.id ? "text-primary" : ""
+                )}
+              >
+                {category.nume}
+              </Link>
+
+              {selectedCategory === category.id && (
+                <div className="ml-4 space-y-1.5">
+                  {category.subcategorii.map(subcategory => (
+                    <Link
+                      key={subcategory.id}
+                      href={`/catalog?category=${category.id}&subcategory=${subcategory.id}`}
+                      className={cn(
+                        "block text-sm hover:text-primary transition-colors",
+                        selectedSubcategory === subcategory.id ? "text-primary font-medium" : "text-muted-foreground"
+                      )}
+                    >
+                      {subcategory.nume}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h3 className="text-lg font-medium">{t('catalog_price')}</h3>
+        <div className="mt-4">
+          <Slider
+            value={priceRange}
+            min={0}
+            max={50000}
+            step={100}
+            onValueChange={(value: number[]) => setPriceRange(value as [number, number])}
+          />
+          <div className="flex justify-between mt-2 text-sm text-muted-foreground">
+            <span>{priceRange[0]} MDL</span>
+            <span>{priceRange[1]} MDL</span>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h3 className="text-lg font-medium">{t('catalog_filters')}</h3>
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="in-stock"
+              checked={availableFilters.inStock}
+              onCheckedChange={(checked) =>
+                setAvailableFilters({...availableFilters, inStock: !!checked})
+              }
+            />
+            <Label htmlFor="in-stock">{t('catalog_in_stock_only')}</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="on-sale"
+              checked={availableFilters.onSale}
+              onCheckedChange={(checked) =>
+                setAvailableFilters({...availableFilters, onSale: !!checked})
+              }
+            />
+            <Label htmlFor="on-sale">{t('catalog_on_sale')}</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="free-shipping"
+              checked={availableFilters.freeShipping}
+              onCheckedChange={(checked) =>
+                setAvailableFilters({...availableFilters, freeShipping: !!checked})
+              }
+            />
+            <Label htmlFor="free-shipping">{t('catalog_free_shipping')}</Label>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={handleClearFilters}
+      >
+        <X className="mr-2 h-4 w-4" />
+        {t('catalog_reset_filters')}
+      </Button>
+    </div>
+  );
+
+  // Calculate the proper page title
+  const getPageTitle = () => {
+    if (selectedSubcategory) {
+      const subcategory = categories
+        .flatMap(c => c.subcategorii)
+        .find(s => s.id === selectedSubcategory);
+      return subcategory ? subcategory.nume : "Catalog";
+    }
+
+    if (selectedCategory) {
+      const category = categories.find(c => c.id === selectedCategory);
+      return category ? category.nume : "Catalog";
+    }
+
+    return t('catalog_all_products');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-12">
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="mt-4 text-lg text-muted-foreground">{t('catalog_loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col space-y-6">
@@ -380,21 +673,21 @@ export default function CatalogPage() {
           transition={{ duration: 0.3 }}
           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
         >
-          <h1 className="text-3xl font-bold">Catalog produse</h1>
+          <h1 className="text-3xl font-bold">{getPageTitle()}</h1>
 
           <form onSubmit={handleSearch} className="flex w-full md:w-auto">
             <div className="relative flex-grow">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 type="search"
-                placeholder="Caută produse..."
+                placeholder={t('catalog_search_placeholder')}
                 className="pl-8 pr-4 w-full md:w-64"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button type="submit" variant="default" className="ml-2">
-              Caută
+              {t('catalog_search_button')}
             </Button>
           </form>
         </motion.div>
@@ -402,7 +695,7 @@ export default function CatalogPage() {
         {/* Active filters - show on both mobile and desktop */}
         <AnimatePresence>
           {(selectedCategory || selectedSubcategory || searchTerm ||
-            priceRange.min > minPrice || priceRange.max < maxPrice) && (
+            activePriceRange.min > minPrice || activePriceRange.max < maxPrice) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -410,7 +703,7 @@ export default function CatalogPage() {
               transition={{ duration: 0.3 }}
               className="flex flex-wrap items-center gap-2 py-2 overflow-hidden"
             >
-              <span className="text-sm text-gray-500">Filtre active:</span>
+              <span className="text-sm text-gray-500">{t('catalog_active_filters')}</span>
               {selectedCategory && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -471,7 +764,7 @@ export default function CatalogPage() {
                   </Badge>
                 </motion.div>
               )}
-              {(priceRange.min > minPrice || priceRange.max < maxPrice) && (
+              {(activePriceRange.min > minPrice || activePriceRange.max < maxPrice) && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -479,11 +772,12 @@ export default function CatalogPage() {
                   transition={{ duration: 0.2, delay: 0.15 }}
                 >
                   <Badge variant="outline" className="flex items-center gap-1">
-                    Preț: {priceRange.min} - {priceRange.max} MDL
+                    Preț: {activePriceRange.min} - {activePriceRange.max} MDL
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => {
-                        setPriceRange({ min: minPrice, max: maxPrice })
+                        setPriceRange([minPrice, maxPrice])
+                        setActivePriceRange({ min: minPrice, max: maxPrice })
                       }}
                     />
                   </Badge>
@@ -502,7 +796,7 @@ export default function CatalogPage() {
                   onClick={handleClearFilters}
                 >
                   <X className="h-3 w-3" />
-                  Resetează toate
+                  {t('catalog_reset_all')}
                 </Button>
               </motion.div>
             </motion.div>
@@ -522,7 +816,7 @@ export default function CatalogPage() {
               >
                 <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
                   <Filter className="h-4 w-4 text-primary" />
-                  Categorii
+                  {t('catalog_categories')}
                 </h3>
 
                 <div className="space-y-2">
@@ -536,7 +830,7 @@ export default function CatalogPage() {
                     }}
                     className="w-full justify-start"
                   >
-                    Toate produsele
+                    {t('catalog_all_products')}
                   </Button>
 
                   {categories.map((category) => (
@@ -593,14 +887,14 @@ export default function CatalogPage() {
               >
                 <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
                   <SlidersHorizontal className="h-4 w-4 text-primary" />
-                  Filtru preț
+                  {t('catalog_filter_by_price')}
                 </h3>
 
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Min: {priceRange.min} MDL</span>
-                      <span className="text-sm text-gray-600">Max: {priceRange.max} MDL</span>
+                      <span className="text-sm text-gray-600">{t('catalog_min')} {priceRange[0]} MDL</span>
+                      <span className="text-sm text-gray-600">{t('catalog_max')} {priceRange[1]} MDL</span>
                     </div>
 
                     <div className="py-4">
@@ -610,12 +904,17 @@ export default function CatalogPage() {
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            placeholder="Preț minim"
+                            placeholder={t('catalog_min_price')}
                             value={inputPriceRange.min}
                             onChange={(e) => {
                               // Allow typing any numeric value, validation happens on apply
                               const value = e.target.value.replace(/[^0-9]/g, '');
                               setInputPriceRange({ ...inputPriceRange, min: value });
+                              // Update priceRange but don't apply filter yet
+                              const numValue = value === '' ? 0 : parseInt(value);
+                              if (!isNaN(numValue)) {
+                                setPriceRange(prev => [numValue, prev[1]]);
+                              }
                             }}
                             className="w-full"
                           />
@@ -625,12 +924,17 @@ export default function CatalogPage() {
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            placeholder="Preț maxim"
+                            placeholder={t('catalog_max_price')}
                             value={inputPriceRange.max}
                             onChange={(e) => {
                               // Allow typing any numeric value, validation happens on apply
                               const value = e.target.value.replace(/[^0-9]/g, '');
                               setInputPriceRange({ ...inputPriceRange, max: value });
+                              // Update priceRange but don't apply filter yet
+                              const numValue = value === '' ? priceRange[1] : parseInt(value);
+                              if (!isNaN(numValue)) {
+                                setPriceRange(prev => [prev[0], numValue]);
+                              }
                             }}
                             className="w-full"
                           />
@@ -644,7 +948,7 @@ export default function CatalogPage() {
                       size="sm"
                       className="w-full"
                     >
-                      Aplică filtru
+                      {t('catalog_apply_filter')}
                     </Button>
                   </div>
                 </div>
@@ -659,7 +963,7 @@ export default function CatalogPage() {
               >
                 <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
                   <ArrowUpDown className="h-4 w-4 text-primary" />
-                  Sortare
+                  {t('catalog_sorting')}
                 </h3>
 
                 <div className="space-y-2">
@@ -668,14 +972,14 @@ export default function CatalogPage() {
                     onValueChange={(value) => setSortOption(value)}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Sortează după" />
+                      <SelectValue placeholder={t('catalog_sort_by')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="newest">Cele mai noi</SelectItem>
-                      <SelectItem value="priceAsc">Preț: crescător</SelectItem>
-                      <SelectItem value="priceDesc">Preț: descrescător</SelectItem>
-                      <SelectItem value="nameAsc">Nume: A-Z</SelectItem>
-                      <SelectItem value="nameDesc">Nume: Z-A</SelectItem>
+                      <SelectItem value="featured">{t('catalog_sort_recommended')}</SelectItem>
+                      <SelectItem value="price-asc">{t('catalog_sort_price_asc')}</SelectItem>
+                      <SelectItem value="price-desc">{t('catalog_sort_price_desc')}</SelectItem>
+                      <SelectItem value="name-asc">{t('catalog_sort_name_asc')}</SelectItem>
+                      <SelectItem value="name-desc">{t('catalog_sort_name_desc')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -692,7 +996,7 @@ export default function CatalogPage() {
                   variant="outline"
                   className="w-full"
                 >
-                  Resetează toate filtrele
+                  {t('catalog_reset_all')}
                 </Button>
               </motion.div>
             </div>
@@ -708,13 +1012,13 @@ export default function CatalogPage() {
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" className="w-full flex justify-between">
-                    <span>Filtrează produsele</span>
+                    <span>{t('catalog_filter_products')}</span>
                     <Filter className="h-4 w-4 ml-2" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
                   <SheetHeader className="pb-2">
-                    <SheetTitle>Filtre</SheetTitle>
+                    <SheetTitle>{t('catalog_filters')}</SheetTitle>
                     <div className="flex justify-end -mt-8">
                       <Button
                         onClick={handleClearFilters}
@@ -722,7 +1026,7 @@ export default function CatalogPage() {
                         size="sm"
                         className="text-xs"
                       >
-                        Resetează toate
+                        {t('catalog_reset_all')}
                       </Button>
                     </div>
                   </SheetHeader>
@@ -740,7 +1044,7 @@ export default function CatalogPage() {
                         }}
                         className="w-full mb-2"
                       >
-                        Toate produsele
+                        {t('catalog_all_products')}
                       </Button>
                     </div>
 
@@ -748,7 +1052,7 @@ export default function CatalogPage() {
                     <div className="pb-2">
                       <h3 className="text-sm font-medium mb-1 flex items-center">
                         <Filter className="h-3.5 w-3.5 mr-1 text-primary" />
-                        Categorii
+                        {t('catalog_categories')}
                       </h3>
                       <Accordion
                         type="multiple"
@@ -793,12 +1097,12 @@ export default function CatalogPage() {
                     <div className="pb-2 border-t pt-3">
                       <h3 className="text-sm font-medium mb-1 flex items-center">
                         <SlidersHorizontal className="h-3.5 w-3.5 mr-1 text-primary" />
-                        Filtru preț
+                        {t('catalog_filter_by_price')}
                       </h3>
                       <div className="space-y-2 mt-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600">Min: {priceRange.min} MDL</span>
-                          <span className="text-xs text-gray-600">Max: {priceRange.max} MDL</span>
+                          <span className="text-xs text-gray-600">{t('catalog_min')} {priceRange[0]} MDL</span>
+                          <span className="text-xs text-gray-600">{t('catalog_max')} {priceRange[1]} MDL</span>
                         </div>
 
                         <div className="py-2">
@@ -808,11 +1112,16 @@ export default function CatalogPage() {
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
-                                placeholder="Preț minim"
+                                placeholder={t('catalog_min_price')}
                                 value={inputPriceRange.min}
                                 onChange={(e) => {
                                   const value = e.target.value.replace(/[^0-9]/g, '');
                                   setInputPriceRange({ ...inputPriceRange, min: value });
+                                  // Update priceRange but don't apply filter yet
+                                  const numValue = value === '' ? 0 : parseInt(value);
+                                  if (!isNaN(numValue)) {
+                                    setPriceRange(prev => [numValue, prev[1]]);
+                                  }
                                 }}
                                 className="w-full h-8 text-sm"
                               />
@@ -822,11 +1131,16 @@ export default function CatalogPage() {
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
-                                placeholder="Preț maxim"
+                                placeholder={t('catalog_max_price')}
                                 value={inputPriceRange.max}
                                 onChange={(e) => {
                                   const value = e.target.value.replace(/[^0-9]/g, '');
                                   setInputPriceRange({ ...inputPriceRange, max: value });
+                                  // Update priceRange but don't apply filter yet
+                                  const numValue = value === '' ? priceRange[1] : parseInt(value);
+                                  if (!isNaN(numValue)) {
+                                    setPriceRange(prev => [prev[0], numValue]);
+                                  }
                                 }}
                                 className="w-full h-8 text-sm"
                               />
@@ -840,7 +1154,7 @@ export default function CatalogPage() {
                           size="sm"
                           className="w-full text-xs h-8"
                         >
-                          Aplică filtru
+                          {t('catalog_apply_filter')}
                         </Button>
                       </div>
                     </div>
@@ -849,21 +1163,21 @@ export default function CatalogPage() {
                     <div className="pb-2 border-t pt-3">
                       <h3 className="text-sm font-medium mb-1 flex items-center">
                         <ArrowUpDown className="h-3.5 w-3.5 mr-1 text-primary" />
-                        Sortare
+                        {t('catalog_sorting')}
                       </h3>
                       <Select
                         value={sortOption}
                         onValueChange={(value) => setSortOption(value)}
                       >
                         <SelectTrigger className="w-full h-8 mt-2 text-sm">
-                          <SelectValue placeholder="Sortează după" />
+                          <SelectValue placeholder={t('catalog_sort_by')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="newest">Cele mai noi</SelectItem>
-                          <SelectItem value="priceAsc">Preț: crescător</SelectItem>
-                          <SelectItem value="priceDesc">Preț: descrescător</SelectItem>
-                          <SelectItem value="nameAsc">Nume: A-Z</SelectItem>
-                          <SelectItem value="nameDesc">Nume: Z-A</SelectItem>
+                          <SelectItem value="featured">{t('catalog_sort_recommended')}</SelectItem>
+                          <SelectItem value="price-asc">{t('catalog_sort_price_asc')}</SelectItem>
+                          <SelectItem value="price-desc">{t('catalog_sort_price_desc')}</SelectItem>
+                          <SelectItem value="name-asc">{t('catalog_sort_name_asc')}</SelectItem>
+                          <SelectItem value="name-desc">{t('catalog_sort_name_desc')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -871,7 +1185,7 @@ export default function CatalogPage() {
 
                   <SheetFooter className="pt-3 border-t mt-2">
                     <SheetClose asChild>
-                      <Button className="w-full">Aplică filtre</Button>
+                      <Button className="w-full">{t('catalog_apply_filters')}</Button>
                     </SheetClose>
                   </SheetFooter>
                 </SheetContent>
@@ -929,7 +1243,7 @@ export default function CatalogPage() {
                       variant="outline"
                       className="w-full sm:w-auto"
                     >
-                      Încarcă încă 10 produse
+                      {t('catalog_load_more')}
                       <ChevronDown className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
@@ -945,7 +1259,7 @@ export default function CatalogPage() {
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
                       >
-                        Anterior
+                        {t('catalog_previous')}
                       </Button>
 
                       {/* Page numbers */}
@@ -993,7 +1307,7 @@ export default function CatalogPage() {
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage >= Math.ceil(filteredProducts.length / productsPerPageMax)}
                       >
-                        Următor
+                        {t('catalog_next')}
                       </Button>
                     </div>
                   </div>
@@ -1006,18 +1320,11 @@ export default function CatalogPage() {
                 transition={{ duration: 0.3 }}
                 className="text-center py-12"
               >
-                <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-4 text-xl font-medium text-gray-900">Nu am găsit produse</h3>
+                <Package className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-4 text-xl font-medium text-gray-900">{t('catalog_no_products_found')}</h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Încearcă alte filtre sau resetează toate filtrele pentru a vedea toate produsele.
+                  {t('catalog_try_different_filters')} <Button onClick={handleClearFilters} variant="link" className="px-1 h-auto text-primary">{t('catalog_clear_all_filters')}</Button>
                 </p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={handleClearFilters}
-                >
-                  Resetează filtrele
-                </Button>
               </motion.div>
             )}
           </div>

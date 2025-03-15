@@ -7,15 +7,20 @@ import {
   ShieldCheck,
   RefreshCw
 } from "lucide-react"
+import { useLanguage } from "@/lib/language-context"
 
 interface Advantage {
   id: number
   title: string
   description: string
   icon: React.ReactNode
+  titleKey: string
+  descriptionKey: string
 }
 
 export default function Advantages() {
+  const { t } = useLanguage()
+
   // Animation variants for staggered animations
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -44,20 +49,26 @@ export default function Advantages() {
   const advantages: Advantage[] = [
     {
       id: 1,
-      title: "Livrare Rapidă",
-      description: "Livrare rapidă în toată Moldova în 24-48 de ore, direct la ușa ta.",
+      title: t("fastDelivery"),
+      description: t("fastDeliveryDescription"),
+      titleKey: "fastDelivery",
+      descriptionKey: "fastDeliveryDescription",
       icon: <Truck className="h-6 w-6 md:h-8 md:w-8" />,
     },
     {
       id: 2,
-      title: "Garanție de Calitate",
-      description: "Toate produsele noastre sunt verificate și garantate pentru calitate superioară.",
+      title: t("qualityGuarantee"),
+      description: t("qualityGuaranteeDescription"),
+      titleKey: "qualityGuarantee",
+      descriptionKey: "qualityGuaranteeDescription",
       icon: <ShieldCheck className="h-6 w-6 md:h-8 md:w-8" />,
     },
     {
       id: 3,
-      title: "Returnare Ușoară",
-      description: "Proces simplu de returnare în 14 zile dacă nu ești mulțumit de achiziția ta.",
+      title: t("easyReturn"),
+      description: t("easyReturnDescription"),
+      titleKey: "easyReturn",
+      descriptionKey: "easyReturnDescription",
       icon: <RefreshCw className="h-6 w-6 md:h-8 md:w-8" />,
     }
   ]
@@ -93,11 +104,11 @@ export default function Advantages() {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
-            Avantajele Noastre
+            {t("ourAdvantages")}
           </h2>
           <div className="w-24 h-1 bg-primary mx-auto mb-6"></div>
           <p className="max-w-3xl mx-auto text-gray-600">
-            De ce să alegi Intelect-Market? Descoperă motivele pentru care clienții noștri ne preferă și care ne diferențiază de competiție.
+            {t("whyChooseUs")}
           </p>
         </div>
 
@@ -172,7 +183,7 @@ export default function Advantages() {
 
         <div className="mt-14 text-center">
           <p className="text-gray-900 font-medium mb-6">
-            Peste 2,000 de clienți mulțumiți în ultimul an
+            {t("satisfiedCustomers")}
           </p>
           <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8">
             <div className="w-14 h-10 md:w-16 md:h-12 bg-gray-100 rounded-md border border-gray-200 opacity-70 hover:opacity-100 transition-opacity duration-300"></div>

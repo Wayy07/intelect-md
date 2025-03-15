@@ -7,6 +7,7 @@ import { Toaster } from "@/app/components/ui/toaster"
 import { Tags } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
 
 interface Product {
   id: string
@@ -27,6 +28,7 @@ interface Product {
 }
 
 export default function SpecialOffers() {
+  const { t } = useLanguage()
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
@@ -34,19 +36,73 @@ export default function SpecialOffers() {
   useEffect(() => {
     const fetchSpecialOffers = async () => {
       try {
-        const response = await fetch("/api/products/offers")
-        if (!response.ok) throw new Error("Failed to fetch special offers")
-        const data = await response.json()
-        setProducts(data)
-      } catch (error) {
-        console.error("Error fetching special offers:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+        // Mock data instead of API call
+        // This would be replaced with a call to your custom API
+        const mockProducts: Product[] = [
+          {
+            id: "1",
+            nume: "Smart TV Example 55\"",
+            cod: "TV-001",
+            pret: 9999,
+            pretRedus: 7999,
+            imagini: ["https://i.pinimg.com/736x/ef/5b/0f/ef5b0fa991fb97235d512b5de5cd449b.jpg"],
+            stoc: 5,
+            subcategorie: {
+              id: "sub1",
+              nume: "Smart TV",
+              categoriePrincipala: {
+                id: "cat1",
+                nume: "Electronice"
+              }
+            }
+          },
+          {
+            id: "2",
+            nume: "Wireless Headphones Pro",
+            cod: "WH-002",
+            pret: 1999,
+            pretRedus: 1499,
+            imagini: ["https://i.pinimg.com/736x/78/51/41/785141f59aabd3352ccc34398cd0f40a.jpg"],
+            stoc: 20,
+            subcategorie: {
+              id: "sub2",
+              nume: "Căști",
+              categoriePrincipala: {
+                id: "cat2",
+                nume: "Accesorii"
+              }
+            }
+          },
+          {
+            id: "3",
+            nume: "Gaming Console X",
+            cod: "GC-003",
+            pret: 7999,
+            pretRedus: 6999,
+            imagini: ["https://i.pinimg.com/736x/1b/bc/f3/1bbcf394f2f999b67b6f9c7dd7f415e2.jpg"],
+            stoc: 8,
+            subcategorie: {
+              id: "sub3",
+              nume: "Console",
+              categoriePrincipala: {
+                id: "cat3",
+                nume: "Gaming"
+              }
+            }
+          }
+        ];
 
-    fetchSpecialOffers()
-  }, [])
+        setProducts(mockProducts);
+      } catch (error) {
+        console.error("Error setting mock products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Simulate loading delay for mock data
+    setTimeout(fetchSpecialOffers, 500);
+  }, []);
 
   // Add global style to hide main category tags on mobile
   useEffect(() => {
@@ -72,8 +128,8 @@ export default function SpecialOffers() {
     // TODO: Implement cart functionality
     console.log("Add to cart:", product)
     toast({
-      title: "Adăugat în coș",
-      description: "Produsul a fost adăugat în coșul tău",
+      title: t("addedToCart"),
+      description: t("productAddedToCart"),
     })
   }
 
@@ -81,8 +137,8 @@ export default function SpecialOffers() {
     // TODO: Implement favorites functionality
     console.log("Add to favorites:", product)
     toast({
-      title: "Adăugat la favorite",
-      description: "Produsul a fost adăugat în lista ta de favorite",
+      title: t("addedToFavorites"),
+      description: t("productAddedToFavorites"),
     })
   }
 
@@ -116,10 +172,10 @@ export default function SpecialOffers() {
       <section className="container mx-auto py-12 px-4 sm:px-6">
         <div className="mb-8">
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-            Oferte Speciale
+            {t("specialOffers")}
           </h2>
           <p className="mt-2 text-muted-foreground">
-            Nu există oferte speciale disponibile momentan.
+            {t("noOffersAvailable")}
           </p>
         </div>
       </section>
@@ -133,18 +189,18 @@ export default function SpecialOffers() {
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl flex items-center gap-2">
               <Tags className="h-7 w-7 text-primary" />
-              Oferte Speciale
+              {t("specialOffers")}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Descoperă produsele noastre cu cele mai mari reduceri
+              {t("discoverDiscountedProducts")}
             </p>
           </div>
 
           <Link
-            href="/catalog"
+            href="/catalog?onSale=true"
             className="hidden md:inline-block text-sm font-medium text-primary hover:text-primary/80 transition-colors"
           >
-            Vezi toate ofertele
+            {t("seeAllOffers")}
           </Link>
         </div>
 
@@ -155,20 +211,23 @@ export default function SpecialOffers() {
               key={product.id}
               className="h-full"
             >
-              <ProductCard
-                product={product}
-                onAddToFavorites={handleAddToFavorites}
-              />
+              <Link href={`/produs/${product.id}`} className="block h-full">
+                <ProductCard
+                  product={product}
+                  onAddToFavorites={handleAddToFavorites}
+                  disableLink={true}
+                />
+              </Link>
             </div>
           ))}
         </div>
 
         <div className="mt-8 text-center md:hidden">
           <Link
-            href="/catalog"
+            href="/catalog?onSale=true"
             className="inline-flex items-center justify-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
           >
-            Vezi toate ofertele
+            {t("seeAllOffers")}
             <span className="ml-1 text-xs">→</span>
           </Link>
         </div>

@@ -3,16 +3,60 @@
 import React, { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronDown, Menu, Search, ShoppingCart, User, ChevronRight, LayoutGrid, LogIn, X, Phone, Clock, Package, Minus, Plus } from "lucide-react"
+import { ChevronDown, Menu, Search, ShoppingCart, User, ChevronRight, LayoutGrid, LogIn, X, Phone, Clock, Package, Minus, Plus, Home, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { CategoriePrincipala, Subcategorie, Produs } from "@prisma/client"
 import { motion, AnimatePresence, PanInfo, useAnimationFrame, useMotionValue, useTransform } from "framer-motion"
 import { useLanguage } from "@/lib/language-context"
 import { useRouter, usePathname } from "next/navigation"
 import { ProductCard } from "@/app/components/ui/product-card"
 import { ProductCardCompact } from "@/app/components/ui/product-card"
 import { useCart } from "@/app/contexts/cart-context"
+import { signIn, signOut, useSession } from "next-auth/react"
+import { DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Calendar } from "lucide-react"
+import { PopoverContent } from "@/components/ui/popover"
+import { useProtectedSession } from "@/lib/hooks/use-protected-session";
+
+// Local interfaces to replace Prisma imports
+interface CategoriePrincipala {
+  id: string
+  nume: string
+  descriere?: string | null
+  imagine?: string | null
+  activ: boolean
+}
+
+interface Subcategorie {
+  id: string
+  nume: string
+  descriere?: string | null
+  imagine?: string | null
+  categoriePrincipalaId: string
+  activ: boolean
+}
+
+interface Produs {
+  id: string
+  cod: string
+  nume: string
+  descriere: string
+  pret: number
+  pretRedus?: number | null
+  stoc: number
+  imagini: string[]
+  specificatii?: any
+  subcategorieId: string
+  activ: boolean
+  stare: string
+  culoare?: string | null
+  dimensiuni?: any
+  greutate?: number | null
+  creditOption?: {
+    months: number
+    monthlyPayment: number
+  } | null
+}
 
 interface CategoryWithSubcategories extends CategoriePrincipala {
   subcategorii: (Subcategorie & {
@@ -43,9 +87,22 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
+// Add Facebook icon component
+function FacebookIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" {...props}>
+      <path
+        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+        fill="#1877F2"
+      />
+    </svg>
+  );
+}
+
 export default function Header() {
   const { language, setLanguage, t } = useLanguage()
   const { totalItems, items, removeItem, updateQuantity, totalPrice } = useCart()
+  const { data: session, status } = useProtectedSession();
   // Desktop states
   const [isDesktopCatalogOpen, setIsDesktopCatalogOpen] = useState(false)
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false)
@@ -100,14 +157,13 @@ export default function Header() {
       if (searchTerm) {
         setIsSearching(true)
         try {
-          const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`)
-          if (!response.ok) throw new Error('Search failed')
-          const data = await response.json()
-          setSearchResults(data)
+          // Using mock data instead of API call
+          // This is a placeholder that would be replaced with a custom API call
+          setSearchResults([])
+          setIsSearching(false)
         } catch (error) {
           console.error('Search error:', error)
           setSearchResults([])
-        } finally {
           setIsSearching(false)
         }
       } else {
@@ -121,10 +177,431 @@ export default function Header() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("/api/catalog")
-        if (!response.ok) throw new Error("Failed to fetch categories")
-        const data = await response.json()
-        setCategories(data)
+        // Using mock data instead of API call
+        // This would be replaced with a call to your custom API
+        const mockCategories: CategoryWithSubcategories[] = [
+          {
+            id: "laptops",
+            nume: "Laptopuri",
+            descriere: "Computere portabile pentru orice necesitate",
+            imagine: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853",
+            activ: true,
+            subcategorii: [
+              {
+                id: "notebooks",
+                nume: "Notebook-uri",
+                descriere: "Laptop-uri ușoare și portabile",
+                imagine: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853",
+                categoriePrincipalaId: "laptops",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "gaming",
+                nume: "Gaming",
+                descriere: "Laptop-uri pentru gaming de performanță",
+                imagine: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6",
+                categoriePrincipalaId: "laptops",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "ultrabooks",
+                nume: "Ultrabook-uri",
+                descriere: "Laptop-uri subțiri și puternice",
+                imagine: "https://images.unsplash.com/photo-1531297484001-80022131f5a1",
+                categoriePrincipalaId: "laptops",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "business",
+                nume: "Business",
+                descriere: "Laptop-uri pentru profesioniști",
+                imagine: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+                categoriePrincipalaId: "laptops",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "apple",
+                nume: "Apple MacBook",
+                descriere: "Laptop-uri premium de la Apple",
+                imagine: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9",
+                categoriePrincipalaId: "laptops",
+                activ: true,
+                produse: []
+              }
+            ]
+          },
+          {
+            id: "smartphones",
+            nume: "Smartphone-uri",
+            descriere: "Telefoane inteligente de ultimă generație",
+            imagine: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
+            activ: true,
+            subcategorii: [
+              {
+                id: "iphone",
+                nume: "iPhone",
+                descriere: "Smartphone-uri Apple",
+                imagine: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5",
+                categoriePrincipalaId: "smartphones",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "samsung",
+                nume: "Samsung",
+                descriere: "Smartphone-uri Samsung Galaxy",
+                imagine: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0",
+                categoriePrincipalaId: "smartphones",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "xiaomi",
+                nume: "Xiaomi",
+                descriere: "Smartphone-uri Xiaomi",
+                imagine: "https://images.unsplash.com/photo-1598327105854-2b820363a3a0",
+                categoriePrincipalaId: "smartphones",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "huawei",
+                nume: "Huawei",
+                descriere: "Smartphone-uri Huawei",
+                imagine: "https://images.unsplash.com/photo-1545659705-95518b325e1e",
+                categoriePrincipalaId: "smartphones",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "budget",
+                nume: "Buget",
+                descriere: "Smartphone-uri accesibile",
+                imagine: "https://images.unsplash.com/photo-1529653762956-b0a27278529c",
+                categoriePrincipalaId: "smartphones",
+                activ: true,
+                produse: []
+              },
+            ]
+          },
+          {
+            id: "tablets",
+            nume: "Tablete",
+            descriere: "Tablete pentru muncă și divertisment",
+            imagine: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0",
+            activ: true,
+            subcategorii: [
+              {
+                id: "ipad",
+                nume: "iPad",
+                descriere: "Tablete Apple iPad",
+                imagine: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0",
+                categoriePrincipalaId: "tablets",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "android",
+                nume: "Android",
+                descriere: "Tablete cu Android",
+                imagine: "https://images.unsplash.com/photo-1542751110-97427bbecf20",
+                categoriePrincipalaId: "tablets",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "windows",
+                nume: "Windows",
+                descriere: "Tablete cu Windows",
+                imagine: "https://images.unsplash.com/photo-1543069190-f687e00648b2",
+                categoriePrincipalaId: "tablets",
+                activ: true,
+                produse: []
+              }
+            ]
+          },
+          {
+            id: "tvs",
+            nume: "Televizoare",
+            descriere: "Televizoare Smart și Ultra HD",
+            imagine: "https://images.unsplash.com/photo-1593784991095-a205069470b6",
+            activ: true,
+            subcategorii: [
+              {
+                id: "smart",
+                nume: "Smart TV",
+                descriere: "Televizoare inteligente",
+                imagine: "https://images.unsplash.com/photo-1593784991095-a205069470b6",
+                categoriePrincipalaId: "tvs",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "4k",
+                nume: "4K Ultra HD",
+                descriere: "Televizoare cu rezoluție 4K",
+                imagine: "https://images.unsplash.com/photo-1509281373149-e957c6296406",
+                categoriePrincipalaId: "tvs",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "oled",
+                nume: "OLED",
+                descriere: "Televizoare cu tehnologie OLED",
+                imagine: "https://images.unsplash.com/photo-1572314493295-09c6d5ec3cdf",
+                categoriePrincipalaId: "tvs",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "qled",
+                nume: "QLED",
+                descriere: "Televizoare cu tehnologie QLED",
+                imagine: "https://images.unsplash.com/photo-1498810568083-2ed9a70f96ea",
+                categoriePrincipalaId: "tvs",
+                activ: true,
+                produse: []
+              }
+            ]
+          },
+          {
+            id: "headphones",
+            nume: "Căști",
+            descriere: "Căști wireless și cu fir",
+            imagine: "https://images.unsplash.com/photo-1545127398-14699f92334b",
+            activ: true,
+            subcategorii: [
+              {
+                id: "wireless",
+                nume: "Wireless",
+                descriere: "Căști wireless",
+                imagine: "https://images.unsplash.com/photo-1545127398-14699f92334b",
+                categoriePrincipalaId: "headphones",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "earbuds",
+                nume: "Earbuds",
+                descriere: "Căști in-ear",
+                imagine: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df",
+                categoriePrincipalaId: "headphones",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "gaming-headsets",
+                nume: "Gaming",
+                descriere: "Căști pentru gaming",
+                imagine: "https://images.unsplash.com/photo-1612444530582-fc66183b16f7",
+                categoriePrincipalaId: "headphones",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "noise-cancelling",
+                nume: "Anulare zgomot",
+                descriere: "Căști cu anulare de zgomot",
+                imagine: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+                categoriePrincipalaId: "headphones",
+                activ: true,
+                produse: []
+              }
+            ]
+          },
+          {
+            id: "smartwatches",
+            nume: "Smartwatch-uri",
+            descriere: "Ceasuri inteligente",
+            imagine: "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1",
+            activ: true,
+            subcategorii: [
+              {
+                id: "apple-watch",
+                nume: "Apple Watch",
+                descriere: "Smartwatch-uri de la Apple",
+                imagine: "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1",
+                categoriePrincipalaId: "smartwatches",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "samsung-watch",
+                nume: "Samsung Watch",
+                descriere: "Smartwatch-uri de la Samsung",
+                imagine: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a",
+                categoriePrincipalaId: "smartwatches",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "fitness",
+                nume: "Fitness",
+                descriere: "Smartwatch-uri pentru fitness",
+                imagine: "https://images.unsplash.com/photo-1576243345690-4e4b79b63288",
+                categoriePrincipalaId: "smartwatches",
+                activ: true,
+                produse: []
+              }
+            ]
+          },
+          {
+            id: "consoles",
+            nume: "Console",
+            descriere: "Console de jocuri video",
+            imagine: "https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42",
+            activ: true,
+            subcategorii: [
+              {
+                id: "playstation",
+                nume: "PlayStation",
+                descriere: "Console PlayStation",
+                imagine: "https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42",
+                categoriePrincipalaId: "consoles",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "xbox",
+                nume: "Xbox",
+                descriere: "Console Xbox",
+                imagine: "https://images.unsplash.com/photo-1621259182978-fbf93132d53d",
+                categoriePrincipalaId: "consoles",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "nintendo",
+                nume: "Nintendo",
+                descriere: "Console Nintendo",
+                imagine: "https://images.unsplash.com/photo-1587815073078-f636169821e3",
+                categoriePrincipalaId: "consoles",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "accessories",
+                nume: "Accesorii",
+                descriere: "Accesorii pentru console",
+                imagine: "https://images.unsplash.com/photo-1592840496694-26d035b52b48",
+                categoriePrincipalaId: "consoles",
+                activ: true,
+                produse: []
+              }
+            ]
+          },
+          {
+            id: "vacuums",
+            nume: "Aspiratoare",
+            descriere: "Aspiratoare și roboți de curățare",
+            imagine: "https://images.unsplash.com/photo-1558317374-067fb5f30001",
+            activ: true,
+            subcategorii: [
+              {
+                id: "robot",
+                nume: "Roboți",
+                descriere: "Aspiratoare robot",
+                imagine: "https://images.unsplash.com/photo-1558317374-067fb5f30001",
+                categoriePrincipalaId: "vacuums",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "handheld",
+                nume: "Portabile",
+                descriere: "Aspiratoare portabile",
+                imagine: "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac",
+                categoriePrincipalaId: "vacuums",
+                activ: true,
+                produse: []
+              },
+              {
+                id: "upright",
+                nume: "Verticale",
+                descriere: "Aspiratoare verticale",
+                imagine: "https://images.unsplash.com/photo-1563453392212-326f5e854473",
+                categoriePrincipalaId: "vacuums",
+                activ: true,
+                produse: []
+              }
+            ]
+          }
+        ];
+
+        setCategories(mockCategories);
+
+        // Add some mock products for the "Popular products" section in the catalog menu
+        const popularProducts: Produs[] = [
+          {
+            id: "prod1",
+            cod: "LPT-001",
+            nume: "MacBook Air M2",
+            descriere: "Laptop ultraportabil Apple cu cip M2",
+            pret: 19999,
+            pretRedus: 18499,
+            stoc: 15,
+            imagini: ["https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/macbook-air-midnight-select-20220606?wid=452&hei=420&fmt=jpeg&qlt=95&.v=1653084303665"],
+            specificatii: {},
+            subcategorieId: "notebooks",
+            activ: true,
+            stare: "nou",
+          },
+          {
+            id: "prod2",
+            cod: "SPH-001",
+            nume: "iPhone 15 Pro",
+            descriere: "Smartphone Apple iPhone 15 Pro",
+            pret: 23999,
+            pretRedus: null,
+            stoc: 10,
+            imagini: ["https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-blue-titanium-select?wid=800&hei=800&fmt=jpeg&qlt=90&.v=1692979276096"],
+            specificatii: {},
+            subcategorieId: "iphone",
+            activ: true,
+            stare: "nou",
+          },
+          {
+            id: "prod3",
+            cod: "AUD-001",
+            nume: "AirPods Pro 2",
+            descriere: "Căști wireless Apple cu anulare activă a zgomotului",
+            pret: 4999,
+            pretRedus: 4499,
+            stoc: 25,
+            imagini: ["https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MQD83?wid=1144&hei=1144&fmt=jpeg&qlt=90&.v=1660803972361"],
+            specificatii: {},
+            subcategorieId: "wireless",
+            activ: true,
+            stare: "nou"
+          },
+          {
+            id: "prod4",
+            cod: "TV-001",
+            nume: "Samsung QLED 65",
+            descriere: "Televizor Samsung QLED 4K Ultra HD",
+            pret: 15999,
+            pretRedus: 13999,
+            stoc: 8,
+            imagini: ["https://images.samsung.com/is/image/samsung/p6pim/ro/qe65q70cauxru/gallery/ro-qled-q70c-qe65q70cauxru-536899301?$650_519_PNG$"],
+            specificatii: {},
+            subcategorieId: "qled",
+            activ: true,
+            stare: "nou",
+          }
+        ];
+
+        // Update categories to include popular products in the first category's subcategories
+        const updatedCategories = [...mockCategories];
+        if (updatedCategories.length > 0 && updatedCategories[0].subcategorii.length > 0) {
+          updatedCategories[0].subcategorii[0].produse = popularProducts;
+        }
+
+        setCategories(updatedCategories);
       } catch (error) {
         console.error("Error fetching categories:", error)
       }
@@ -199,6 +676,21 @@ export default function Header() {
   // Cart menu state
   const [isCartOpen, setIsCartOpen] = useState(false)
 
+  // Handle sign in with Google
+  const handleGoogleSignIn = async () => {
+    await signIn("google", { callbackUrl: "/" })
+  }
+
+  // Handle sign in with Facebook
+  const handleFacebookSignIn = async () => {
+    await signIn("facebook", { callbackUrl: "/" })
+  }
+
+  // Handle sign out
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" })
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white">
       <div className="bg-white shadow-sm">
@@ -210,7 +702,7 @@ export default function Header() {
               <div className="flex items-center gap-6">
                 <a href="tel:+37360123456" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
                   <Phone className="h-3.5 w-3.5" />
-                  <span>+373 60 123 456</span>
+                  <span>+373 601 75 111</span>
                 </a>
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Clock className="h-3.5 w-3.5" />
@@ -352,6 +844,12 @@ export default function Header() {
 
             {/* Right section - Cart and User */}
             <div className="hidden md:flex items-center gap-3">
+              <Link href="/contact" className="px-3">
+                <Button variant="ghost" className="text-base">
+                  {t("contact")}
+                </Button>
+              </Link>
+
               <div className="relative" ref={cartMenuRef}>
                 <Button
                   variant="ghost"
@@ -379,7 +877,7 @@ export default function Header() {
                     >
                       <div className="p-4 border-b">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-lg">Coșul meu</h3>
+                          <h3 className="font-medium text-lg">{t("myCart")}</h3>
                           {totalItems > 0 && (
                             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                               {totalItems}
@@ -393,9 +891,9 @@ export default function Header() {
                           <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-accent text-muted-foreground mb-4">
                             <ShoppingCart className="h-8 w-8" />
                           </div>
-                          <h4 className="font-medium mb-2">Coșul tău este gol</h4>
+                          <h4 className="font-medium mb-2">{t("cartEmpty")}</h4>
                           <p className="text-sm text-muted-foreground mb-4">
-                            Adaugă produse din catalogul nostru.
+                            {t("addProductsFromCatalog")}
                           </p>
                           <Button
                             variant="outline"
@@ -406,7 +904,7 @@ export default function Header() {
                             }}
                           >
                             <LayoutGrid className="h-4 w-4 mr-2" />
-                            Explorează catalogul
+                            {t("exploreCatalog")}
                           </Button>
                         </div>
                       ) : (
@@ -434,7 +932,7 @@ export default function Header() {
                                       {item.product.nume}
                                     </h4>
                                     <div className="text-xs text-muted-foreground mt-1">
-                                      Cod: {item.product.cod}
+                                      {t("productCode")}{item.product.cod}
                                     </div>
                                     <div className="flex justify-between items-center mt-1">
                                       <div className="text-sm font-medium">
@@ -468,6 +966,21 @@ export default function Header() {
                                         </Button>
                                       </div>
                                     </div>
+                                    <div className="text-right">
+                                      <div className="font-medium">
+                                        {((item.product.pretRedus || item.product.pret) * item.quantity).toLocaleString()} MDL
+                                      </div>
+                                      {item.product.pretRedus && (
+                                        <div className="text-sm text-muted-foreground line-through">
+                                          {(item.product.pret * item.quantity).toLocaleString()} MDL
+                                        </div>
+                                      )}
+                                      {item.product.creditOption && (
+                                        <div className="text-sm text-primary mt-1">
+                                          {item.product.creditOption.months} rate x {item.product.creditOption.monthlyPayment.toLocaleString()} MDL/lună
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                   <Button
                                     size="icon"
@@ -498,7 +1011,7 @@ export default function Header() {
                                   window.location.href = "/cart"
                                 }}
                               >
-                                Vezi coșul
+                                {t("completeOrder")}
                               </Button>
                               <Button
                                 className="flex-1 text-sm"
@@ -507,7 +1020,7 @@ export default function Header() {
                                   window.location.href = "/checkout"
                                 }}
                               >
-                                Finalizează
+                                {t("checkout")}
                               </Button>
                             </div>
                           </div>
@@ -524,7 +1037,18 @@ export default function Header() {
                   className="h-12 w-12"
                   onClick={() => setIsDesktopUserMenuOpen(!isDesktopUserMenuOpen)}
                 >
-                  <User className="h-6 w-6" />
+                  {status === "authenticated" && session?.user?.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      width={32}
+                      height={32}
+                      className="rounded-full"
+                      priority
+                    />
+                  ) : (
+                    <User className="h-6 w-6" />
+                  )}
                 </Button>
 
                 <AnimatePresence>
@@ -537,27 +1061,108 @@ export default function Header() {
                       className="absolute right-0 mt-2 w-72 origin-top-right rounded-lg border bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 desktop-catalog-menu"
                     >
                       <div className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-full bg-accent/50 flex items-center justify-center">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="space-y-0.5">
-                            <p className="text-sm text-black font-medium">
-                              {t("welcome")}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {t("loginToContinue")}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <Button className="w-full" variant="outline">
-                            <div className="bg-white rounded-full p-1 mr-2">
-                              <GoogleIcon className="h-5 w-5" />
+                        {status === "authenticated" ? (
+                          <div>
+                            <div className="flex items-center gap-4">
+                              <div className="h-10 w-10 rounded-full bg-accent/50 flex items-center justify-center">
+                                {session.user?.image ? (
+                                  <Image
+                                    src={session.user.image}
+                                    alt={session.user.name || "User"}
+                                    width={40}
+                                    height={40}
+                                    className="rounded-full"
+                                  />
+                                ) : (
+                                  <User className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-sm text-black font-medium">
+                                  {session.user?.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {session.user?.email}
+                                </p>
+                              </div>
                             </div>
-                            <span>{t("signInWithGoogle")}</span>
-                          </Button>
-                        </div>
+
+                            <div className="mt-4 space-y-2">
+                              <Link
+                                href="/comenzi"
+                                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors w-full"
+                                onClick={() => setIsDesktopUserMenuOpen(false)}
+                              >
+                                <span>{t("myOrders")}</span>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              </Link>
+                              <Link
+                                href="/favorite"
+                                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors w-full"
+                                onClick={() => setIsDesktopUserMenuOpen(false)}
+                              >
+                                <span>{t("favorites")}</span>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              </Link>
+                              <Link
+                                href="/credit"
+                                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors w-full"
+                                onClick={() => setIsDesktopUserMenuOpen(false)}
+                              >
+                                <span>{t("buyInInstallments")}</span>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              </Link>
+                            </div>
+
+                            <div className="mt-4">
+                              <Button
+                                className="w-full"
+                                variant="outline"
+                                onClick={handleSignOut}
+                              >
+                                {t("signOut")}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="flex items-center gap-4">
+                              <div className="h-10 w-10 rounded-full bg-accent/50 flex items-center justify-center">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-sm text-black font-medium">
+                                  {t("welcome")}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {t("loginToContinue")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-4">
+                              <Button
+                                className="w-full"
+                                variant="outline"
+                                onClick={handleGoogleSignIn}
+                              >
+                                <div className="bg-white rounded-full p-1 mr-2">
+                                  <GoogleIcon className="h-5 w-5" />
+                                </div>
+                                <span>{t("signInWithGoogle")}</span>
+                              </Button>
+                              <Button
+                                className="w-full mt-2"
+                                variant="outline"
+                                onClick={handleFacebookSignIn}
+                              >
+                                <div className="bg-white rounded-full p-1 mr-2">
+                                  <FacebookIcon className="h-5 w-5" />
+                                </div>
+                                {t("signInWithFacebook")}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -617,6 +1222,7 @@ export default function Header() {
                             <Link
                               href={`/catalog/${hoveredCategory}`}
                               className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                              onClick={() => setIsDesktopCatalogOpen(false)}
                             >
                               Vezi toate
                             </Link>
@@ -629,6 +1235,7 @@ export default function Header() {
                                   key={subcategory.id}
                                   href={`/catalog/${hoveredCategory}/${subcategory.id}`}
                                   className="group flex items-center gap-3 rounded-xl py-3 transition-all duration-200 hover:translate-x-1"
+                                  onClick={() => setIsDesktopCatalogOpen(false)}
                                 >
                                   <div className="flex-1 min-w-0">
                                     <p className="font-medium text-base truncate group-hover:text-primary transition-colors">
@@ -685,26 +1292,23 @@ export default function Header() {
           {/* Mobile bottom navigation */}
           <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-lg bg-white/80 border-t border-gray-100 md:hidden">
             <div className="container mx-auto px-2 pb-safe">
-              <div className="grid grid-cols-5 gap-1">
+              <div className="grid grid-cols-4 gap-1">
                 <button
                   onClick={() => router.push("/")}
                   className="group flex flex-col items-center justify-center py-2"
                 >
                   <div className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200",
+                    "flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200",
                     pathname === "/" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                   )}>
-                    <div className="relative h-12 w-12 rounded-full">
-                      <Image
-                        src="/logo.jpg"
-                        alt="Intelect MD"
-                        fill
-                        className="object-contain h-10 w-10 rounded-full"
-                        priority
-                      />
-                    </div>
+                    <Home className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
                   </div>
-
+                  <span className={cn(
+                    "text-xs font-medium mt-1 transition-colors",
+                    pathname === "/" ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                  )}>
+                    {t("home")}
+                  </span>
                 </button>
 
                 <button
@@ -722,24 +1326,6 @@ export default function Header() {
                     isMobileMenuOpen ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                   )}>
                     {t("catalog")}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setShowMobileSearch(true)}
-                  className="group flex flex-col items-center justify-center py-2"
-                >
-                  <div className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200",
-                    showMobileSearch ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                  )}>
-                    <Search className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
-                  </div>
-                  <span className={cn(
-                    "text-xs font-medium mt-1 transition-colors",
-                    showMobileSearch ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                  )}>
-                    Caută
                   </span>
                 </button>
 
@@ -762,7 +1348,7 @@ export default function Header() {
                     "text-xs font-medium mt-1 transition-colors",
                     isCartOpen ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                   )}>
-                    Coș
+                    {t("cart")}
                   </span>
                 </button>
 
@@ -780,7 +1366,7 @@ export default function Header() {
                     "text-xs font-medium mt-1 transition-colors",
                     isMobileUserMenuOpen ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                   )}>
-                    Cont
+                    {t("account")}
                   </span>
                 </button>
               </div>
@@ -936,6 +1522,14 @@ export default function Header() {
                             <span>{t("delivery")}</span>
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           </Link>
+                          <Link
+                            href="/contact"
+                            className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <span>{t("contact")}</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </Link>
                         </div>
 
                         {/* Language switcher */}
@@ -1001,7 +1595,7 @@ export default function Header() {
                 >
                   {/* Search header */}
                   <div className="flex items-center justify-between px-4 h-16 border-b">
-                    <h2 className="font-semibold text-lg">Căutare</h2>
+                    <h2 className="font-semibold text-lg">{t("search")}</h2>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -1125,7 +1719,7 @@ export default function Header() {
                         ))
                       ) : searchTerm ? (
                         <div className="text-center py-8 text-muted-foreground">
-                          Nu au fost găsite produse
+                          {t("noProductsFound")}
                         </div>
                       ) : null}
                     </div>
@@ -1164,7 +1758,7 @@ export default function Header() {
                 >
                   {/* User menu header */}
                   <div className="flex items-center justify-between px-4 h-16 border-b ">
-                    <h2 className="font-semibold text-lg">Cont</h2>
+                    <h2 className="font-semibold text-lg">{t("account")}</h2>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -1175,39 +1769,94 @@ export default function Header() {
                   </div>
 
                   <div className="p-6 space-y-6">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-accent/50 flex items-center justify-center">
-                        <User className="h-6 w-6 text-muted-foreground" />
+                    {status === "authenticated" ? (
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-accent/50 flex items-center justify-center overflow-hidden">
+                            {session.user?.image ? (
+                              <Image
+                                src={session.user.image}
+                                alt={session.user.name || "User"}
+                                width={48}
+                                height={48}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-6 w-6 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="font-semibold">{session.user?.name}</h3>
+                            <p className="text-sm text-muted-foreground">{session.user?.email}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Link
+                            href="/comenzi"
+                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
+                            onClick={() => setIsMobileUserMenuOpen(false)}
+                          >
+                            <span>{t("myOrders")}</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </Link>
+                          <Link
+                            href="/favorite"
+                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
+                            onClick={() => setIsMobileUserMenuOpen(false)}
+                          >
+                            <span>{t("favorites")}</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </Link>
+                          <Link
+                            href="/credit"
+                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
+                            onClick={() => setIsMobileUserMenuOpen(false)}
+                          >
+                            <span>{t("buyInInstallments")}</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </Link>
+                        </div>
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          onClick={handleSignOut}
+                        >
+                          {t("signOut")}
+                        </Button>
                       </div>
-                      <div className="space-y-1">
-                        <h3 className="font-semibold">{t("welcome")}</h3>
-                        <p className="text-sm text-muted-foreground">{t("loginToContinue")}</p>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-accent/50 flex items-center justify-center">
+                            <User className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="font-semibold">{t("welcome")}</h3>
+                            <p className="text-sm text-muted-foreground">{t("loginToContinue")}</p>
+                          </div>
+                        </div>
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          onClick={handleGoogleSignIn}
+                        >
+                          <div className="bg-white rounded-full p-1 mr-2">
+                            <GoogleIcon className="h-5 w-5" />
+                          </div>
+                          {t("signInWithGoogle")}
+                        </Button>
+                        <Button
+                          className="w-full mt-2"
+                          variant="outline"
+                          onClick={handleFacebookSignIn}
+                        >
+                          <div className="bg-white rounded-full p-1 mr-2">
+                            <FacebookIcon className="h-5 w-5" />
+                          </div>
+                          {t("signInWithFacebook")}
+                        </Button>
                       </div>
-                    </div>
-                    <Button className="w-full" variant="outline">
-                      <div className="bg-white rounded-full p-1 mr-2">
-                        <GoogleIcon className="h-5 w-5" />
-                      </div>
-                      {t("signInWithGoogle")}
-                    </Button>
-                    <div className="space-y-2">
-                      <Link
-                        href="/comenzi"
-                        className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
-                        onClick={() => setIsMobileUserMenuOpen(false)}
-                      >
-                        <span>Comenzile mele</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </Link>
-                      <Link
-                        href="/favorite"
-                        className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
-                        onClick={() => setIsMobileUserMenuOpen(false)}
-                      >
-                        <span>Favorite</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </Link>
-                    </div>
+                    )}
                   </div>
                 </motion.div>
               </>
@@ -1257,7 +1906,7 @@ export default function Header() {
                       <X className="h-5 w-5" />
                     </Button>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-semibold">Coșul meu</h2>
+                      <h2 className="text-lg font-semibold">{t("myCart")}</h2>
                       {totalItems > 0 && (
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                           {totalItems}
@@ -1280,10 +1929,10 @@ export default function Header() {
                         className="text-center space-y-2 mb-8"
                       >
                         <h3 className="text-xl font-semibold">
-                          Coșul tău este gol
+                          {t("cartEmpty")}
                         </h3>
                         <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-                          Se pare că nu ai adăugat încă niciun produs în coș. Începe să explorezi catalogul nostru!
+                          {t("addProductsFromCatalog")}
                         </p>
                       </motion.div>
                       <motion.div
@@ -1300,7 +1949,7 @@ export default function Header() {
                           className="w-full h-12 rounded-xl"
                         >
                           <LayoutGrid className="h-5 w-5 mr-2" />
-                          Explorează catalogul
+                          {t("exploreCatalog")}
                         </Button>
                       </motion.div>
                     </div>
@@ -1331,7 +1980,7 @@ export default function Header() {
                                 {item.product.nume}
                               </h4>
                               <div className="text-xs text-muted-foreground mt-1">
-                                Cod: {item.product.cod}
+                                {t("productCode")}{item.product.cod}
                               </div>
                               <div className="flex justify-between items-center mt-2">
                                 <div className="text-sm font-medium">
@@ -1365,6 +2014,21 @@ export default function Header() {
                                   </Button>
                                 </div>
                               </div>
+                              <div className="text-right">
+                                <div className="font-medium">
+                                  {((item.product.pretRedus || item.product.pret) * item.quantity).toLocaleString()} MDL
+                                </div>
+                                {item.product.pretRedus && (
+                                  <div className="text-sm text-muted-foreground line-through">
+                                    {(item.product.pret * item.quantity).toLocaleString()} MDL
+                                  </div>
+                                )}
+                                {item.product.creditOption && (
+                                  <div className="text-sm text-primary mt-1">
+                                    {item.product.creditOption.months} rate x {item.product.creditOption.monthlyPayment.toLocaleString()} MDL/lună
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <Button
                               size="icon"
@@ -1395,7 +2059,7 @@ export default function Header() {
                         disabled={items.length === 0}
                         onClick={() => window.location.href = "/cart"}
                       >
-                        Finalizează comanda
+                        {t("completeOrder")}
                       </Button>
                     </div>
                   </div>
@@ -1417,8 +2081,7 @@ export default function Header() {
               >
                 {[...announcements, ...announcements, ...announcements].map((text, index) => (
                   <span key={index} className="inline-flex items-center gap-24 shrink-0">
-                    <span className="text-sm font-medium whitespace-nowrap">{text}</span>
-
+                    <span className="text-sm font-medium whitespace-nowrap">{t(text === "0% Credit - Cumpără acum, plătește mai târziu" ? "zeroCreditBuyNow" : "installmentsUpTo")}</span>
                   </span>
                 ))}
               </motion.div>
@@ -1428,8 +2091,7 @@ export default function Header() {
               >
                 {[...announcements, ...announcements, ...announcements].map((text, index) => (
                   <span key={`second-${index}`} className="inline-flex items-center gap-32 shrink-0">
-                    <span className="text-sm font-medium whitespace-nowrap">{text}</span>
-
+                    <span className="text-sm font-medium whitespace-nowrap">{t(text === "0% Credit - Cumpără acum, plătește mai târziu" ? "zeroCreditBuyNow" : "installmentsUpTo")}</span>
                   </span>
                 ))}
               </motion.div>

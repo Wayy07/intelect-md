@@ -18,6 +18,10 @@ interface Product {
       nume: string
     }
   }
+  creditOption?: {
+    months: number
+    monthlyPayment: number
+  }
 }
 
 interface CartItem {
