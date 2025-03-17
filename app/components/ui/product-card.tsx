@@ -4,11 +4,12 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Package, Heart, ShoppingCart, ArrowRight } from "lucide-react"
+import { Package, Heart, ShoppingCart, ArrowRight, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/app/components/ui/use-toast"
 import { useCart } from "@/app/contexts/cart-context"
+import { useLanguage } from "@/lib/language-context"
 
 interface Product {
   id: string
@@ -39,6 +40,7 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
   const [isFavorite, setIsFavorite] = useState(false)
   const { toast } = useToast()
   const { addItem } = useCart()
+  const { t } = useLanguage()
 
   // Debug logging for category data
   console.log(`ProductCard ${product.id} category data:`, {
@@ -52,8 +54,8 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
     e.preventDefault()
     addItem(product)
     toast({
-      title: "Adăugat în coș",
-      description: "Produsul a fost adăugat în coșul tău",
+      title: t?.('cart_added_title') || "Adăugat în coș",
+      description: t?.('cart_added_description') || "Produsul a fost adăugat în coșul tău",
     })
   }
 
@@ -63,10 +65,10 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
     if (onAddToFavorites) {
       onAddToFavorites(product)
       toast({
-        title: isFavorite ? "Eliminat din favorite" : "Adăugat la favorite",
+        title: isFavorite ? t?.('favorites_removed_title') || "Eliminat din favorite" : t?.('favorites_added_title') || "Adăugat la favorite",
         description: isFavorite
-          ? "Produsul a fost eliminat din lista ta de favorite"
-          : "Produsul a fost adăugat în lista ta de favorite",
+          ? t?.('favorites_removed_description') || "Produsul a fost eliminat din lista ta de favorite"
+          : t?.('favorites_added_description') || "Produsul a fost adăugat în lista ta de favorite",
       })
     }
   }
@@ -75,72 +77,79 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       className="group h-full"
     >
       <div
         className="relative flex h-full flex-col overflow-hidden rounded-xl bg-white transition-all duration-300
-                 hover:shadow-xl hover:shadow-primary/10 border border-gray-100"
+                 hover:shadow-lg border border-gray-100"
       >
-        {/* Quick actions - Desktop */}
-        <motion.div
-          className="absolute right-3 top-3 z-20 hidden md:flex flex-col gap-2"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 20 }}
-        >
-          <Button
-            size="icon"
-            variant="secondary"
-            className={cn(
-              "h-8 w-8 rounded-full shadow-lg transition-colors",
-              isFavorite && "bg-primary text-white hover:bg-primary/80"
-            )}
-            onClick={handleToggleFavorite}
-          >
-            <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
-          </Button>
-          {product.stoc > 0 && (
-            <Button
-              size="icon"
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-lg hover:bg-primary hover:text-white"
-              onClick={handleAddToCart}
+        {/* Quick actions - Desktop with improved animations */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              className="absolute right-4 top-4 z-20 hidden md:flex flex-col gap-2"
+              initial={{ opacity: 0, scale: 0.5, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.5, y: -20 }}
+              transition={{
+                duration: 0.2,
+                staggerChildren: 0.05,
+                delayChildren: 0.05
+              }}
             >
-              <ShoppingCart className="h-4 w-4" />
-            </Button>
-          )}
-        </motion.div>
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className={cn(
+                    "h-9 w-9 rounded-full shadow-lg transition-all",
+                    isFavorite ? "bg-primary text-white hover:bg-dark-blue" : "backdrop-blur-sm bg-white/80 hover:bg-dark-blue hover:text-white"
+                  )}
+                  onClick={handleToggleFavorite}
+                >
+                  <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
+                </Button>
+              </motion.div>
 
-        {/* Quick actions - Mobile */}
-        <div className="absolute right-3 top-3 z-20 flex md:hidden flex-col gap-2">
-          <Button
-            size="icon"
-            variant="secondary"
-            className={cn(
-              "h-10 w-10 rounded-full shadow-lg transition-colors backdrop-blur-sm",
-              isFavorite
-                ? "bg-primary text-white hover:bg-primary/80"
-                : "bg-white/90 hover:bg-white"
-            )}
-            onClick={handleToggleFavorite}
-          >
-            <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
-          </Button>
-          {product.stoc > 0 && (
+              {product.stoc > 0 && (
+                <motion.div whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-9 w-9 rounded-full shadow-lg backdrop-blur-sm bg-white/80 hover:bg-dark-blue hover:text-white"
+                    onClick={handleAddToCart}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Quick actions - Mobile with improved styling */}
+        <div className="absolute right-3 top-3 z-20 flex md:hidden">
+          <motion.div whileTap={{ scale: 0.95 }}>
             <Button
               size="icon"
               variant="secondary"
-              className="h-10 w-10 rounded-full shadow-lg bg-white/90 hover:bg-primary hover:text-white backdrop-blur-sm"
-              onClick={handleAddToCart}
+              className={cn(
+                "h-10 w-10 rounded-full shadow-lg transition-all backdrop-blur-sm",
+                isFavorite
+                  ? "bg-primary text-white hover:bg-dark-blue"
+                  : "bg-white/90 hover:bg-dark-blue hover:text-white"
+              )}
+              onClick={handleToggleFavorite}
             >
-              <ShoppingCart className="h-5 w-5" />
+              <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
             </Button>
-          )}
+          </motion.div>
         </div>
 
-        {/* Tags */}
+        {/* Tags with enhanced animations */}
         <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2">
           {product.pretRedus && product.pretRedus < product.pret && (
             <>
@@ -150,7 +159,8 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-white"
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    className="rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-white shadow-sm"
                   >
                     -{discountPercentage}%
                   </motion.div>
@@ -161,7 +171,8 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-white"
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="rounded-full bg-black/80 backdrop-blur-sm px-2.5 py-1 text-xs font-medium text-white shadow-sm"
           >
             {product.subcategorie?.categoriePrincipala?.nume
               ? product.subcategorie.categoriePrincipala.nume
@@ -173,8 +184,9 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
               className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium",
+                "rounded-full px-2.5 py-1 text-xs font-medium shadow-sm",
                 product.stoc === 0
                   ? "bg-gray-100 text-gray-700"
                   : "bg-amber-100 text-amber-700"
@@ -185,26 +197,51 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
           )}
         </div>
 
-        {/* Image container */}
+        {/* Image container with static image (no scale effect) */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
           {product.imagini?.[0] ? (
-            <Image
-              src={product.imagini[0]}
-              alt={product.nume}
-              fill
-              className="object-cover transition-all duration-500 group-hover:scale-110"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
+            <div className="w-full h-full relative">
+              <Image
+                src={product.imagini[0]}
+                alt={product.nume}
+                fill
+                className="object-cover transition-all duration-500 ease-in-out"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              />
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                animate={{ opacity: isHovered ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+
+              {/* Preview button in the middle of the image (desktop only) */}
+              {isHovered && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute inset-0 flex items-center justify-center hidden md:flex"
+                >
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="rounded-full bg-white/90 backdrop-blur-sm text-gray-900 hover:bg-white hover:text-dark-blue transition-all shadow-md border border-gray-200 font-medium px-4"
+                  >
+                    <span>{t('preview_product') || "Previzualizare"}</span>
+                  </Button>
+                </motion.div>
+              )}
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <Package className="h-12 w-12 text-gray-400" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         </div>
 
-        {/* Content */}
-        <div className="flex flex-1 flex-col p-4">
+        {/* Content with improved animations */}
+        <div className="flex flex-1 flex-col p-4 pb-16 md:pb-16">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -218,7 +255,7 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
                   ? product.subcategorie.nume
                   : 'Subcategorie'}
             </div>
-            <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors duration-300">
+            <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-dark-blue transition-colors duration-300">
               {product.nume}
             </h3>
           </motion.div>
@@ -229,9 +266,10 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
                 Cod: {product.cod}
               </div>
               <motion.div
-                animate={{ x: isHovered ? 0 : -10, opacity: isHovered ? 1 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-primary hidden md:block"
+                initial={{ x: 10, opacity: 0 }}
+                animate={{ x: isHovered ? 0 : 10, opacity: isHovered ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-dark-blue hidden md:block"
               >
                 <ArrowRight className="h-4 w-4" />
               </motion.div>
@@ -241,37 +279,55 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
               <div>
                 {product.pretRedus ? (
                   <div className="space-y-1">
-                    <motion.div
-                      className="text-lg font-bold text-primary"
-                      animate={{ scale: isHovered ? 1.05 : 1 }}
-                    >
+                    <div className="text-lg font-bold text-dark-blue">
                       {product.pretRedus} MDL
-                    </motion.div>
+                    </div>
                     <div className="text-sm text-muted-foreground line-through">
                       {product.pret} MDL
                     </div>
                   </div>
                 ) : (
-                  <motion.div
-                    className="text-lg font-bold text-gray-900"
-                    animate={{ scale: isHovered ? 1.05 : 1 }}
-                  >
+                  <div className="text-lg font-bold text-gray-900">
                     {product.pret} MDL
-                  </motion.div>
+                  </div>
                 )}
               </div>
 
+              {/* Add to cart button - always visible on mobile */}
               {product.stoc > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hidden md:block"
+                <Button
+                  onClick={handleAddToCart}
+                  size="sm"
+                  className="rounded-full h-9 bg-dark-blue text-white hover:bg-dark-blue/90 hidden sm:flex md:hidden"
                 >
+                  <ShoppingCart className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Adaugă</span>
+                </Button>
+              )}
+
+              {product.stoc > 0 && (
+                <div className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hidden md:block">
                   În stoc
-                </motion.div>
+                </div>
               )}
             </div>
           </div>
+
+          {/* Cart button bottom bar - always visible with hover effect */}
+          {product.stoc > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 md:block hidden z-10">
+              <div className="w-full bg-dark-blue/90 hover:bg-dark-blue transition-all hover:shadow-lg h-12 flex items-center justify-center text-white group">
+                <Button
+                  onClick={handleAddToCart}
+                  variant="ghost"
+                  className="w-full h-full text-white hover:bg-dark-blue/90 hover:text-white flex items-center justify-center gap-2 transition-all"
+                >
+                  <ShoppingCart className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <span className="group-hover:translate-x-1 transition-transform">{t?.('cart_add_to_cart') || "Adaugă în coș"}</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -289,15 +345,17 @@ function ProductCard({ product, onAddToFavorites, disableLink = false }: Product
 
 function ProductCardCompact({ product, onAddToFavorites, disableLink = false }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const { toast } = useToast()
   const { addItem } = useCart()
+  const { t } = useLanguage()
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     addItem(product)
     toast({
-      title: "Adăugat în coș",
-      description: "Produsul a fost adăugat în coșul tău",
+      title: t?.('cart_added_title') || "Adăugat în coș",
+      description: t?.('cart_added_description') || "Produsul a fost adăugat în coșul tău",
     })
   }
 
@@ -307,26 +365,35 @@ function ProductCardCompact({ product, onAddToFavorites, disableLink = false }: 
     if (onAddToFavorites) {
       onAddToFavorites(product)
       toast({
-        title: isFavorite ? "Eliminat din favorite" : "Adăugat la favorite",
+        title: isFavorite ? t?.('favorites_removed_title') || "Eliminat din favorite" : t?.('favorites_added_title') || "Adăugat la favorite",
         description: isFavorite
-          ? "Produsul a fost eliminat din lista ta de favorite"
-          : "Produsul a fost adăugat în lista ta de favorite",
+          ? t?.('favorites_removed_description') || "Produsul a fost eliminat din lista ta de favorite"
+          : t?.('favorites_added_description') || "Produsul a fost adăugat în lista ta de favorite",
       })
     }
   }
 
   const content = (
-    <div className="group flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors">
-      {/* Image */}
-      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
+    <motion.div
+      className="group flex items-center gap-4 p-2 hover:bg-muted/50 rounded-lg transition-colors"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.03)" }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+    >
+      {/* Image with minimal hover effect */}
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md group-hover:shadow-md transition-all duration-300">
         {product.imagini?.[0] ? (
-          <Image
-            src={product.imagini[0]}
-            alt={product.nume}
-            fill
-            className="object-cover"
-            sizes="64px"
-          />
+          <div className="w-full h-full">
+            <Image
+              src={product.imagini[0]}
+              alt={product.nume}
+              fill
+              className="object-cover transition-all duration-300"
+              sizes="64px"
+            />
+          </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
             <Package className="h-6 w-6 text-muted-foreground" />
@@ -336,13 +403,13 @@ function ProductCardCompact({ product, onAddToFavorites, disableLink = false }: 
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+        <h3 className="text-sm font-medium text-foreground truncate group-hover:text-dark-blue transition-colors">
           {product.nume}
         </h3>
         <div className="mt-1 flex items-center gap-2">
           {product.pretRedus ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-primary">
+              <span className="text-sm font-semibold text-dark-blue">
                 {product.pretRedus} MDL
               </span>
               <span className="text-xs text-muted-foreground line-through">
@@ -359,29 +426,33 @@ function ProductCardCompact({ product, onAddToFavorites, disableLink = false }: 
 
       {/* Actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        <Button
-          size="icon"
-          variant="ghost"
-          className={cn(
-            "h-8 w-8 rounded-full",
-            isFavorite && "text-primary hover:text-primary/80"
-          )}
-          onClick={handleToggleFavorite}
-        >
-          <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
-        </Button>
-        {product.stoc > 0 && (
+        <motion.div whileTap={{ scale: 0.95 }}>
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 rounded-full hover:bg-primary hover:text-primary-foreground"
-            onClick={handleAddToCart}
+            className={cn(
+              "h-8 w-8 rounded-full",
+              isFavorite ? "text-primary hover:text-dark-blue" : "hover:text-dark-blue"
+            )}
+            onClick={handleToggleFavorite}
           >
-            <ShoppingCart className="h-4 w-4" />
+            <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
           </Button>
+        </motion.div>
+        {product.stoc > 0 && (
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-full hover:bg-dark-blue hover:text-white"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Button>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 
   return disableLink ? content : (

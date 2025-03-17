@@ -125,6 +125,125 @@ export default function LatestProducts() {
                 nume: "Tablete"
               }
             }
+          },
+          {
+            id: "4",
+            nume: "Gaming Laptop XR",
+            cod: "GL-004",
+            pret: 14999,
+            pretRedus: 13499,
+            imagini: ["https://i.pinimg.com/736x/fa/e9/58/fae958c39c7cb6d7194e285281794e2f.jpg"],
+            stoc: 6,
+            subcategorie: {
+              id: "sub1",
+              nume: "Laptopuri",
+              categoriePrincipala: {
+                id: "cat1",
+                nume: "Computere"
+              }
+            }
+          },
+          {
+            id: "5",
+            nume: "Smartwatch Pro",
+            cod: "SW-005",
+            pret: 2499,
+            pretRedus: 1999,
+            imagini: ["https://i.pinimg.com/736x/c1/a0/81/c1a0819faf10183c7e711adef66d0380.jpg"],
+            stoc: 20,
+            subcategorie: {
+              id: "sub4",
+              nume: "Smartwatch-uri",
+              categoriePrincipala: {
+                id: "cat4",
+                nume: "Accesorii"
+              }
+            }
+          },
+          {
+            id: "6",
+            nume: "Wireless Earbuds Elite",
+            cod: "WE-006",
+            pret: 1299,
+            pretRedus: null,
+            imagini: ["https://i.pinimg.com/736x/c9/a3/7b/c9a37b9f85c5b61965494e6375a39a93.jpg"],
+            stoc: 25,
+            subcategorie: {
+              id: "sub5",
+              nume: "Căști",
+              categoriePrincipala: {
+                id: "cat4",
+                nume: "Accesorii"
+              }
+            }
+          },
+          {
+            id: "7",
+            nume: "4K Curved Monitor",
+            cod: "CM-007",
+            pret: 5499,
+            pretRedus: 4799,
+            imagini: ["https://i.pinimg.com/736x/36/d8/5e/36d85ee48167f78962ddb48bd53584e7.jpg"],
+            stoc: 7,
+            subcategorie: {
+              id: "sub6",
+              nume: "Monitoare",
+              categoriePrincipala: {
+                id: "cat1",
+                nume: "Computere"
+              }
+            }
+          },
+          {
+            id: "8",
+            nume: "Premium Smartphone Z",
+            cod: "PSZ-008",
+            pret: 11999,
+            pretRedus: 10999,
+            imagini: ["https://i.pinimg.com/736x/b9/88/91/b98891a63eb5166c116fcdda8f52ef21.jpg"],
+            stoc: 5,
+            subcategorie: {
+              id: "sub2",
+              nume: "Smartphones",
+              categoriePrincipala: {
+                id: "cat2",
+                nume: "Telefoane"
+              }
+            }
+          },
+          {
+            id: "9",
+            nume: "Ultrabook Slim 14",
+            cod: "US-009",
+            pret: 8999,
+            pretRedus: null,
+            imagini: ["https://i.pinimg.com/736x/0a/b3/74/0ab374d029f8f4222f3a3151f05fe765.jpg"],
+            stoc: 12,
+            subcategorie: {
+              id: "sub1",
+              nume: "Laptopuri",
+              categoriePrincipala: {
+                id: "cat1",
+                nume: "Computere"
+              }
+            }
+          },
+          {
+            id: "10",
+            nume: "Professional Camera X200",
+            cod: "PC-010",
+            pret: 18999,
+            pretRedus: 16999,
+            imagini: ["https://i.pinimg.com/736x/67/eb/f2/67ebf2fd16a93a2b0ca34db67dc5b70c.jpg"],
+            stoc: 3,
+            subcategorie: {
+              id: "sub7",
+              nume: "Camere Foto",
+              categoriePrincipala: {
+                id: "cat3",
+                nume: "Electronice"
+              }
+            }
           }
         ];
 

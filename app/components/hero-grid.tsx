@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { motion, useMotionValue, useAnimationFrame, useTransform } from "framer-motion"
 import { Package } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/language-context"
@@ -27,6 +27,17 @@ interface SubcategoryWithCategory extends Subcategorie {
   }
 }
 
+// Brand interface for the new component
+interface Brand {
+  id: string
+  name: string
+  logo: string
+  color: string
+  hoverColor: string
+  background: string
+  category: string
+}
+
 const gridPositions = [
   "col-span-1 row-span-1",
   "col-span-2 row-span-2",
@@ -37,6 +48,301 @@ const gridPositions = [
   "col-span-1 row-span-1",
   "col-span-2 row-span-1",
 ]
+
+// Replace SubcategoryTags with BrandLogos
+const BrandLogos = () => {
+  const { t } = useLanguage()
+
+  // Animation settings - slower speed for more visible scrolling
+  const baseVelocity = 0.05 // Reduced for much slower motion
+  const baseX = useMotionValue(0)
+  const [hoveredBrandId, setHoveredBrandId] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Check if we're on mobile on component mount
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const brands: Brand[] = [
+    {
+      id: "apple",
+      name: "Apple",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+      color: "#000000",
+      hoverColor: "#111111",
+      background: "#ffffff",
+      category: "cat1"
+    },
+    {
+      id: "samsung",
+      name: "Samsung",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
+      color: "#1428a0",
+      hoverColor: "#1c3bd4",
+      background: "#ffffff",
+      category: "cat2"
+    },
+    {
+      id: "lg",
+      name: "LG",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/LG_symbol.svg/2048px-LG_symbol.svg.png",
+      color: "#a50034",
+      hoverColor: "#c50040",
+      background: "#ffffff",
+      category: "cat3"
+    },
+    {
+      id: "xiaomi",
+      name: "Xiaomi",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg",
+      color: "#ff6700",
+      hoverColor: "#ff8a3d",
+      background: "#ffffff",
+      category: "cat2"
+    },
+    {
+      id: "sony",
+      name: "Sony",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/c/ca/Sony_logo.svg",
+      color: "#ffffff",
+      hoverColor: "#ffffff",
+      background: "#ffffff",
+      category: "cat3"
+    },
+    {
+      id: "dell",
+      name: "Dell",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/1/18/Dell_logo_2016.svg",
+      color: "#007db8",
+      hoverColor: "#0094d9",
+      background: "#ffffff",
+      category: "cat1"
+    },
+    {
+      id: "hp",
+      name: "HP",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/a/ad/HP_logo_2012.svg",
+      color: "#0096d6",
+      hoverColor: "#00adfa",
+      background: "#ffffff",
+      category: "cat1"
+    },
+    {
+      id: "lenovo",
+      name: "Lenovo",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/0/03/Lenovo_Global_Corporate_Logo.png",
+      color: "#e2231a",
+      hoverColor: "#ff3c33",
+      background: "#ffffff",
+      category: "cat1"
+    },
+    {
+      id: "acer",
+      name: "Acer",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/0/00/Acer_2011.svg",
+      color: "#83b81a",
+      hoverColor: "#9cdb1f",
+      background: "#ffffff",
+      category: "cat1"
+    },
+    {
+      id: "asus",
+      name: "Asus",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/2/2e/ASUS_Logo.svg",
+      color: "#00539b",
+      hoverColor: "#0068c4",
+      background: "#ffffff",
+      category: "cat1"
+    },
+    {
+      id: "msi",
+      name: "MSI",
+      logo: "https://1000logos.net/wp-content/uploads/2018/10/MSI-Logo.png",
+      color: "#ff0000",
+      hoverColor: "#ff3333",
+      background: "#ffffff",
+      category: "cat1"
+    },
+    {
+      id: "huawei",
+      name: "Huawei",
+      logo: "https://1000logos.net/wp-content/uploads/2018/08/Huawei-Logo.png",
+      color: "#ff0000",
+      hoverColor: "#ff3333",
+      background: "#ffffff",
+      category: "cat2"
+    }
+  ];
+
+  // Create a very long list of brands to ensure continuous scrolling
+  // Using 4 sets of brands should be enough for a seamless appearance
+  const extendedBrands = [...brands, ...brands, ...brands, ...brands];
+
+  // Base dimensions - smaller card width on mobile
+  const itemWidth = isMobile ? 130 : 170;
+
+  // Animation using continuous scrolling with time-based movement
+  // This animation will continue even when hovering over individual cards
+  // but will pause when dragging
+  useAnimationFrame((time) => {
+    if (isDragging) return;
+
+    // Get the width of one complete set of brands
+    const brandSetWidth = brands.length * itemWidth;
+
+    // Create a continuous motion with natural looping using modulo
+    const xPos = (-time * baseVelocity) % brandSetWidth;
+    baseX.set(xPos);
+  });
+
+  // Transform the x position for left-to-right scrolling
+  const x = useTransform(baseX, (value) => `${value}px`);
+
+  // Drag constraints
+  const containerWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const brandSetWidth = brands.length * itemWidth;
+
+  // Set up drag handlers
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = (event: any, info: any) => {
+    setIsDragging(false);
+
+    // Update the baseX position based on the drag
+    const newX = baseX.get() + info.offset.x;
+    baseX.set(newX);
+  };
+
+  return (
+    <div className="w-full py-10 px-4 bg-gray-50 border-t border-gray-100">
+      <motion.h3
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="text-xl sm:text-2xl font-semibold text-center mb-8 text-gray-800"
+      >
+        {t("popular_brands") || "Branduri populare"}
+      </motion.h3>
+
+      <div
+        className="relative max-w-7xl mx-auto overflow-hidden"
+        ref={containerRef}
+      >
+        {/* Fade overlay on the edges */}
+        <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-gray-50 to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-gray-50 to-transparent z-10" />
+
+        {/* Mobile drag hint overlay */}
+        {isMobile && (
+          <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center opacity-0 animate-fadeOut">
+            <div className="bg-black/70 text-white px-4 py-2 rounded-full text-sm flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Trage pentru a naviga
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-hidden">
+          <motion.div
+            className="flex py-2"
+            style={{ x }}
+            drag={isMobile ? "x" : false}
+            dragConstraints={{
+              left: -brandSetWidth,
+              right: containerWidth
+            }}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            dragElastic={0.2}
+          >
+            {extendedBrands.map((brand, index) => (
+              <motion.div
+                key={`${brand.id}-${index}`}
+                className="flex-shrink-0"
+                style={{ width: itemWidth }}
+                whileHover={{ y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                onHoverStart={() => setHoveredBrandId(brand.id)}
+                onHoverEnd={() => setHoveredBrandId(null)}
+              >
+                <Link
+                  href={`/catalog?brand=${brand.id}&category=${brand.category}`}
+                  className={`flex flex-col items-center justify-center group mx-2 rounded-xl p-3
+                           hover:shadow-lg transition-all duration-300 relative overflow-hidden
+                           ${isMobile ? 'h-[70px]' : 'h-[90px]'}`}
+                  onClick={(e) => {
+                    // Prevent navigation when dragging on mobile
+                    if (isDragging) {
+                      e.preventDefault();
+                    }
+                  }}
+                  style={{
+                    borderColor: `${brand.color}30`,
+                    background: brand.background,
+                    boxShadow: hoveredBrandId === brand.id ? `0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px ${brand.color}30` : 'none',
+                  }}
+                >
+                  <motion.div
+                    className={`relative ${isMobile ? 'h-10 w-24' : 'h-12 w-32'}`}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    style={{
+                      filter: hoveredBrandId === brand.id ? "none" : "grayscale(0.2) opacity(0.9)"
+                    }}
+                  >
+                    <Image
+                      src={brand.logo}
+                      alt={brand.name}
+                      fill
+                      sizes={isMobile ? "96px" : "128px"}
+                      className="object-contain transition-all duration-300"
+                      loading="eager"
+                      unoptimized
+                    />
+                  </motion.div>
+
+                  {/* Hover effect underline */}
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100"
+                    initial={{ scaleX: 0 }}
+                    whileHover={{ scaleX: 1 }}
+                    transition={{ duration: 0.3 }}
+                    style={{
+                      background: brand.color,
+                      transformOrigin: "left"
+                    }}
+                  />
+
+                  {/* Radial hover effect */}
+                  <div
+                    className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                    style={{
+                      background: `radial-gradient(circle, ${brand.color} 0%, transparent 70%)`,
+                    }}
+                  />
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const SubcategoryTags = ({ heroSubcategories, subcategories }: {
   heroSubcategories: SubcategoryWithCategory[]
@@ -357,10 +663,7 @@ export default function HeroSection() {
         </div>
       </section>
 
-      <SubcategoryTags
-        heroSubcategories={heroSubcategories}
-        subcategories={subcategories}
-      />
+      <BrandLogos />
     </>
   )
 }

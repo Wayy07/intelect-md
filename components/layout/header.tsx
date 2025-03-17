@@ -869,80 +869,112 @@ export default function Header() {
                 <AnimatePresence>
                   {isDesktopCartOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 top-full mt-2 w-96 rounded-xl bg-white shadow-xl z-50 overflow-hidden"
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="absolute right-0 top-full mt-2 w-96 rounded-xl bg-white shadow-xl z-50 overflow-hidden border border-gray-100"
                     >
-                      <div className="p-4 border-b">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-lg">{t("myCart")}</h3>
+                      <div className="p-4 border-b flex items-center justify-between bg-gray-50/80 backdrop-blur-sm">
+                        <h3 className="font-medium text-lg flex items-center gap-2">
+                          <ShoppingCart className="h-4 w-4 text-primary" />
+                          {t("cart_title")}
                           {totalItems > 0 && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                            <motion.span
+                              initial={{ scale: 0.8 }}
+                              animate={{ scale: 1 }}
+                              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-medium text-white"
+                            >
                               {totalItems}
-                            </span>
+                            </motion.span>
                           )}
-                        </div>
+                        </h3>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-full hover:bg-gray-200/70"
+                          onClick={() => setIsDesktopCartOpen(false)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
 
                       {items.length === 0 ? (
-                        <div className="p-6 text-center">
-                          <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-accent text-muted-foreground mb-4">
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.1 }}
+                          className="p-6 text-center"
+                        >
+                          <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.2, type: "spring", stiffness: 400, damping: 15 }}
+                            className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-gray-100 text-gray-400 mb-4"
+                          >
                             <ShoppingCart className="h-8 w-8" />
-                          </div>
-                          <h4 className="font-medium mb-2">{t("cartEmpty")}</h4>
+                          </motion.div>
+                          <h4 className="font-medium mb-2">{t("cart_empty")}</h4>
                           <p className="text-sm text-muted-foreground mb-4">
-                            {t("addProductsFromCatalog")}
+                            {t("cart_empty_description")}
                           </p>
                           <Button
                             variant="outline"
-                            className="text-sm h-9"
+                            className="text-sm h-9 rounded-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary hover:border-primary/30"
                             onClick={() => {
                               setIsDesktopCartOpen(false)
                               setIsDesktopCatalogOpen(true)
                             }}
                           >
                             <LayoutGrid className="h-4 w-4 mr-2" />
-                            {t("exploreCatalog")}
+                            {t("cart_explore_catalog")}
                           </Button>
-                        </div>
+                        </motion.div>
                       ) : (
                         <>
-                          <div className="max-h-96 overflow-y-auto p-4">
+                          <div className="max-h-96 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
                             <div className="space-y-3">
-                              {items.map((item) => (
-                                <div
+                              {items.map((item, index) => (
+                                <motion.div
                                   key={item.product.id}
-                                  className="flex gap-3 p-2 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  whileHover={{ scale: 1.01 }}
+                                  className="flex gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all group"
                                 >
-                                  <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-accent/50">
-                                    {item.product.imagini[0] && (
+                                  <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-50 group-hover:shadow-md transition-shadow">
+                                    {item.product.imagini[0] ? (
                                       <Image
                                         src={item.product.imagini[0]}
                                         alt={item.product.nume}
                                         fill
-                                        className="object-cover"
+                                        className="object-cover transition-transform group-hover:scale-105 duration-300"
                                         sizes="(max-width: 768px) 100vw, 768px"
                                       />
+                                    ) : (
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <Package className="h-6 w-6 text-gray-400" />
+                                      </div>
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-sm truncate">
+                                    <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
                                       {item.product.nume}
                                     </h4>
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      {t("productCode")}{item.product.cod}
+                                    <div className="text-xs text-muted-foreground mt-1 flex items-center">
+                                      <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 mr-1">{t("cart_product_code")}</span>
+                                      {item.product.cod}
                                     </div>
                                     <div className="flex justify-between items-center mt-1">
                                       <div className="text-sm font-medium">
                                         {(item.product.pretRedus || item.product.pret).toLocaleString()} MDL
                                       </div>
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-1 bg-gray-50 rounded-full p-0.5">
                                         <Button
                                           size="icon"
                                           variant="ghost"
-                                          className="h-6 w-6 rounded-md"
+                                          className="h-6 w-6 rounded-full"
                                           onClick={(e) => {
                                             e.stopPropagation()
                                             updateQuantity(item.product.id, item.quantity - 1)
@@ -950,13 +982,13 @@ export default function Header() {
                                         >
                                           <Minus className="h-3 w-3" />
                                         </Button>
-                                        <span className="text-sm w-6 text-center">
+                                        <span className="text-sm w-6 text-center font-medium">
                                           {item.quantity}
                                         </span>
                                         <Button
                                           size="icon"
                                           variant="ghost"
-                                          className="h-6 w-6 rounded-md"
+                                          className="h-6 w-6 rounded-full"
                                           onClick={(e) => {
                                             e.stopPropagation()
                                             updateQuantity(item.product.id, item.quantity + 1)
@@ -966,64 +998,81 @@ export default function Header() {
                                         </Button>
                                       </div>
                                     </div>
-                                    <div className="text-right">
-                                      <div className="font-medium">
+                                    <div className="text-right mt-1">
+                                      <div className="font-medium text-sm">
                                         {((item.product.pretRedus || item.product.pret) * item.quantity).toLocaleString()} MDL
                                       </div>
                                       {item.product.pretRedus && (
-                                        <div className="text-sm text-muted-foreground line-through">
+                                        <div className="text-xs text-muted-foreground line-through">
                                           {(item.product.pret * item.quantity).toLocaleString()} MDL
                                         </div>
                                       )}
                                       {item.product.creditOption && (
-                                        <div className="text-sm text-primary mt-1">
-                                          {item.product.creditOption.months} rate x {item.product.creditOption.monthlyPayment.toLocaleString()} MDL/lună
+                                        <div className="text-xs text-primary mt-1 bg-primary/5 rounded-full px-2 py-0.5 inline-block">
+                                          {item.product.creditOption.months} {t("cart_monthly_payment")} {item.product.creditOption.monthlyPayment.toLocaleString()} {t("cart_per_month")}
                                         </div>
                                       )}
                                     </div>
                                   </div>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-8 w-8 flex-shrink-0 self-start text-muted-foreground hover:text-destructive"
+                                  <motion.button
+                                    className="h-8 w-8 flex-shrink-0 self-start text-gray-400 hover:text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    whileTap={{ scale: 0.9 }}
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       removeItem(item.product.id)
                                     }}
                                   >
                                     <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                                  </motion.button>
+                                </motion.div>
                               ))}
                             </div>
                           </div>
-                          <div className="p-4 border-t bg-white">
+                          <motion.div
+                            className="p-4 border-t bg-gray-50/80 backdrop-blur-sm"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
                             <div className="flex items-center justify-between mb-4">
-                              <span className="font-medium text-muted-foreground">Total</span>
-                              <span className="font-semibold">{totalPrice.toLocaleString()} MDL</span>
+                              <span className="font-medium text-gray-500">{t("cart_total")}</span>
+                              <motion.span
+                                className="font-semibold text-lg"
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+                              >
+                                {totalPrice.toLocaleString()} MDL
+                              </motion.span>
+                            </div>
+                            <div className="flex items-center justify-between mb-4 text-xs text-muted-foreground">
+                              <div className="flex items-center">
+                                <Package className="h-3 w-3 mr-1" />
+                                {t("cart_free_delivery")}
+                              </div>
                             </div>
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"
-                                className="flex-1 text-sm"
+                                className="flex-1 text-sm h-10 rounded-full border-primary/20 text-primary hover:bg-primary/5"
                                 onClick={() => {
                                   setIsDesktopCartOpen(false)
                                   window.location.href = "/cart"
                                 }}
                               >
-                                {t("completeOrder")}
+                                {t("cart_title")}
                               </Button>
                               <Button
-                                className="flex-1 text-sm"
+                                className="flex-1 text-sm h-10 rounded-full bg-black hover:bg-black/90 text-white"
                                 onClick={() => {
                                   setIsDesktopCartOpen(false)
                                   window.location.href = "/checkout"
                                 }}
                               >
-                                {t("checkout")}
+                                {t("cart_checkout")}
                               </Button>
                             </div>
-                          </div>
+                          </motion.div>
                         </>
                       )}
                     </motion.div>
@@ -1863,7 +1912,7 @@ export default function Header() {
             )}
           </AnimatePresence>
 
-          {/* Cart menu panel */}
+          {/* Mobile cart panel */}
           <AnimatePresence>
             {isCartOpen && (
               <>
@@ -1892,36 +1941,48 @@ export default function Header() {
                 >
                   {/* Drag handle */}
                   <div className="w-full pt-3 pb-2 px-4">
-                    <div className="h-1 w-12 mx-auto rounded-full bg-gray-300/80" />
+                    <div className="h-1 w-16 mx-auto rounded-full bg-gray-300/80" />
                   </div>
 
                   {/* Cart header */}
-                  <div className="flex items-center justify-between h-14 px-4 border-b">
+                  <div className="flex items-center justify-between h-14 px-4 border-b bg-gray-50/80 backdrop-blur-sm">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 rounded-xl hover:bg-accent"
+                      className="h-10 w-10 rounded-xl hover:bg-gray-200/70"
                       onClick={() => setIsCartOpen(false)}
                     >
                       <X className="h-5 w-5" />
                     </Button>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-semibold">{t("myCart")}</h2>
+                      <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <ShoppingCart className="h-4 w-4 text-primary" />
+                        {t("cart_title")}
+                      </h2>
                       {totalItems > 0 && (
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                        <motion.span
+                          initial={{ scale: 0.5 }}
+                          animate={{ scale: 1 }}
+                          className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-white"
+                        >
                           {totalItems}
-                        </span>
+                        </motion.span>
                       )}
                     </div>
                     <div className="w-10" /> {/* Spacer for alignment */}
                   </div>
 
                   {items.length === 0 ? (
-                    // Empty cart state
+                    // Empty cart state with better animations
                     <div className="flex-1 flex flex-col items-center justify-center px-6">
-                      <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-accent text-muted-foreground mb-6">
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                        className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gray-100 text-gray-400 mb-6"
+                      >
                         <ShoppingCart className="h-12 w-12" />
-                      </div>
+                      </motion.div>
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1929,10 +1990,10 @@ export default function Header() {
                         className="text-center space-y-2 mb-8"
                       >
                         <h3 className="text-xl font-semibold">
-                          {t("cartEmpty")}
+                          {t("cart_empty")}
                         </h3>
                         <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-                          {t("addProductsFromCatalog")}
+                          {t("cart_empty_description")}
                         </p>
                       </motion.div>
                       <motion.div
@@ -1946,101 +2007,106 @@ export default function Header() {
                             setIsCartOpen(false)
                             setIsMobileMenuOpen(true)
                           }}
-                          className="w-full h-12 rounded-xl"
+                          className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white"
                         >
                           <LayoutGrid className="h-5 w-5 mr-2" />
-                          {t("exploreCatalog")}
+                          {t("cart_explore_catalog")}
                         </Button>
                       </motion.div>
                     </div>
                   ) : (
-                    // Cart with items
-                    <div className="flex-1 overflow-auto p-4">
+                    // Cart with items - enhanced with animations
+                    <div className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent hover:scrollbar-thumb-gray-300">
                       <div className="space-y-4">
-                        {items.map((item) => (
+                        {items.map((item, index) => (
                           <motion.div
                             key={item.product.id}
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                            transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 20 }}
+                            whileTap={{ scale: 0.98 }}
+                            whileHover={{ scale: 1.01 }}
+                            className="flex gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-all group relative bg-white hover:shadow-sm"
                           >
-                            <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-accent/50">
-                              {item.product.imagini[0] && (
+                            <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-50 group-hover:shadow-sm transition-shadow">
+                              {item.product.imagini[0] ? (
                                 <Image
                                   src={item.product.imagini[0]}
                                   alt={item.product.nume}
                                   fill
-                                  className="object-cover"
+                                  className="object-cover transition-transform group-hover:scale-105 duration-300"
                                   sizes="(max-width: 768px) 100vw, 768px"
                                 />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <Package className="h-6 w-6 text-gray-400" />
+                                </div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate">
+                              <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
                                 {item.product.nume}
                               </h4>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t("productCode")}{item.product.cod}
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{t("cart_product_code")}</span>
+                                <span className="truncate">{item.product.cod}</span>
                               </div>
                               <div className="flex justify-between items-center mt-2">
                                 <div className="text-sm font-medium">
                                   {(item.product.pretRedus || item.product.pret).toLocaleString()} MDL
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-6 w-6 rounded-md"
+                                <div className="flex items-center gap-1 bg-gray-50 rounded-full p-0.5">
+                                  <motion.button
+                                    whileTap={{ scale: 0.9 }}
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       updateQuantity(item.product.id, item.quantity - 1)
                                     }}
+                                    className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
                                   >
                                     <Minus className="h-3 w-3" />
-                                  </Button>
-                                  <span className="text-sm w-6 text-center">
+                                  </motion.button>
+                                  <span className="text-sm w-6 text-center font-medium">
                                     {item.quantity}
                                   </span>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-6 w-6 rounded-md"
+                                  <motion.button
+                                    whileTap={{ scale: 0.9 }}
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       updateQuantity(item.product.id, item.quantity + 1)
                                     }}
+                                    className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
                                   >
                                     <Plus className="h-3 w-3" />
-                                  </Button>
+                                  </motion.button>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="font-medium">
+                              <div className="mt-1">
+                                <div className="font-medium text-right">
                                   {((item.product.pretRedus || item.product.pret) * item.quantity).toLocaleString()} MDL
                                 </div>
                                 {item.product.pretRedus && (
-                                  <div className="text-sm text-muted-foreground line-through">
+                                  <div className="text-xs text-muted-foreground line-through text-right">
                                     {(item.product.pret * item.quantity).toLocaleString()} MDL
                                   </div>
                                 )}
                                 {item.product.creditOption && (
-                                  <div className="text-sm text-primary mt-1">
-                                    {item.product.creditOption.months} rate x {item.product.creditOption.monthlyPayment.toLocaleString()} MDL/lună
+                                  <div className="text-xs text-primary mt-1 bg-primary/5 rounded-full px-2 py-0.5 inline-block float-right">
+                                    {item.product.creditOption.months} {t("cart_monthly_payment")} {item.product.creditOption.monthlyPayment.toLocaleString()} {t("cart_per_month")}
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 flex-shrink-0 self-start text-muted-foreground hover:text-destructive"
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all opacity-0 group-hover:opacity-100"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 removeItem(item.product.id)
                               }}
                             >
-                              <X className="h-4 w-4" />
-                            </Button>
+                              <X className="h-3 w-3" />
+                            </motion.button>
                           </motion.div>
                         ))}
                       </div>
@@ -2048,18 +2114,43 @@ export default function Header() {
                   )}
 
                   {/* Cart footer */}
-                  <div className="border-t p-4 bg-white">
+                  <div className="border-t p-4 bg-gray-50/80 backdrop-blur-sm">
                     <div className="space-y-4 max-w-sm mx-auto">
-                      <div className="flex items-center justify-between text-base">
-                        <span className="font-medium text-muted-foreground">Total</span>
-                        <span className="font-semibold text-lg">{totalPrice.toLocaleString()} MDL</span>
+                      <div className="flex flex-col gap-2 mb-2">
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <span>{t("cart_products")}</span>
+                          <span>{totalItems} {totalItems === 1 ? t("item") : t("items")}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <span>{t("cart_delivery")}</span>
+                          <span className="font-medium text-primary">{t("cart_free")}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-base pt-2 border-t">
+                          <span className="font-medium">{t("cart_total")}</span>
+                          <motion.span
+                            className="font-semibold text-lg"
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+                          >
+                            {totalPrice.toLocaleString()} MDL
+                          </motion.span>
+                        </div>
                       </div>
                       <Button
-                        className="w-full h-12 rounded-xl"
+                        className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white"
+                        disabled={items.length === 0}
+                        onClick={() => window.location.href = "/checkout"}
+                      >
+                        {t("cart_checkout")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full h-10 rounded-xl text-sm border-gray-200"
                         disabled={items.length === 0}
                         onClick={() => window.location.href = "/cart"}
                       >
-                        {t("completeOrder")}
+                        {t("cart_title")}
                       </Button>
                     </div>
                   </div>

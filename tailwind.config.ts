@@ -52,6 +52,7 @@ const config = {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
+  			'dark-blue': 'hsl(var(--dark-blue))',
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
@@ -81,11 +82,23 @@ const config = {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+        'fade-out': {
+          '0%': {
+            opacity: '0.7',
+          },
+          '50%': {
+            opacity: '0.5',
+          },
+          '100%': {
+            opacity: '0',
+          }
+        }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+        'fadeOut': 'fade-out 3s ease-in-out forwards 1s'
   		}
   	}
   },

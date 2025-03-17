@@ -460,7 +460,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="flex justify-between items-center pt-1 border-t border-gray-100">
-                    <span className="font-medium text-sm">Total produse:</span>
+                    <span className="font-medium text-sm">{t('confirmation_total_products')}:</span>
                     <span className="font-bold">{formatCurrency(orderDetails?.total || 0)}</span>
                   </div>
                 </div>
@@ -607,7 +607,7 @@ export default function CheckoutPage() {
                     {t('confirmation_email_notification')}
                   </p>
                   <p>
-                    Un email cu detaliile {t('confirmation_order_registered')} a fost trimis la adresa <strong>{orderDetails.customer.email}</strong>.
+                    {t('confirmation_email_sent')} <strong>{orderDetails.customer.email}</strong>.
                   </p>
                 </div>
               </div>

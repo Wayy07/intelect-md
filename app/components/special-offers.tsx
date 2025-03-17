@@ -89,6 +89,159 @@ export default function SpecialOffers() {
                 nume: "Gaming"
               }
             }
+          },
+          {
+            id: "4",
+            nume: "High-Performance SSD 1TB",
+            cod: "SSD-004",
+            pret: 1499,
+            pretRedus: 999,
+            imagini: ["https://i.pinimg.com/736x/c7/d0/a3/c7d0a39b5b0f2ce5eb12d66af6019212.jpg"],
+            stoc: 30,
+            subcategorie: {
+              id: "sub4",
+              nume: "Componente PC",
+              categoriePrincipala: {
+                id: "cat4",
+                nume: "Computere"
+              }
+            }
+          },
+          {
+            id: "5",
+            nume: "Robot Vacuum Cleaner Pro",
+            cod: "RVC-005",
+            pret: 3499,
+            pretRedus: 2799,
+            imagini: ["https://i.pinimg.com/736x/a3/08/aa/a308aa8fcd88c9c35ad044a4d7de9386.jpg"],
+            stoc: 12,
+            subcategorie: {
+              id: "sub5",
+              nume: "Aspiratoare",
+              categoriePrincipala: {
+                id: "cat5",
+                nume: "Electrocasnice"
+              }
+            }
+          },
+          {
+            id: "6",
+            nume: "Premium Coffee Machine",
+            cod: "PCM-006",
+            pret: 4999,
+            pretRedus: 3999,
+            imagini: ["https://i.pinimg.com/736x/a3/c8/81/a3c8810a3ea9090239dcbe5a4ccb5389.jpg"],
+            stoc: 8,
+            subcategorie: {
+              id: "sub6",
+              nume: "Aparate Cafea",
+              categoriePrincipala: {
+                id: "cat5",
+                nume: "Electrocasnice"
+              }
+            }
+          },
+          {
+            id: "7",
+            nume: "Bluetooth Speaker System",
+            cod: "BSS-007",
+            pret: 2499,
+            pretRedus: 1999,
+            imagini: ["https://i.pinimg.com/736x/c1/b7/ce/c1b7ce97a1d7e5863c9b4cb7416b2b96.jpg"],
+            stoc: 15,
+            subcategorie: {
+              id: "sub7",
+              nume: "Boxe",
+              categoriePrincipala: {
+                id: "cat6",
+                nume: "Audio"
+              }
+            }
+          },
+          {
+            id: "8",
+            nume: "Digital Camera 24MP",
+            cod: "DC-008",
+            pret: 5999,
+            pretRedus: 4799,
+            imagini: ["https://i.pinimg.com/736x/e7/5b/15/e75b15b3d020342f7b83da060b5cf5a4.jpg"],
+            stoc: 7,
+            subcategorie: {
+              id: "sub8",
+              nume: "Camere Foto",
+              categoriePrincipala: {
+                id: "cat7",
+                nume: "Foto & Video"
+              }
+            }
+          },
+          {
+            id: "9",
+            nume: "Smart Doorbell Camera",
+            cod: "SDC-009",
+            pret: 1299,
+            pretRedus: 999,
+            imagini: ["https://i.pinimg.com/736x/e0/9c/25/e09c25b3614c1ee3f0f23cae700d5179.jpg"],
+            stoc: 22,
+            subcategorie: {
+              id: "sub9",
+              nume: "Smart Home",
+              categoriePrincipala: {
+                id: "cat8",
+                nume: "Securitate"
+              }
+            }
+          },
+          {
+            id: "10",
+            nume: "Electric Scooter Pro",
+            cod: "ESP-010",
+            pret: 4999,
+            pretRedus: 3999,
+            imagini: ["https://i.pinimg.com/736x/65/99/35/6599358c98575a8a99a9a7c8143ecd3b.jpg"],
+            stoc: 5,
+            subcategorie: {
+              id: "sub10",
+              nume: "Transport",
+              categoriePrincipala: {
+                id: "cat9",
+                nume: "Mobilitate"
+              }
+            }
+          },
+          {
+            id: "11",
+            nume: "Fitness Smartwatch",
+            cod: "FS-011",
+            pret: 1999,
+            pretRedus: 1499,
+            imagini: ["https://i.pinimg.com/736x/ff/5a/80/ff5a80cff5de3f0b23802f52409d3af0.jpg"],
+            stoc: 25,
+            subcategorie: {
+              id: "sub11",
+              nume: "Smartwatch-uri",
+              categoriePrincipala: {
+                id: "cat2",
+                nume: "Accesorii"
+              }
+            }
+          },
+          {
+            id: "12",
+            nume: "Gaming Keyboard RGB",
+            cod: "GK-012",
+            pret: 899,
+            pretRedus: 699,
+            imagini: ["https://i.pinimg.com/736x/86/4a/df/864adf990c0eb5ae1064d75f96e007bf.jpg"],
+            stoc: 30,
+            subcategorie: {
+              id: "sub12",
+              nume: "Periferice",
+              categoriePrincipala: {
+                id: "cat3",
+                nume: "Gaming"
+              }
+            }
           }
         ];
 

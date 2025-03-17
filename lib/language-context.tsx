@@ -1759,10 +1759,37 @@ export const translations: Translations = {
     ru: "платежи x"
   },
   cart_per_month: {
-    ro: "MDL/lună",
-    ru: "MDL/месяц"
+    ro: "pe lună",
+    ru: "в месяц"
   },
-
+  cart_add_to_cart: {
+    ro: "Adaugă în coș",
+    ru: "Добавить в корзину"
+  },
+  cart_added_title: {
+    ro: "Adăugat în coș",
+    ru: "Добавлено в корзину"
+  },
+  cart_added_description: {
+    ro: "Produsul a fost adăugat în coșul tău",
+    ru: "Товар был добавлен в вашу корзину"
+  },
+  favorites_added_title: {
+    ro: "Adăugat la favorite",
+    ru: "Добавлено в избранное"
+  },
+  favorites_removed_title: {
+    ro: "Eliminat din favorite",
+    ru: "Удалено из избранного"
+  },
+  favorites_added_description: {
+    ro: "Produsul a fost adăugat în lista ta de favorite",
+    ru: "Товар был добавлен в ваш список избранного"
+  },
+  favorites_removed_description: {
+    ro: "Produsul a fost eliminat din lista ta de favorite",
+    ru: "Товар был удален из вашего списка избранного"
+  },
   // Checkout Page Translations
   checkout_title: {
     ro: "Finalizare comandă",
@@ -1941,6 +1968,118 @@ export const translations: Translations = {
     ro: "Email de confirmare comandă",
     ru: "Подтверждение заказа по электронной почте"
   },
+  confirmation_email_sent: {
+    ro: "Un email cu detaliile comenzii a fost trimis la adresa",
+    ru: "Электронное письмо с деталями заказа было отправлено на адрес"
+  },
+  confirmation_credit_request_registered: {
+    ro: "Cerere de credit înregistrată",
+    ru: "Заявка на кредит зарегистрирована"
+  },
+  confirmation_order_registered_title: {
+    ro: "Comandă înregistrată",
+    ru: "Заказ зарегистрирован"
+  },
+  confirmation_order_registered: {
+    ro: "comenzii",
+    ru: "заказа"
+  },
+  confirmation_notification: {
+    ro: "Veți fi notificat prin email despre statusul comenzii.",
+    ru: "Вы получите уведомление о статусе заказа по электронной почте."
+  },
+  confirmation_order_number_label: {
+    ro: "Număr comandă",
+    ru: "Номер заказа"
+  },
+  confirmation_payment_method: {
+    ro: "Metoda de plată",
+    ru: "Способ оплаты"
+  },
+  confirmation_about_credit: {
+    ro: "Despre creditul tău",
+    ru: "О вашем кредите"
+  },
+  confirmation_credit_contact: {
+    ro: "Specialistul nostru de credit vă va contacta în scurt timp pentru a continua procesul de finanțare.",
+    ru: "Наш кредитный специалист свяжется с вами в ближайшее время, чтобы продолжить процесс финансирования."
+  },
+  confirmation_after_credit_approval: {
+    ro: "După aprobarea creditului, veți fi contactat pentru a semna contractul",
+    ru: "После одобрения кредита с вами свяжутся для подписания договора"
+  },
+  confirmation_credit_contract: {
+    ro: "Livrarea produselor se va face după semnarea contractului de credit",
+    ru: "Доставка товаров будет осуществляться после подписания кредитного договора"
+  },
+  confirmation_credit_info: {
+    ro: "Află mai multe despre credit",
+    ru: "Узнать больше о кредите"
+  },
+  confirmation_delivery_pickup: {
+    ro: "Ridicare din magazin",
+    ru: "Самовывоз из магазина"
+  },
+  confirmation_store_address: {
+    ro: "Adresa magazinului",
+    ru: "Адрес магазина"
+  },
+  confirmation_store_hours: {
+    ro: "Program de lucru",
+    ru: "Часы работы"
+  },
+  confirmation_monday_friday: {
+    ro: "Luni - Vineri: 9:00 - 18:00",
+    ru: "Понедельник - Пятница: 9:00 - 18:00"
+  },
+  confirmation_saturday: {
+    ro: "Sâmbătă: 10:00 - 15:00",
+    ru: "Суббота: 10:00 - 15:00"
+  },
+  confirmation_sunday: {
+    ro: "Duminică: Închis",
+    ru: "Воскресенье: Закрыто"
+  },
+  confirmation_order_number: {
+    ro: "Prezentați numărul comenzii la ridicarea produselor",
+    ru: "Укажите номер заказа при получении товаров"
+  },
+  confirmation_delivery_address: {
+    ro: "Livrare la adresa indicată",
+    ru: "Доставка по указанному адресу"
+  },
+  confirmation_delivery_info: {
+    ro: "Comanda dvs. va fi livrată la adresa indicată în maxim 1-3 zile lucrătoare.",
+    ru: "Ваш заказ будет доставлен по указанному адресу в течение 1-3 рабочих дней."
+  },
+  confirmation_delivery_address_label: {
+    ro: "Adresa de livrare",
+    ru: "Адрес доставки"
+  },
+  confirmation_delivery_time: {
+    ro: "Timp de livrare",
+    ru: "Время доставки"
+  },
+  confirmation_working_days: {
+    ro: "1-3 zile lucrătoare",
+    ru: "1-3 рабочих дня"
+  },
+  confirmation_cash_payment: {
+    ro: "Plata se va efectua la livrare, în numerar sau prin card bancar",
+    ru: "Оплата производится при доставке наличными или банковской картой"
+  },
+  confirmation_continue_shopping: {
+    ro: "Continuă cumpărăturile",
+    ru: "Продолжить покупки"
+  },
+  confirmation_back_to_home: {
+    ro: "Înapoi la pagina principală",
+    ru: "Вернуться на главную страницу"
+  },
+  confirmation_total_products: {
+    ro: "Total produse",
+    ru: "Всего товаров"
+  },
   // Form validation errors
   checkout_error_firstname_required: {
     ro: "Prenumele este obligatoriu",
@@ -2025,6 +2164,31 @@ export const translations: Translations = {
   checkout_months: {
     ro: "luni",
     ru: "месяцев"
+  },
+  // Adding missing checkout keys
+  checkout_products: {
+    ro: "produse",
+    ru: "товары"
+  },
+  checkout_view_details: {
+    ro: "Vezi detalii",
+    ru: "Посмотреть детали"
+  },
+  item: {
+    ro: "produs",
+    ru: "товар"
+  },
+  items: {
+    ro: "produse",
+    ru: "товары"
+  },
+  preview_product: {
+    ro: "Previzualizare",
+    ru: "Предпросмотр"
+  },
+  popular_brands: {
+    ro: "Magazin de electronice și electrocasnice",
+    ru: "Магазин электроники и бытовой техники"
   }
 }
 
