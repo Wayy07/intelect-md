@@ -13,15 +13,15 @@ import { FavoritesProvider } from "@/app/contexts/favorites-context";
 const inter = Inter({ subsets: ["latin"] });
 
 // Base URL for absolute URLs
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://intelect.md';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://intelect.md";
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' }
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
 
@@ -29,12 +29,23 @@ export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
     default: "Intelect MD | Magazin online de tehnică și electronice",
-    template: "%s | Intelect MD"
+    template: "%s | Intelect MD",
   },
-  description: "Magazin online de tehnică și electronice în Moldova. Laptop-uri, smartphone-uri, tablete și alte produse electronice la prețuri avantajoase.",
+  description:
+    "Magazin online de tehnică și electronice în Moldova. Laptop-uri, smartphone-uri, tablete și alte produse electronice la prețuri avantajoase.",
   keywords: [
-    "tehnică", "electronice", "magazin online", "moldova", "laptop", "smartphone",
-    "tablete", "televizoare", "căști", "smartwatch", "console", "aspiratoare"
+    "tehnică",
+    "electronice",
+    "magazin online",
+    "moldova",
+    "laptop",
+    "smartphone",
+    "tablete",
+    "televizoare",
+    "căști",
+    "smartwatch",
+    "console",
+    "aspiratoare",
   ],
   authors: [{ name: "Intelect MD" }],
   creator: "Intelect MD",
@@ -52,9 +63,9 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   // Open Graph metadata
@@ -65,7 +76,8 @@ export const metadata: Metadata = {
     url: baseUrl,
     siteName: "Intelect MD",
     title: "Intelect MD | Magazin online de tehnică și electronice",
-    description: "Magazin online de tehnică și electronice în Moldova. Laptop-uri, smartphone-uri, tablete și alte produse electronice la prețuri avantajoase.",
+    description:
+      "Magazin online de tehnică și electronice în Moldova. Laptop-uri, smartphone-uri, tablete și alte produse electronice la prețuri avantajoase.",
     images: [
       {
         url: `${baseUrl}/images/og-image.jpg`,
@@ -79,7 +91,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Intelect MD | Magazin online de tehnică și electronice",
-    description: "Magazin online de tehnică și electronice în Moldova. Laptop-uri, smartphone-uri, tablete și alte produse electronice la prețuri avantajoase.",
+    description:
+      "Magazin online de tehnică și electronice în Moldova. Laptop-uri, smartphone-uri, tablete și alte produse electronice la prețuri avantajoase.",
     images: [`${baseUrl}/images/twitter-image.jpg`],
     creator: "@intelectmd",
   },
@@ -93,7 +106,11 @@ export const metadata: Metadata = {
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/icons/apple-icon-180x180.png", sizes: "180x180", type: "image/png" },
+      {
+        url: "/icons/apple-icon-180x180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
     other: [
       {
@@ -113,8 +130,8 @@ export const metadata: Metadata = {
   // Alternate language versions
   alternates: {
     languages: {
-      'ro-MD': `${baseUrl}/ro`,
-      'ru-MD': `${baseUrl}/ru`,
+      "ro-MD": `${baseUrl}/ro`,
+      "ru-MD": `${baseUrl}/ru`,
     },
     canonical: baseUrl,
   },
@@ -123,19 +140,22 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="ro">
-      <body className={cn(inter.className, "min-h-screen bg-background flex flex-col")}>
+      <body
+        className={cn(
+          inter.className,
+          "min-h-screen bg-background flex flex-col"
+        )}
+      >
         <Providers>
           <FavoritesProvider>
             <LanguageProvider>
               <CartProvider>
                 <HeaderWrapper />
-                <main className="flex-grow">
-                  {children}
-                </main>
+                <main className="flex-grow">{children}</main>
                 <FooterWrapper />
                 <CookieConsent />
               </CartProvider>

@@ -1,95 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
+import { allProducts, Product } from "@/app/utils/mock-data";
 
-// Import our mock product database
-import { mockProducts, Product } from "./mock-data";
-
-// GET /api/products - Get a list of products with optional filtering
+// GET /api/products - Get all products with optional filters
 export async function GET(request: NextRequest) {
   try {
-    // Get search params from URL
-    const { searchParams } = new URL(request.url);
+    // Get URL params
+    const searchParams = request.nextUrl.searchParams;
 
-    // Parse query parameters
-    const category = searchParams.get('category');
-    const subcategory = searchParams.get('subcategory');
-    const searchTerm = searchParams.get('search')?.toLowerCase();
-    const minPrice = Number(searchParams.get('minPrice')) || 0;
-    const maxPrice = Number(searchParams.get('maxPrice')) || Number.MAX_SAFE_INTEGER;
-    const sortBy = searchParams.get('sortBy') || 'default'; // default, price-asc, price-desc, name-asc, name-desc
-    const page = Number(searchParams.get('page')) || 1;
-    const limit = Number(searchParams.get('limit')) || 12;
+    // Parse filters
+    const category = searchParams.get("category");
+    const subcategory = searchParams.get("subcategory");
+    const search = searchParams.get("search");
+    const onSale = searchParams.get("onSale") === "true";
+    const latest = searchParams.get("latest") === "true";
+    const limit = Number(searchParams.get("limit") || "30");
+    const page = Number(searchParams.get("page") || "1");
 
-    // Filter products based on query parameters
-    let filteredProducts = [...mockProducts];
+    // Apply filters
+    let filteredProducts: Product[] = [...allProducts];
 
-    // Filter by category
     if (category) {
       filteredProducts = filteredProducts.filter(
-        p => p.subcategorie.categoriePrincipala.id === category
+        (p) => p.subcategorie.categoriePrincipala.id === category
       );
     }
 
-    // Filter by subcategory
     if (subcategory) {
       filteredProducts = filteredProducts.filter(
-        p => p.subcategorie.id === subcategory
+        (p) => p.subcategorie.id === subcategory
       );
     }
 
-    // Filter by search term
-    if (searchTerm) {
+    if (search) {
+      const searchLower = search.toLowerCase();
       filteredProducts = filteredProducts.filter(
-        p =>
-          p.nume.toLowerCase().includes(searchTerm) ||
-          p.cod.toLowerCase().includes(searchTerm) ||
-          p.descriere?.toLowerCase().includes(searchTerm)
+        (p) =>
+          p.nume.toLowerCase().includes(searchLower) ||
+          p.descriere?.toLowerCase().includes(searchLower)
       );
     }
 
-    // Filter by price range
-    filteredProducts = filteredProducts.filter(
-      p => {
-        const price = p.pretRedus || p.pret;
-        return price >= minPrice && price <= maxPrice;
-      }
-    );
-
-    // Sort products
-    if (sortBy === 'price-asc') {
-      filteredProducts.sort((a, b) => (a.pretRedus || a.pret) - (b.pretRedus || b.pret));
-    } else if (sortBy === 'price-desc') {
-      filteredProducts.sort((a, b) => (b.pretRedus || b.pret) - (a.pretRedus || a.pret));
-    } else if (sortBy === 'name-asc') {
-      filteredProducts.sort((a, b) => a.nume.localeCompare(b.nume));
-    } else if (sortBy === 'name-desc') {
-      filteredProducts.sort((a, b) => b.nume.localeCompare(a.nume));
+    if (onSale) {
+      filteredProducts = filteredProducts.filter((p) => p.pretRedus !== null);
     }
 
-    // Calculate pagination
-    const totalProducts = filteredProducts.length;
-    const totalPages = Math.ceil(totalProducts / limit);
+    if (latest) {
+      // Sort by newest (use the order in the array for now)
+      filteredProducts = filteredProducts.slice(0, 10);
+    }
+
+    // Pagination
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
     const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-    // Simulate a slight delay to mimic real API behavior
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Count for pagination metadata
+    const totalProducts = filteredProducts.length;
+    const totalPages = Math.ceil(totalProducts / limit);
 
-    // Return paginated products with metadata
+    // Return products with pagination metadata
     return NextResponse.json({
       products: paginatedProducts,
       pagination: {
-        page,
-        limit,
         totalProducts,
         totalPages,
-        hasMore: page < totalPages
-      }
+        currentPage: page,
+        limit,
+      },
     });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     return NextResponse.json(
-      { error: 'Eroare la preluarea produselor' },
+      { error: "Failed to fetch products" },
       { status: 500 }
     );
   }

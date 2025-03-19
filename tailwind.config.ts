@@ -1,3 +1,4 @@
+import {heroui} from '@heroui/theme';
 import type { Config } from "tailwindcss";
 
 const config = {
@@ -7,6 +8,7 @@ const config = {
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
+    "./node_modules/@heroui/theme/dist/components/(slider|popover).js"
   ],
   prefix: "",
   theme: {
@@ -14,10 +16,14 @@ const config = {
   		center: true,
   		padding: '2rem',
   		screens: {
-  			'2xl': '1400px'
+  			'2xl': '1400px',
+  			'3xl': '2000px'
   		}
   	},
   	extend: {
+  		screens: {
+  			'3xl': '2000px'
+  		},
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
@@ -83,26 +89,47 @@ const config = {
   					height: '0'
   				}
   			},
-        'fade-out': {
-          '0%': {
-            opacity: '0.7',
-          },
-          '50%': {
-            opacity: '0.5',
-          },
-          '100%': {
-            opacity: '0',
-          }
-        }
+  			'fade-out': {
+  				'0%': {
+  					opacity: '0.7'
+  				},
+  				'50%': {
+  					opacity: '0.5'
+  				},
+  				'100%': {
+  					opacity: '0'
+  				}
+  			},
+  			'shimmer-slide': {
+  				to: {
+  					transform: 'translate(calc(100cqw - 100%), 0)'
+  				}
+  			},
+  			'spin-around': {
+  				'0%': {
+  					transform: 'translateZ(0) rotate(0)'
+  				},
+  				'15%, 35%': {
+  					transform: 'translateZ(0) rotate(90deg)'
+  				},
+  				'65%, 85%': {
+  					transform: 'translateZ(0) rotate(270deg)'
+  				},
+  				'100%': {
+  					transform: 'translateZ(0) rotate(360deg)'
+  				}
+  			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-        'fadeOut': 'fade-out 3s ease-in-out forwards 1s'
+  			fadeOut: 'fade-out 3s ease-in-out forwards 1s',
+  			'shimmer-slide': 'shimmer-slide var(--speed) ease-in-out infinite alternate',
+  			'spin-around': 'spin-around calc(var(--speed) * 2) infinite linear'
   		}
   	}
   },
-  plugins: [require("@tailwindcss/forms"), require("tailwindcss-animate")],
+  plugins: [require("@tailwindcss/forms"),require("tailwindcss-animate"),heroui()],
 } satisfies Config;
 
 export default config;
