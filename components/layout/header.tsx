@@ -320,7 +320,10 @@ export default function Header() {
                         ? "text-foreground font-medium"
                         : "text-muted-foreground hover:text-foreground"
                     )}
-                    onClick={() => setLanguage("ro")}
+                    onClick={() => {
+                      setLanguage("ro");
+                      window.location.reload();
+                    }}
                   >
                     RO
                   </button>
@@ -332,7 +335,10 @@ export default function Header() {
                         ? "text-foreground font-medium"
                         : "text-muted-foreground hover:text-foreground"
                     )}
-                    onClick={() => setLanguage("ru")}
+                    onClick={() => {
+                      setLanguage("ru");
+                      window.location.reload();
+                    }}
                   >
                     RU
                   </button>
@@ -551,14 +557,14 @@ export default function Header() {
                                   whileHover={{ scale: 1.01 }}
                                   className="flex gap-2 lg:gap-3 p-2 lg:p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all group"
                                 >
-                                  <div className="relative w-14 h-14 lg:w-16 lg:h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-50 group-hover:shadow-md transition-shadow">
+                                  <div className="relative w-12 h-12 lg:w-16 lg:h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 border border-primary/10 shadow-sm group-hover:shadow-md transition-all">
                                     {item.product.imagini[0] ? (
                                       <Image
                                         src={item.product.imagini[0]}
                                         alt={item.product.nume}
                                         fill
-                                        className="object-cover transition-transform group-hover:scale-105 duration-300"
-                                        sizes="(max-width: 768px) 100vw, 768px"
+                                        className="object-contain p-1 transition-transform group-hover:scale-105 duration-300"
+                                        sizes="(max-width: 768px) 48px, 64px"
                                       />
                                     ) : (
                                       <div className="absolute inset-0 flex items-center justify-center">
@@ -567,92 +573,38 @@ export default function Header() {
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-xs lg:text-sm truncate group-hover:text-primary transition-colors">
+                                    <h4 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
                                       {item.product.nume}
                                     </h4>
-                                    <div className="text-xs text-muted-foreground mt-0.5 lg:mt-1 flex items-center">
-                                      <span className="bg-gray-100 px-1 lg:px-1.5 py-0.5 rounded text-xs text-gray-600 mr-1">
+                                    <div className="text-xs text-muted-foreground mt-1.5 flex items-center">
+                                      <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs text-gray-600 mr-1">
                                         {t("cart_product_code")}
                                       </span>
                                       {item.product.cod}
                                     </div>
-                                    <div className="flex justify-between items-center mt-1">
-                                      <div className="text-xs lg:text-sm font-medium">
-                                        {(
-                                          item.product.pretRedus ||
-                                          item.product.pret
-                                        ).toLocaleString()}{" "}
-                                        MDL
-                                      </div>
-                                      <div className="flex items-center gap-1 bg-gray-50 rounded-full p-0.5">
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-5 w-5 lg:h-6 lg:w-6 rounded-full"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            updateQuantity(
-                                              item.product.id,
-                                              item.quantity - 1
-                                            );
-                                          }}
-                                        >
-                                          <Minus className="h-2.5 w-2.5 lg:h-3 lg:w-3" />
-                                        </Button>
-                                        <span className="text-xs lg:text-sm w-5 lg:w-6 text-center font-medium">
-                                          {item.quantity}
-                                        </span>
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-5 w-5 lg:h-6 lg:w-6 rounded-full"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            updateQuantity(
-                                              item.product.id,
-                                              item.quantity + 1
-                                            );
-                                          }}
-                                        >
-                                          <Plus className="h-2.5 w-2.5 lg:h-3 lg:w-3" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    <div className="text-right mt-0.5 lg:mt-1">
-                                      <div className="font-medium text-xs lg:text-sm">
-                                        {(
-                                          (item.product.pretRedus ||
-                                            item.product.pret) * item.quantity
-                                        ).toLocaleString()}{" "}
-                                        MDL
-                                      </div>
-                                      {item.product.pretRedus && (
-                                        <div className="text-[10px] lg:text-xs text-muted-foreground line-through">
-                                          {(
-                                            item.product.pret * item.quantity
-                                          ).toLocaleString()}{" "}
-                                          MDL
+                                    <div className="flex items-center justify-between mt-3">
+                                      <div className="flex flex-col">
+                                        <div className="text-base font-semibold text-primary">
+                                          {((item.product.pretRedus || item.product.pret) * item.quantity).toLocaleString()} MDL
                                         </div>
-                                      )}
-                                      {item.product.creditOption && (
-                                        <div className="text-[10px] lg:text-xs text-primary mt-0.5 lg:mt-1 bg-primary/5 rounded-full px-1.5 lg:px-2 py-0.5 inline-block">
-                                          {item.product.creditOption.months}{" "}
-                                          {t("cart_monthly_payment")}{" "}
-                                          {item.product.creditOption.monthlyPayment.toLocaleString()}{" "}
-                                          {t("cart_per_month")}
-                                        </div>
-                                      )}
+                                        {item.product.pretRedus && (
+                                          <div className="text-xs text-muted-foreground line-through">
+                                            {(item.product.pret * item.quantity).toLocaleString()} MDL
+                                          </div>
+                                        )}
+                                      </div>
+
                                     </div>
                                   </div>
                                   <motion.button
-                                    className="h-6 w-6 lg:h-8 lg:w-8 flex-shrink-0 self-start text-gray-400 hover:text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                     whileTap={{ scale: 0.9 }}
+                                    className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       removeItem(item.product.id);
                                     }}
                                   >
-                                    <X className="h-3 w-3 lg:h-4 lg:w-4" />
+                                    <X className="h-3 w-3" />
                                   </motion.button>
                                 </motion.div>
                               ))}
@@ -942,7 +894,7 @@ export default function Header() {
                                   onClick={() => setIsDesktopCatalogOpen(false)}
                                 >
                                   {subcategory.imagine && (
-                                    <div className="relative w-8 h-8 lg:w-10 lg:h-10 mr-3 rounded-md overflow-hidden bg-white flex-shrink-0 border border-gray-100 group-hover:border-primary/20 transition-colors">
+                                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 border border-primary/10 shadow-sm group-hover:shadow-md transition-all">
                                       <Image
                                         src={subcategory.imagine}
                                         alt={
@@ -951,8 +903,8 @@ export default function Header() {
                                             : subcategory.nume
                                         }
                                         fill
-                                        className="object-cover transition-transform group-hover:scale-110 duration-300"
-                                        sizes="40px"
+                                        className="object-contain p-1 transition-transform group-hover:scale-105 duration-300"
+                                        sizes="64px"
                                       />
                                     </div>
                                   )}
@@ -1321,7 +1273,10 @@ export default function Header() {
                                   ? "bg-primary text-primary-foreground font-medium"
                                   : "text-muted-foreground hover:text-foreground"
                               )}
-                              onClick={() => setLanguage("ro")}
+                              onClick={() => {
+                                setLanguage("ro");
+                                window.location.reload();
+                              }}
                             >
                               Română
                             </button>
@@ -1332,7 +1287,10 @@ export default function Header() {
                                   ? "bg-primary text-primary-foreground font-medium"
                                   : "text-muted-foreground hover:text-foreground"
                               )}
-                              onClick={() => setLanguage("ru")}
+                              onClick={() => {
+                                setLanguage("ru");
+                                window.location.reload();
+                              }}
                             >
                               Русский
                             </button>
@@ -1780,14 +1738,14 @@ export default function Header() {
                             whileHover={{ scale: 1.01 }}
                             className="flex gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-all group relative bg-white hover:shadow-sm"
                           >
-                            <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-50 group-hover:shadow-sm transition-shadow">
+                            <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 border border-primary/10 shadow-sm group-hover:shadow-md transition-all">
                               {item.product.imagini[0] ? (
                                 <Image
                                   src={item.product.imagini[0]}
                                   alt={item.product.nume}
                                   fill
-                                  className="object-cover transition-transform group-hover:scale-105 duration-300"
-                                  sizes="(max-width: 768px) 100vw, 768px"
+                                  className="object-contain p-1 transition-transform group-hover:scale-105 duration-300"
+                                  sizes="64px"
                                 />
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center">
@@ -1796,85 +1754,32 @@ export default function Header() {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                              <h4 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
                                 {item.product.nume}
                               </h4>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
+                              <div className="text-xs text-muted-foreground mt-1.5 flex items-center">
+                                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs text-gray-600 mr-1">
                                   {t("cart_product_code")}
                                 </span>
-                                <span className="truncate">
-                                  {item.product.cod}
-                                </span>
+                                {item.product.cod}
                               </div>
-                              <div className="flex justify-between items-center mt-2">
-                                <div className="text-sm font-medium">
-                                  {(
-                                    item.product.pretRedus || item.product.pret
-                                  ).toLocaleString()}{" "}
-                                  MDL
-                                </div>
-                                <div className="flex items-center gap-1 bg-gray-50 rounded-full p-0.5">
-                                  <motion.button
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateQuantity(
-                                        item.product.id,
-                                        item.quantity - 1
-                                      );
-                                    }}
-                                    className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                                  >
-                                    <Minus className="h-3 w-3" />
-                                  </motion.button>
-                                  <span className="text-sm w-6 text-center font-medium">
-                                    {item.quantity}
-                                  </span>
-                                  <motion.button
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateQuantity(
-                                        item.product.id,
-                                        item.quantity + 1
-                                      );
-                                    }}
-                                    className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </motion.button>
-                                </div>
-                              </div>
-                              <div className="mt-1">
-                                <div className="font-medium text-right">
-                                  {(
-                                    (item.product.pretRedus ||
-                                      item.product.pret) * item.quantity
-                                  ).toLocaleString()}{" "}
-                                  MDL
-                                </div>
-                                {item.product.pretRedus && (
-                                  <div className="text-xs text-muted-foreground line-through text-right">
-                                    {(
-                                      item.product.pret * item.quantity
-                                    ).toLocaleString()}{" "}
-                                    MDL
+                              <div className="flex items-center justify-between mt-3">
+                                <div className="flex flex-col">
+                                  <div className="text-base font-semibold text-primary">
+                                    {((item.product.pretRedus || item.product.pret) * item.quantity).toLocaleString()} MDL
                                   </div>
-                                )}
-                                {item.product.creditOption && (
-                                  <div className="text-xs text-primary mt-1 bg-primary/5 rounded-full px-2 py-0.5 inline-block float-right">
-                                    {item.product.creditOption.months}{" "}
-                                    {t("cart_monthly_payment")}{" "}
-                                    {item.product.creditOption.monthlyPayment.toLocaleString()}{" "}
-                                    {t("cart_per_month")}
-                                  </div>
-                                )}
+                                  {item.product.pretRedus && (
+                                    <div className="text-xs text-muted-foreground line-through">
+                                      {(item.product.pret * item.quantity).toLocaleString()} MDL
+                                    </div>
+                                  )}
+                                </div>
+
                               </div>
                             </div>
                             <motion.button
                               whileTap={{ scale: 0.9 }}
-                              className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all opacity-0 group-hover:opacity-100"
+                              className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 removeItem(item.product.id);
@@ -1955,7 +1860,7 @@ export default function Header() {
       </div>
 
       {/* Credit announcement bar - Full width background with contained text */}
-      <div className="lg:block bg-primary text-white overflow-hidden whitespace-nowrap border-t border-white/10">
+      <div className="hidden lg:block bg-primary text-white overflow-hidden whitespace-nowrap border-t border-white/10">
         <div className="container mx-auto relative">
           <div className="relative h-12 overflow-hidden">
             <div className="absolute inset-0">

@@ -16,14 +16,35 @@ export const translations: Translations = {
   workingHours: {
     ro: "Luni - Vineri: 9:00 - 18:00",
     ru: "Понедельник - Пятница: 9:00 - 18:00",
-  },
+    },
+    product_count_singular: {
+        ro: "Produs",
+        ru: "товар",
+    },
+    checkout_intro:{
+        ro: "Introduceți informațiile de mai jos pentru a finaliza comanda",
+        ru: "Введите информацию ниже для завершения заказа",
+    },
   credit: {
     ro: "Intelect Credit",
     ru: "Intelect Кредит",
+    },
+  checkout_required_fields:{
+    ro: "Câmpuri obligatorii",
+    ru: "Обязательные поля",
   },
+    checkout_payment: {
+        ro: "Metoda de plată",
+        ru: "Метод оплаты",
+    },
+
   deliveryHeader: {
     ro: "Livrare",
     ru: "Доставка",
+    },
+  checkout_select_payment: {
+    ro: "Selectează metoda de plată",
+    ru: "Выберите метод оплаты",
   },
   searching: {
     ro: "Caută produse...",
@@ -41,11 +62,34 @@ export const translations: Translations = {
   techStoreHeader: {
     ro: "Magazin de tehnică",
     ru: "Магазин техники",
-  },
+    },
+  checkout_payment_credit: {
+    ro: "Credit",
+    ru: "Кредит",
+    },
+
+  checkout_payment_pickup: {
+    ro: "Pickup",
+    ru: "Самовывоз",
+    },
+  checkout_payment_credit_description: {
+    ro: "Credit",
+    ru: "Кредит",
+    },
+
   garantie_faq: {
     ro: "FAQ",
     ru: "FAQ",
-  },
+    },
+  checkout_delivery_cash_description: {
+    ro: "Livrare la domiciliu",
+    ru: "Доставка на дом",
+    },
+  checkout_delivery_cash: {
+    ro: "Livrare la domiciliu",
+    ru: "Доставка на дом",
+    },
+
   garantie_coverage: {
     ro: "Garantie",
     ru: "Гарантия",
@@ -53,6 +97,126 @@ export const translations: Translations = {
   returnare_faq: {
     ro: "FAQ",
     ru: "FAQ",
+    },
+
+  cart_subtotal: {
+    ro: "Subtotal",
+    ru: "Сумма заказа",
+    },
+
+  checkout_first_name_placeholder: {
+    ro: "Numele tău",
+    ru: "Ваше имя",
+    },
+  checkout_last_name_placeholder: {
+    ro: "Numele tău",
+    ru: "Ваше имя",
+    },
+
+  checkout_email_placeholder: {
+    ro: "Adresa ta de email",
+    ru: "Ваш email",
+    },
+  checkout_phone_placeholder: {
+    ro: "Numărul tău de telefon",
+    ru: "Ваш номер телефона",
+    },
+
+  your_shopping_cart: {
+    ro: "Cosul tău de cumpărături",
+    ru: "Ваш корзина покупок",
+    },
+
+  review_your_items: {
+    ro: "Revizieți articolele",
+    ru: "Просмотр ваших товаров",
+    },
+checkout_success: {
+    ro: "Comanda a fost finalizată cu succes",
+    ru: "Заказ успешно завершен",
+    },
+
+  checkout_term: {
+    ro: "Luni",
+    ru: "Понедельник",
+    },
+
+  checkout_order_summary: {
+    ro: "Sumarul comenzii",
+    ru: "Сводка заказа",
+    },
+
+  cart_description: {
+    ro: "Descriere",
+    ru: "Описание",
+    },
+
+  checkout_monthly_payment: {
+    ro: "Plată lunară",
+    ru: "Ежемесячный платеж",
+    },
+  thank_you_for_order: {
+    ro: "Vă mulțumim pentru comanda",
+    ru: "Спасибо за заказ",
+    },
+
+  checkout_complete_order: {
+    ro: "Finalizează comanda",
+    ru: "Завершить заказ",
+    },
+
+  checkout_place_order: {
+    ro: "Plasează comanda",
+    ru: "Разместить заказ",
+    },
+
+  checkout_total_credit: {
+    ro: "Total credit",
+    ru: "Общая сумма кредита",
+    },
+
+  checkout_credit_more_info: {
+    ro: "Mai multe informații despre credit",
+    ru: "Больше информации о кредите",
+    },
+  checkout_credit_learn_more: {
+    ro: "Aflați mai multe",
+    ru: "Узнать больше",
+    },
+  checkout_credit_apply: {
+    ro: "Aplică",
+    ru: "Применить",
+  },
+  cart_shipping: {
+    ro: "Livrare",
+    ru: "Доставка",
+  },
+  checkout_notes_optional: {
+    ro: "Notițe suplimentare (opționale)",
+    ru: "Дополнительные заметки (необязательно)",
+    },
+
+  checkout_support_hours: {
+    ro: "Luni - Vineri: 9:00 - 18:00",
+    ru: "Понедельник - Пятница: 9:00 - 18:00",
+    },
+
+  checkout_help: {
+    ro: "Ajutor",
+    ru: "Помощь",
+    },
+
+  checkout_additional_notes: {
+    ro: "Notițe suplimentare",
+    ru: "Дополнительные заметки",
+    },
+  checkout_address_placeholder: {
+    ro: "Adresa",
+    ru: "Адрес",
+    },
+  checkout_city_placeholder: {
+    ro: "Oras",
+    ru: "Город",
   },
   viewAllProducts: {
     ro: "Vezi toate produsele",
@@ -2347,7 +2511,13 @@ export const translations: Translations = {
   checkout_error_email_invalid: {
     ro: "Adresa de email nu este validă",
     ru: "Неверный формат электронной почты",
+    },
+
+  adding_to_cart: {
+    ro: "Se adaugă în coș...",
+    ru: "Добавляется в корзину...",
   },
+
   checkout_error_phone_invalid: {
     ro: "Numărul de telefon nu este valid",
     ru: "Неверный формат телефона",
@@ -2376,10 +2546,7 @@ export const translations: Translations = {
     ro: "Adaugă notițe pentru comanda ta",
     ru: "Добавьте примечания к вашему заказу",
   },
-  checkout_order_summary: {
-    ro: "Sumarul comenzii",
-    ru: "Сводка заказа",
-  },
+
   checkout_back_to_cart: {
     ro: "Înapoi la coș",
     ru: "Вернуться в корзину",

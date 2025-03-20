@@ -121,9 +121,7 @@ export default function Advantages() {
           >
             <HyperText
               className="text-3xl font-bold sm:text-4xl"
-              duration={200}
-              startOnView={true}
-              animateOnHover={false}
+
             >
               {t("ourAdvantages")}
             </HyperText>
@@ -142,14 +140,12 @@ export default function Advantages() {
             animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <HyperText
+            <span
               className="text-lg text-gray-600"
-              duration={200}
-              startOnView={true}
-              delay={600}
+
             >
               {t("whyChooseUs")}
-            </HyperText>
+            </span>
           </motion.p>
         </div>
 
@@ -189,14 +185,12 @@ export default function Advantages() {
                   <h3
                     className={`text-xl font-bold mb-4 group-hover:${advantage.color} transition-colors duration-300 relative z-10`}
                   >
-                    <HyperText
+                    <span
                       className={`text-xl font-bold transition-colors duration-300`}
-                      duration={200}
-                      startOnView={true}
-                      animateOnHover={true}
+
                     >
                       {advantage.title}
-                    </HyperText>
+                    </span>
                   </h3>
                   <p className="text-gray-600 leading-relaxed relative z-10">
                     {advantage.description}
@@ -234,14 +228,13 @@ export default function Advantages() {
                     <h3
                       className={`text-base font-bold mb-1 ${advantage.color}`}
                     >
-                      <HyperText
+                      <span
                         className={`text-base font-bold ${advantage.color}`}
-                        duration={200}
-                        startOnView={true}
-                        characterSet={advantage.title.split("")}
+
+
                       >
                         {advantage.title}
-                      </HyperText>
+                      </span>
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
                       {advantage.description}

@@ -98,13 +98,15 @@ export function HyperText({
     const interval = setInterval(() => {
       if (iterationCount.current < maxIterations) {
         setDisplayText((currentText) =>
-          currentText.map((letter, index) =>
-            letter === " "
-              ? letter
-              : index <= iterationCount.current
-                ? children[index]
-                : characterSet[getRandomInt(characterSet.length)],
-          ),
+          currentText.map((letter, index) => {
+            if (letter === " " || index > children.length - 1) {
+              return letter || " ";
+            }
+
+            return index <= iterationCount.current
+              ? children[index] || " "
+              : characterSet[getRandomInt(characterSet.length)] || "X";
+          }),
         );
         iterationCount.current = iterationCount.current + 0.1;
       } else {
@@ -129,7 +131,7 @@ export function HyperText({
             key={index}
             className={cn("font-mono", letter === " " ? "w-3" : "")}
           >
-            {letter.toUpperCase()}
+            {letter ? letter.toUpperCase() : ""}
           </motion.span>
         ))}
       </AnimatePresence>

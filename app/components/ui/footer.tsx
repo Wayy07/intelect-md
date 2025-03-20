@@ -120,9 +120,7 @@ export default function Footer() {
           <div className="lg:col-span-3 lg:col-start-6">
             <h4 className="font-semibold text-gray-900 mb-4">
               <HyperText
-                characterSet={["S", "U", "P", "O", "R", "T"]}
-                duration={1000}
-                startOnView={true}
+
                 className="text-base font-semibold"
               >
                 {t("support") || "Support"}
@@ -147,8 +145,6 @@ export default function Footer() {
           <div className="lg:col-span-4 lg:col-start-9">
             <h4 className="font-semibold text-gray-900 mb-4">
               <HyperText
-                duration={1200}
-                startOnView={true}
                 className="text-base font-semibold"
               >
                 {t("subscribeToNewsletter") || "Newsletter"}
@@ -183,11 +179,9 @@ export default function Footer() {
                 shimmerColor="#00BFFF"
                 shimmerSize="0.1em"
                 shimmerDuration="2s"
-                background="rgba(0, 114, 245, 0.9)"
+                background="rgba(0, 191, 255, 0.9)"
               >
                 <HyperText
-                  duration={800}
-                  animateOnHover={true}
                   className="text-md font-medium"
                 >
                   {t("subscribe") || "Subscribe"}
@@ -198,8 +192,6 @@ export default function Footer() {
             <div className="mt-6">
               <h4 className="font-semibold text-gray-900 mb-3 text-sm">
                 <HyperText
-                  duration={1200}
-                  startOnView={true}
                   className="text-base font-semibold"
                 >
                   {t("followUs") || "Follow Us"}

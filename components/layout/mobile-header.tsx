@@ -171,7 +171,7 @@ export default function MobileHeader() {
       `}</style>
 
       <div
-        className={`sticky top-0 z-40 bg-white shadow-md md:hidden border-b border-gray-100 transition-transform duration-200 ease-out ${
+        className={`sticky top-0 z-40 bg-white shadow-md md:hidden border-b border-gray-100 transition-transform duration-400 ease-out ${
           isVisible ? "transform-none" : "-translate-y-full"
         }`}
       >
@@ -215,7 +215,10 @@ export default function MobileHeader() {
                         ? "ring-2 ring-primary ring-offset-1"
                         : "opacity-70 hover:opacity-100"
                     )}
-                    onClick={() => setLanguage("ro")}
+                    onClick={() => {
+                      setLanguage("ro");
+                      window.location.reload();
+                    }}
                     aria-label="Romanian Language"
                     title="Romanian Language"
                   >
@@ -234,7 +237,10 @@ export default function MobileHeader() {
                         ? "ring-2 ring-primary ring-offset-1"
                         : "opacity-70 hover:opacity-100"
                     )}
-                    onClick={() => setLanguage("ru")}
+                    onClick={() => {
+                      setLanguage("ru");
+                      window.location.reload();
+                    }}
                     aria-label="Russian Language"
                     title="Russian Language"
                   >

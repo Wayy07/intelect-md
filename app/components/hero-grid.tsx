@@ -272,9 +272,7 @@ const BrandLogos = () => {
         className="relative max-w-7xl mx-auto overflow-hidden"
         ref={containerRef}
       >
-        {/* Fade overlay on the edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-gray-50 to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-gray-50 to-transparent z-10" />
+
 
         <div className="overflow-hidden cursor-grab active:cursor-grabbing">
           <motion.div
@@ -420,10 +418,6 @@ const SubcategoryTags = () => {
       <div className="text-center mb-6 md:mb-10">
         <HyperText
           className="text-2xl md:text-4xl font-extrabold text-black inline-block"
-          duration={1200}
-          delay={300}
-          animateOnHover={true}
-          startOnView={true}
         >
           {t("popular_categories")}
         </HyperText>
