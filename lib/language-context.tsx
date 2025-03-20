@@ -25,11 +25,48 @@ export const translations: Translations = {
     ro: "Livrare",
     ru: "Доставка",
   },
+  searching: {
+    ro: "Caută produse...",
+    ru: "Поиск товаров...",
+  },
+  viewAllResults: {
+    ro: "Vezi toate rezultatele",
+    ru: "Посмотреть все результаты",
+  },
+  typeTwoChars: {
+    ro: "Tastă minim 2 caractere pentru a căuta",
+    ru: "Введите минимум 2 символа для поиска",
+  },
   // Header - Main
   techStoreHeader: {
     ro: "Magazin de tehnică",
     ru: "Магазин техники",
   },
+  garantie_faq: {
+    ro: "FAQ",
+    ru: "FAQ",
+  },
+  garantie_coverage: {
+    ro: "Garantie",
+    ru: "Гарантия",
+  },
+  returnare_faq: {
+    ro: "FAQ",
+    ru: "FAQ",
+  },
+  viewAllProducts: {
+    ro: "Vezi toate produsele",
+    ru: "Посмотреть все товары",
+  },
+  returnare_exchange: {
+    ro: "Returnare și schimb",
+    ru: "Возврат и обмен",
+  },
+  returnare_process: {
+    ro: "Procesul returnării",
+    ru: "Процесс возврата",
+  },
+
   catalog: {
     ro: "Catalog",
     ru: "Каталог",
@@ -42,6 +79,10 @@ export const translations: Translations = {
     ro: "Credit",
     ru: "Кредиты",
   },
+  livrare_calculate_shipping: {
+    ro: "Calculează costul livrării",
+    ru: "Рассчитать стоимость доставки",
+  },
   product_available_payment_periods: {
     ro: "Perioade de plată disponibile",
     ru: "Доступные периоды оплаты",
@@ -49,6 +90,34 @@ export const translations: Translations = {
   followUs: {
     ro: "Urmărește-ne",
     ru: "Следуйте за нами",
+  },
+  contact_subtitle: {
+    ro: "Contactați-ne pentru asistență sau pentru a afla mai multe despre produsele și serviciile noastre.",
+    ru: "Свяжитесь с нами, чтобы получить помощь или узнать больше о наших продуктах и услугах.",
+  },
+  contact_our_location: {
+    ro: "Locatia noastra",
+    ru: "Наше местоположение",
+  },
+  contact_open_in_maps: {
+    ro: "Deschide in Google Maps",
+    ru: "Открыть в Google Maps",
+  },
+  contact_call_us: {
+    ro: "Sună-ne",
+    ru: "Позвоните нам",
+  },
+  learn_more: {
+    ro: "Aflați mai multe",
+    ru: "Узнать больше",
+  },
+  month: {
+    ro: "luna",
+    ru: "месяц",
+  },
+  product_similar_description: {
+    ro: "Produse similare",
+    ru: "Похожие товары",
   },
   backToTop: {
     ro: "Înapoi sus",

@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
+import { HyperText } from "@/components/magicui/hyper-text";
 
 // Support links
 const getSupportLinks = (t: (key: string) => string) => [
@@ -47,7 +49,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-white border-t border-gray-100">
+    <footer className="bg-white ">
       {/* Main footer content */}
       <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
@@ -117,7 +119,14 @@ export default function Footer() {
           {/* Middle column with support links - 3 columns on large screens */}
           <div className="lg:col-span-3 lg:col-start-6">
             <h4 className="font-semibold text-gray-900 mb-4">
-              {t("support") || "Support"}
+              <HyperText
+                characterSet={["S", "U", "P", "O", "R", "T"]}
+                duration={1000}
+                startOnView={true}
+                className="text-base font-semibold"
+              >
+                {t("support") || "Support"}
+              </HyperText>
             </h4>
             <ul className="space-y-2">
               {supportLinks.map((link) => (
@@ -137,7 +146,13 @@ export default function Footer() {
           {/* Newsletter section - 5 columns on large screens */}
           <div className="lg:col-span-4 lg:col-start-9">
             <h4 className="font-semibold text-gray-900 mb-4">
-              {t("subscribeToNewsletter") || "Newsletter"}
+              <HyperText
+                duration={1200}
+                startOnView={true}
+                className="text-base font-semibold"
+              >
+                {t("subscribeToNewsletter") || "Newsletter"}
+              </HyperText>
             </h4>
             <p className="text-gray-600 mb-4 text-sm">
               {t("receiveOffersAndNews") ||
@@ -162,14 +177,33 @@ export default function Footer() {
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
-              <Button type="submit" className="w-full">
-                {t("subscribe") || "Subscribe"}
-              </Button>
+              <ShimmerButton
+                type="submit"
+                className="w-full py-1 font-medium text-md"
+                shimmerColor="#00BFFF"
+                shimmerSize="0.1em"
+                shimmerDuration="2s"
+                background="rgba(0, 114, 245, 0.9)"
+              >
+                <HyperText
+                  duration={800}
+                  animateOnHover={true}
+                  className="text-md font-medium"
+                >
+                  {t("subscribe") || "Subscribe"}
+                </HyperText>
+              </ShimmerButton>
             </form>
 
             <div className="mt-6">
               <h4 className="font-semibold text-gray-900 mb-3 text-sm">
-                {t("followUs") || "Follow Us"}
+                <HyperText
+                  duration={1200}
+                  startOnView={true}
+                  className="text-base font-semibold"
+                >
+                  {t("followUs") || "Follow Us"}
+                </HyperText>
               </h4>
               <div className="flex gap-4">
                 <a
@@ -195,15 +229,18 @@ export default function Footer() {
             {t("allRightsReserved") || "All rights reserved"}
           </p>
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs border-gray-200"
+            <ShimmerButton
+              className="h-8 text-xs flex items-center justify-center px-3 py-1.5"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              shimmerColor="rgba(0, 0, 0, 0.1)"
+              shimmerSize="0.05em"
+              shimmerDuration="1.5s"
+              background="white"
+              borderRadius="0.375rem"
             >
               <ChevronUp className="h-3 w-3 mr-1" />
               {t("backToTop") || "Back to top"}
-            </Button>
+            </ShimmerButton>
             <Link href="/" className="flex items-center">
               <div className="text-xs text-gray-500 flex items-center gap-1 hover:text-primary transition-colors">
                 <Heart className="h-3 w-3" />

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 import Image from "next/image";
+import { HyperText } from "@/components/magicui/hyper-text";
 import {
   motion,
   useMotionValue,
@@ -140,7 +141,7 @@ export default function LatestProducts() {
         <div className="mb-8 flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl flex items-center gap-2">
-              {t("newProducts")}
+              <HyperText>{t("newProducts")}</HyperText>
             </h2>
             <div className="flex items-center gap-3 mt-2">
               <div className="h-1 w-12 bg-primary rounded-full"></div>

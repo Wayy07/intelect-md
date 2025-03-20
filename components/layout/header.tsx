@@ -285,7 +285,7 @@ export default function Header() {
               <div className="flex items-center gap-3 lg:gap-6">
                 <a
                   href="tel:+37360123456"
-                  className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Phone className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                   <span>+373 601 75 111</span>
@@ -301,13 +301,13 @@ export default function Header() {
                 <nav className="flex items-center gap-2 lg:gap-4">
                   <Link
                     href="/credit"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     {t("credit")}
                   </Link>
                   <Link
                     href="/livrare"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     {t("delivery")}
                   </Link>
@@ -425,13 +425,13 @@ export default function Header() {
                   <input
                     type="text"
                     placeholder={t("searchPlaceholder")}
-                    className="w-full h-10 lg:h-12 pl-10 lg:pl-12 pr-4 text-sm lg:text-base rounded-full border border-input bg-accent/50 transition-all duration-200 focus:bg-background focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/70"
+                    className="w-full h-10 lg:h-12 pl-10 lg:pl-12 pr-4 text-sm lg:text-base rounded-full border border-input bg-accent/50 transition-all duration-200 focus:bg-background focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground/70"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                   <button
                     type="submit"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary h-6 lg:h-7 w-6 lg:w-7 flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white h-6 lg:h-7 w-6 lg:w-7 flex items-center justify-center rounded-full bg-primary hover:bg-primary/90 transition-colors"
                     aria-label="Search"
                   >
                     <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4" />
@@ -445,7 +445,7 @@ export default function Header() {
               <Link href="/contact" className="px-2 lg:px-3">
                 <Button
                   variant="ghost"
-                  className="text-sm lg:text-base h-10 lg:h-12 px-2 lg:px-4"
+                  className="text-sm lg:text-base h-10 lg:h-12 px-2 lg:px-4 hover:text-primary"
                 >
                   {t("contact")}
                 </Button>
@@ -460,7 +460,7 @@ export default function Header() {
                 >
                   <ShoppingCart className="h-5 w-5 lg:h-6 lg:w-6" />
                   {totalItems > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                       {totalItems}
                     </span>
                   )}
@@ -707,7 +707,7 @@ export default function Header() {
                                 {t("cart_title")}
                               </Button>
                               <Button
-                                className="flex-1 text-xs lg:text-sm h-8 lg:h-10 rounded-full bg-black hover:bg-black/90 text-white"
+                                className="flex-1 text-xs lg:text-sm h-8 lg:h-10 rounded-full bg-primary hover:bg-primary/90 text-white"
                                 onClick={() => {
                                   setIsDesktopCartOpen(false);
                                   window.location.href = "/checkout";
@@ -766,7 +766,7 @@ export default function Header() {
                                     alt={session.user.name || "User"}
                                     width={40}
                                     height={40}
-                                    className="rounded-full"
+                                    className="rounded-full border-2 border-primary"
                                   />
                                 ) : (
                                   <User className="h-4 w-4 lg:h-5 lg:w-5 text-muted-foreground" />
@@ -785,7 +785,7 @@ export default function Header() {
                             <div className="mt-4 space-y-1 lg:space-y-2">
                               <Link
                                 href="/comenzi"
-                                className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent transition-colors w-full"
+                                className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent hover:text-primary transition-colors w-full"
                                 onClick={() => setIsDesktopUserMenuOpen(false)}
                               >
                                 <span>{t("myOrders")}</span>
@@ -793,7 +793,7 @@ export default function Header() {
                               </Link>
                               <Link
                                 href="/favorite"
-                                className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent transition-colors w-full"
+                                className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent hover:text-primary transition-colors w-full"
                                 onClick={() => setIsDesktopUserMenuOpen(false)}
                               >
                                 <span>{t("favorites")}</span>
@@ -801,7 +801,7 @@ export default function Header() {
                               </Link>
                               <Link
                                 href="/credit"
-                                className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent transition-colors w-full"
+                                className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent hover:text-primary transition-colors w-full"
                                 onClick={() => setIsDesktopUserMenuOpen(false)}
                               >
                                 <span>{t("buyInInstallments")}</span>
@@ -1077,7 +1077,7 @@ export default function Header() {
                   >
                     <ShoppingCart className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
                     {totalItems > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                         {totalItems}
                       </span>
                     )}
@@ -1169,7 +1169,7 @@ export default function Header() {
                       >
                         {/* Back button */}
                         <button
-                          className="flex items-center gap-2 p-4 w-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          className="flex items-center gap-2 p-4 w-full text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                           onClick={() => setActiveMobileCategory(null)}
                         >
                           <ChevronDown className="h-4 w-4 rotate-90" />
@@ -1234,7 +1234,7 @@ export default function Header() {
                                     </p>
                                   </div>
                                   <div className="ml-4">
-                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+                                    <div className="flex h-7 w-7 lg:h-8 lg:w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
                                       <ChevronRight className="h-4 w-4" />
                                     </div>
                                   </div>
@@ -1583,7 +1583,7 @@ export default function Header() {
                         <div className="space-y-2">
                           <Link
                             href="/comenzi"
-                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
+                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent hover:text-primary transition-colors w-full"
                             onClick={() => setIsMobileUserMenuOpen(false)}
                           >
                             <span>{t("myOrders")}</span>
@@ -1591,7 +1591,7 @@ export default function Header() {
                           </Link>
                           <Link
                             href="/favorite"
-                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
+                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent hover:text-primary transition-colors w-full"
                             onClick={() => setIsMobileUserMenuOpen(false)}
                           >
                             <span>{t("favorites")}</span>
@@ -1599,7 +1599,7 @@ export default function Header() {
                           </Link>
                           <Link
                             href="/credit"
-                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent"
+                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent hover:text-primary transition-colors w-full"
                             onClick={() => setIsMobileUserMenuOpen(false)}
                           >
                             <span>{t("buyInInstallments")}</span>
@@ -1908,7 +1908,7 @@ export default function Header() {
                         <div className="flex items-center justify-between text-base pt-2 border-t">
                           <span className="font-medium">{t("cart_total")}</span>
                           <motion.span
-                            className="font-semibold text-lg"
+                            className="font-semibold text-lg text-primary"
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
                             transition={{
@@ -1931,7 +1931,7 @@ export default function Header() {
                         {t("cart_clear") || "Clear Cart"}
                       </Button>
                       <Button
-                        className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white"
+                        className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white"
                         disabled={items.length === 0}
                         onClick={() => (window.location.href = "/checkout")}
                       >
@@ -1939,7 +1939,7 @@ export default function Header() {
                       </Button>
                       <Button
                         variant="outline"
-                        className="w-full h-10 rounded-xl text-sm border-gray-200"
+                        className="w-full h-10 rounded-xl text-sm border-gray-200 hover:border-primary/30 hover:text-primary"
                         disabled={items.length === 0}
                         onClick={() => (window.location.href = "/cart")}
                       >
@@ -1955,7 +1955,7 @@ export default function Header() {
       </div>
 
       {/* Credit announcement bar - Full width background with contained text */}
-      <div className=" lg:block bg-black text-white overflow-hidden whitespace-nowrap border-t border-white/10">
+      <div className="lg:block bg-primary text-white overflow-hidden whitespace-nowrap border-t border-white/10">
         <div className="container mx-auto relative">
           <div className="relative h-12 overflow-hidden">
             <div className="absolute inset-0">

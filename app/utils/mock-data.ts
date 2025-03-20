@@ -82,7 +82,7 @@ export const latestProducts: Product[] = [
     stare: "nou",
   },
   {
-    id: "3",
+    id: "3-tablet",
     nume: "Tablet Example X",
     cod: "TX-003",
     pret: 5999,
@@ -546,4 +546,11 @@ export function getRelatedProducts(
   return sameCategoryProducts
     .sort(() => 0.5 - Math.random())
     .slice(0, Math.min(limit, sameCategoryProducts.length));
+}
+
+// Additional helper function to add test favorite products for testing
+export function getRandomProducts(limit: number = 4): Product[] {
+  return [...allProducts]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, Math.min(limit, allProducts.length));
 }

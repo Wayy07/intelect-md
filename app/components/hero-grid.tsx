@@ -30,6 +30,9 @@ import {
   Brand,
 } from "@/lib/mock-data";
 import { useBannerStore } from "../lib/banner-data";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
+import { HyperText } from "@/components/magicui/hyper-text";
+import { useRouter } from "next/navigation";
 
 // Interface for Banner object
 interface Banner {
@@ -41,17 +44,6 @@ interface Banner {
   linkUrl: string;
   buttonText?: string;
 }
-
-const gridPositions = [
-  "col-span-1 row-span-1",
-  "col-span-2 row-span-2",
-  "col-span-1 row-span-3",
-  "col-span-1 row-span-2",
-  "col-span-2 row-span-1",
-  "col-span-1 row-span-1",
-  "col-span-1 row-span-1",
-  "col-span-2 row-span-1",
-];
 
 // Banner Slideshow component
 const BannerSlideshow = () => {
@@ -96,14 +88,14 @@ const BannerSlideshow = () => {
   }, []);
 
   return (
-    <div className="sm:py-0 py-8 bg-gray-50">
-      {/* Mobile container */}
-      <div className="md:px-0 px-4 md:max-w-none">
-        {/* Fixed size container with rounded edges and white border */}
-        <div className="md:rounded-none rounded-2xl border-2 border-white overflow-hidden shadow-lg">
+    <div className="py-4 md:py-6 ">
+      {/* Container with consistent styling for both mobile and desktop */}
+      <div className="px-4  md:max-w-[900px] xl:max-w-[1400px] 3xl:max-w-[2000px]  mx-auto">
+        {/* Fixed size container with rounded edges and white border for both mobile and desktop */}
+        <div className="rounded-2xl border-2 border-white overflow-hidden shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300">
           <Carousel
             setApi={setApi}
-            className="w-full h-[200px] md:h-[500px] xl:h-[650px] 3xl:h-[750px]"
+            className="w-full h-[220px] md:h-[235px] xl:h-[400px] 3xl:h-[550px]"
             opts={{
               align: "start",
               loop: true,
@@ -114,9 +106,9 @@ const BannerSlideshow = () => {
                 <CarouselItem key={banner.id}>
                   <Link
                     href={banner.linkUrl}
-                    className="relative block w-full h-[200px] md:h-[500px] xl:h-[650px] 3xl:h-[750px]"
+                    className="relative block w-full h-[220px] md:h-[235px] xl:h-[400px] 3xl:h-[550px]"
                   >
-                    {/* Desktop image */}
+                    {/* Display appropriate image based on screen size */}
                     <img
                       src={
                         isMobile
@@ -124,30 +116,30 @@ const BannerSlideshow = () => {
                           : banner.desktopImageUrl
                       }
                       alt={banner.title || banner.id}
-                      className="max-w-[100%] w-full md:h-[500px] h-[200px] xl:h-[650px] 3xl:h-[750px] object-cover"
+                      className="max-w-[100%] w-full h-[220px] md:h-[235px] xl:h-[400px] 3xl:h-[550px] object-cover"
                     />
                   </Link>
                 </CarouselItem>
               ))}
             </CarouselContent>
 
-            <CarouselPrevious className="left-4 md:left-8 bg-white/80 border-0 shadow-md hover:bg-white z-10" />
-            <CarouselNext className="right-4 md:right-8 bg-white/80 border-0 shadow-md hover:bg-white z-10" />
+            <CarouselPrevious className="left-4 md:left-8 bg-white/80 hover:bg-white border-0 shadow-md hover:shadow-lg text-primary hover:text-primary/90 h-8 w-8 md:h-10 md:w-10 z-10" />
+            <CarouselNext className="right-4 md:right-8 bg-white/80 hover:bg-white border-0 shadow-md hover:shadow-lg text-primary hover:text-primary/90 h-8 w-8 md:h-10 md:w-10 z-10" />
           </Carousel>
         </div>
       </div>
 
-      {/* Mobile indicators (outside container) */}
-      <div className="flex md:hidden justify-center flex-wrap gap-[3px] mt-3 max-w-[300px] mx-auto">
+      {/* Indicators for both mobile and desktop */}
+      <div className="flex justify-center flex-wrap gap-[4px] mt-4 max-w-[300px] mx-auto">
         {mainBanners
           .slice(0, Math.min(mainBanners.length, 20))
           .map((_: any, index: number) => (
             <button
-              key={`indicator-mobile-${index}`}
+              key={`indicator-${index}`}
               onClick={() => api?.scrollTo(index)}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+              className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full transition-all duration-300 ${
                 index === current
-                  ? "bg-primary scale-110"
+                  ? "bg-primary scale-110 shadow-sm shadow-primary/30"
                   : "bg-gray-300 hover:bg-gray-400"
               }`}
               aria-label={`Go to slide ${index + 1}`}
@@ -275,7 +267,7 @@ const BrandLogos = () => {
   };
 
   return (
-    <div className="w-full py-10 px-4 bg-gray-50 border-t border-gray-100">
+    <div className="w-full py-10 px-4  ">
       <div
         className="relative max-w-7xl mx-auto overflow-hidden"
         ref={containerRef}
@@ -389,12 +381,13 @@ const BrandLogos = () => {
 const SubcategoryTags = () => {
   const { t } = useLanguage();
   const [allTags, setAllTags] = useState<SubcategoryWithCategory[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchSubcategories = async () => {
       try {
         // Get 15 random subcategories from our centralized mock data
-        const randomSubcategories = getRandomSubcategories(15);
+        const randomSubcategories = getRandomSubcategories(16);
 
         // Before setting the state, apply translations to the names
         const translatedSubcategories = randomSubcategories.map((subcat) => ({
@@ -418,25 +411,43 @@ const SubcategoryTags = () => {
     fetchSubcategories();
   }, [t]);
 
+  const handleTagClick = (categoryId: string, subcategoryId: string) => {
+    router.push(`/catalog?category=${categoryId}&subcategory=${subcategoryId}`);
+  };
+
   return (
-    <div className="w-full py-8 md:py-14 px-4 md:px-8 bg-gray-50">
-      <h2 className="text-center text-xl md:text-2xl  mb-6 md:mb-10 font-extrabold text-gray-800">
-        {t("popular_categories")}
-      </h2>
-      <div className="flex flex-wrap justify-center gap-2 md:gap-4 max-w-6xl mx-auto">
+    <div className="w-full py-8 md:py-14 px-4 md:px-8 ">
+      <div className="text-center mb-6 md:mb-10">
+        <HyperText
+          className="text-2xl md:text-4xl font-extrabold text-black inline-block"
+          duration={1200}
+          delay={300}
+          animateOnHover={true}
+          startOnView={true}
+        >
+          {t("popular_categories")}
+        </HyperText>
+      </div>
+      <div className="flex flex-wrap justify-center gap-3 md:gap-3 max-w-6xl mx-auto">
         {allTags.map((subcategory) => (
-          <Link
+          <ShimmerButton
             key={subcategory.id}
-            href={`/catalog?category=${subcategory.categoriePrincipala.id}&subcategory=${subcategory.id}`}
-            className="inline-flex items-center px-3 py-1.5 md:px-5 md:py-2.5 rounded-full
-                     bg-white md:bg-gray-100 shadow-sm border border-gray-200
-                     hover:bg-primary hover:border-primary hover:text-primary-foreground
-                     transition-all duration-300 
-                     text-sm md:text-base
-                     md:hover:scale-110 md:hover:shadow-md md:hover:z-10 md:font-medium"
+            onClick={() =>
+              handleTagClick(subcategory.categoriePrincipala.id, subcategory.id)
+            }
+            background="rgba(0, 0, 0, 0.9)"
+            shimmerColor="#00BFFF"
+            shimmerSize="0.08em"
+            shimmerDuration="3s"
+            borderRadius="50px"
+            className="px-3 py-1.5 md:px-5 md:py-2.5
+                     text-sm md:text-base font-medium
+                     hover:scale-105 hover:z-10 transition-transform"
           >
-            <span className="whitespace-nowrap">{subcategory.nume}</span>
-          </Link>
+            <span className="whitespace-nowrap text-white">
+              {subcategory.nume}
+            </span>
+          </ShimmerButton>
         ))}
       </div>
     </div>

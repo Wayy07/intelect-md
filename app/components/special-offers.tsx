@@ -7,14 +7,16 @@ import {
 } from "@/app/components/ui/product-card";
 import { useToast } from "@/app/components/ui/use-toast";
 import { Toaster } from "@/app/components/ui/toaster";
-import { Tags } from "lucide-react";
+import { Tags, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
+import { HyperText } from "@/components/magicui/hyper-text";
 import {
   Product,
   specialOffers as mockProductsSource,
 } from "@/app/utils/mock-data";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
 
 // Use all products from the expanded special offers list
 const mockProducts = mockProductsSource;
@@ -99,7 +101,7 @@ export default function SpecialOffers() {
           <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2" />
           <div className="h-6 w-96 bg-gray-100 rounded animate-pulse" />
         </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="rounded-xl bg-gray-100 animate-pulse">
               <div className="aspect-[4/3]" />
@@ -131,12 +133,12 @@ export default function SpecialOffers() {
 
   return (
     <>
-      <section className="container mx-auto py-12 px-4 sm:px-6 3xl:px-16 3xl:max-w-[80%]">
+      <section className="container mx-auto py-12 px-2 sm:px-6 3xl:px-16 3xl:max-w-[80%]">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl flex items-center gap-2">
               <Tags className="h-10 w-10 text-primary" />
-              {t("specialOffers")}
+              <HyperText>{t("specialOffers")}</HyperText>
             </h2>
             <p className="mt-2 text-muted-foreground">
               {t("discoverDiscountedProducts")}
@@ -152,7 +154,7 @@ export default function SpecialOffers() {
         </div>
 
         {/* Product grid - responsive for both mobile and desktop */}
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-6">
           {products.slice(0, 12).map((product) => (
             <div key={product.id} className="h-full">
               <Link href={`/produs/${product.id}`} className="block h-full">
@@ -181,6 +183,25 @@ export default function SpecialOffers() {
           >
             {t("seeAllOffers")}
             <span className="ml-1 text-xs">→</span>
+          </Link>
+        </div>
+
+        {/* "View all products" button visible on all devices */}
+        <div className="mt-12 text-center">
+          <Link href="/catalog" className="inline-block">
+            <ShimmerButton
+              className="px-8 py-3.5 font-medium text-lg rounded-full group relative"
+              shimmerColor="#00BFFF"
+              shimmerSize="0.03em"
+              shimmerDuration="2.5s"
+              borderRadius="9999px"
+              background="rgba(0, 0, 0, 0.9)"
+            >
+              <span className="flex items-center gap-2">
+                {t("viewAllProducts") || "View All Products"}
+                <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </ShimmerButton>
           </Link>
         </div>
       </section>

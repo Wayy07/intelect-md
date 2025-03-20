@@ -59,6 +59,9 @@ import {
   ProductCardCompact,
 } from "@/app/components/ui/product-card";
 import SimilarProducts from "@/app/components/similar-products";
+import { GridPattern } from "@/components/magicui/grid-pattern";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
+import { MorphingText } from "@/components/magicui/morphing-text";
 
 // Update the Product interface to include properties needed for this page
 interface Product extends MockProduct {
@@ -418,12 +421,29 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 relative min-h-screen isolate">
+        {/* Grid Pattern Background */}
+        <GridPattern
+          width={40}
+          height={40}
+          x={-1}
+          y={-1}
+          className="absolute inset-0 -z-10 h-full w-full stroke-gray-300/25 [mask-image:linear-gradient(to_bottom_right,white,transparent,transparent)] opacity-20"
+          squares={[
+            [0, 2],
+            [5, 3],
+            [2, 8],
+            [8, 10],
+            [10, 7],
+            [12, 2],
+            [15, 9],
+          ]}
+        />
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="rounded-lg overflow-hidden relative h-96">
-            <Skeleton className="w-full h-full" />
+          <div className="rounded-xl overflow-hidden relative h-96 bg-white/40 backdrop-blur-sm border border-white/20 p-4">
+            <Skeleton className="w-full h-full rounded-lg" />
           </div>
-          <div className="space-y-4">
+          <div className="space-y-4 bg-white/40 backdrop-blur-sm rounded-xl border border-white/20 p-6">
             <Skeleton className="h-8 w-3/4" />
             <Skeleton className="h-6 w-1/2" />
             <Skeleton className="h-10 w-1/3" />
@@ -440,29 +460,69 @@ export default function ProductPage() {
 
   if (error || !product) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 relative min-h-screen isolate">
+        {/* Grid Pattern Background */}
+        <GridPattern
+          width={40}
+          height={40}
+          x={-1}
+          y={-1}
+          className="absolute inset-0 -z-10 h-full w-full stroke-gray-300/25 [mask-image:linear-gradient(to_bottom_right,white,transparent,transparent)] opacity-20"
+          squares={[
+            [0, 2],
+            [5, 3],
+            [2, 8],
+            [8, 10],
+            [10, 7],
+            [12, 2],
+            [15, 9],
+          ]}
+        />
         <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+          className="bg-red-50/80 backdrop-blur-md border border-red-200 text-red-700 px-6 py-5 rounded-xl relative max-w-xl mx-auto shadow-sm"
           role="alert"
         >
-          <strong className="font-bold">{t("product_error_title")} </strong>
-          <span className="block sm:inline">
+          <strong className="font-bold text-lg">
+            {t("product_error_title")}{" "}
+          </strong>
+          <span className="block sm:inline mt-1">
             {error || t("product_not_found")}
           </span>
-          <Button
-            variant="outline"
-            className="mt-4"
+          <ShimmerButton
+            className="mt-4 border border-red-200 bg-white/80 backdrop-blur-sm text-red-700 hover:bg-white flex items-center rounded-md px-3 py-2"
             onClick={() => router.back()}
+            shimmerColor="rgba(239, 68, 68, 0.1)"
+            shimmerSize="0.1em"
+            shimmerDuration="1.5s"
+            background="transparent"
           >
             <ChevronLeft className="mr-2 h-4 w-4" /> {t("product_back_button")}
-          </Button>
+          </ShimmerButton>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 relative min-h-screen isolate">
+      {/* Grid Pattern Background */}
+      <GridPattern
+        width={40}
+        height={40}
+        x={-1}
+        y={-1}
+        className="absolute inset-0 -z-10 h-full w-full stroke-gray-300/25 [mask-image:linear-gradient(to_bottom_right,white,transparent,transparent)] opacity-20"
+        squares={[
+          [0, 2],
+          [5, 3],
+          [2, 8],
+          [8, 10],
+          [10, 7],
+          [12, 2],
+          [15, 9],
+        ]}
+      />
+
       {/* Breadcrumbs */}
       <nav className="flex mb-6 text-sm space-x-2 overflow-x-auto pb-2 hide-scrollbar">
         <Link
@@ -690,7 +750,7 @@ export default function ProductPage() {
           </div>
 
           {/* Price and credit info */}
-          <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+          <div className="bg-white/70 backdrop-blur-md p-4 rounded-xl border border-white/20 shadow-sm space-y-2">
             {/* Regular price */}
             {product.pretRedus ? (
               <div className="flex items-baseline space-x-2">
@@ -712,13 +772,18 @@ export default function ProductPage() {
           </div>
 
           {/* Stock status and delivery */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
+          <div className="space-y-3">
+            <motion.div
+              className="flex items-center gap-2 text-sm"
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            >
               {product.stoc > 0 ? (
                 <>
                   <Badge
                     variant="outline"
-                    className="bg-green-50 text-green-700 hover:bg-green-50 border-green-200"
+                    className="bg-green-50/80 backdrop-blur-sm text-green-700 hover:bg-green-50/80 border-green-200 transition-all duration-300 hover:shadow"
                   >
                     <Check className="mr-1 h-3.5 w-3.5" />
                     {t("product_in_stock")}
@@ -730,35 +795,44 @@ export default function ProductPage() {
               ) : (
                 <Badge
                   variant="outline"
-                  className="bg-gray-100 text-gray-700 hover:bg-gray-100 border-gray-200"
+                  className="bg-gray-100/80 backdrop-blur-sm text-gray-700 hover:bg-gray-100/80 border-gray-200 transition-all duration-300 hover:shadow"
                 >
                   <X className="mr-1 h-3.5 w-3.5" />
                   {t("product_out_of_stock")}
                 </Badge>
               )}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Truck className="h-4 w-4" />
+            </motion.div>
+            <motion.div
+              className="flex items-center gap-2 text-sm text-muted-foreground"
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.3 }}
+            >
+              <Truck className="h-4 w-4 text-primary" />
               <span>{t("product_delivery_time")}</span>
-            </div>
+            </motion.div>
           </div>
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Button
+            <ShimmerButton
               onClick={handleAddToCart}
               disabled={product.stoc <= 0}
-              className="h-10 sm:h-11 flex-1 min-w-0 bg-primary hover:bg-primary/90 text-sm sm:text-base"
+              className="h-10 sm:h-11 flex-1 min-w-0 text-sm sm:text-base flex items-center justify-center"
+              shimmerColor={product.stoc > 0 ? "#00BFFF" : "#ccc"}
+              shimmerSize="0.05em"
+              shimmerDuration="2s"
+              background="rgba(0, 114, 245, 0.9)"
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
               {t("product_add_to_cart")}
-            </Button>
+            </ShimmerButton>
 
             <Dialog open={creditDialogOpen} onOpenChange={setCreditDialogOpen}>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="h-10 sm:h-11 flex-1 min-w-0 text-sm sm:text-base"
+                  className="h-10 sm:h-11 flex-1 min-w-0 text-sm sm:text-base flex items-center justify-center border-2 border-gray-400 bg-gray backdrop-blur-sm rounded-md hover:bg-white/80 transition-all duration-300 text-gray-700 "
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span className="truncate">
@@ -922,13 +996,16 @@ export default function ProductPage() {
 
                 {/* Footer with action button */}
                 <div className="p-3 sm:p-4 bg-gray-50 border-t flex justify-end items-center mt-2">
-                  <Button
+                  <ShimmerButton
                     onClick={() => setCreditDialogOpen(false)}
-                    variant="ghost"
-                    className="w-auto"
+                    className="px-4 py-2 text-sm bg-transparent border border-gray-200 rounded-md"
+                    shimmerColor="rgba(0, 0, 0, 0.05)"
+                    shimmerSize="0.1em"
+                    shimmerDuration="1.5s"
+                    background="transparent"
                   >
                     {t("product_close")}
-                  </Button>
+                  </ShimmerButton>
                 </div>
               </DialogContent>
             </Dialog>
@@ -938,54 +1015,49 @@ export default function ProductPage() {
               size="icon"
               onClick={handleToggleFavorite}
               className={cn(
-                "h-10 w-10 sm:h-11 sm:w-11 p-0 aspect-square transition-all",
+                "h-10 w-10 sm:h-11 sm:w-11 p-0 aspect-square transition-all bg-white/50 backdrop-blur-sm border-gray-200",
                 isFavorite &&
-                  "bg-pink-50 text-pink-500 border-pink-200 hover:bg-pink-100 hover:text-pink-600"
+                  "bg-pink-50/80 text-pink-500 border-pink-200 hover:bg-pink-100/80 hover:text-pink-600"
               )}
             >
               <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
             </Button>
 
             <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 sm:h-11 sm:w-11 p-0 aspect-square"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
               <PopoverContent className="w-auto p-4" align="end">
                 <div className="space-y-3">
                   <h4 className="font-medium">{t("product_share_product")}</h4>
                   <div className="flex flex-col gap-2">
                     {hasWebShare ? (
-                      <Button
-                        size="sm"
+                      <ShimmerButton
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           handleShareProduct();
                         }}
-                        className="w-full"
+                        className="w-full text-sm py-1.5"
+                        shimmerColor="#00BFFF"
+                        shimmerSize="0.03em"
+                        shimmerDuration="1.5s"
                       >
                         {t("product_share")}
-                      </Button>
+                      </ShimmerButton>
                     ) : (
-                      <Button
-                        size="sm"
+                      <ShimmerButton
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           handleShareProduct();
                         }}
-                        className="w-full"
+                        className="w-full text-sm py-1.5"
+                        shimmerColor="#00BFFF"
+                        shimmerSize="0.03em"
+                        shimmerDuration="1.5s"
                       >
                         {shareUrlCopied
                           ? t("product_link_copied")
                           : t("product_copy_link")}
-                      </Button>
+                      </ShimmerButton>
                     )}
                   </div>
                 </div>
@@ -1009,10 +1081,11 @@ export default function ProductPage() {
 
       {/* Product specifications - Enhanced Desktop UI */}
       <div className="mt-12">
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <Info className="h-5 w-5 mr-2 text-primary" />
           {t("product_specifications")}
         </h2>
-        <div className="bg-white rounded-lg border border-border p-4 sm:p-6">
+        <div className="bg-white/70 backdrop-blur-md rounded-xl border border-white/20 shadow-sm p-4 sm:p-6">
           {product.specificatii &&
           Object.keys(product.specificatii).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
@@ -1020,9 +1093,9 @@ export default function ProductPage() {
                 ([key, value], index, arr) => (
                   <div
                     key={key}
-                    className="flex py-3 border-b last:border-0 md:even:last:border-0 md:odd:last:md:border-0"
+                    className="flex py-3 border-b border-gray-100 last:border-0 md:even:last:border-0 md:odd:last:md:border-0 group hover:bg-gray-50/50 transition-colors duration-200 rounded-lg px-2"
                   >
-                    <span className="font-medium text-sm w-[40%] text-gray-700">
+                    <span className="font-medium text-sm w-[40%] text-gray-700 group-hover:text-primary transition-colors duration-200">
                       {key}:
                     </span>
                     <span className="text-sm text-muted-foreground flex-1">

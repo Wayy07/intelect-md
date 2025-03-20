@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react";
 import { ReactNode, useEffect } from "react";
 import { Toaster } from "@/app/components/ui/toaster";
+import { FavoritesProvider } from "@/app/contexts/favorites-context";
 import { clearSessionRetryCount } from "@/lib/session-utils";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -12,12 +13,11 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SessionProvider
-      refetchInterval={0}
-      refetchOnWindowFocus={false}
-    >
-      {children}
-      <Toaster />
+    <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
+      <FavoritesProvider>
+        {children}
+        <Toaster />
+      </FavoritesProvider>
     </SessionProvider>
   );
 }

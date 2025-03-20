@@ -56,8 +56,14 @@ export default function MobileHeader() {
     const controlHeader = () => {
       const currentScrollY = window.scrollY;
 
-      // Only show header when at the very top of the page (within 10px)
-      setIsVisible(currentScrollY <= 10);
+      // Show header when scrolling up or at the top of the page
+      if (currentScrollY <= 10 || currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      }
+      // Hide header when scrolling down (but only if we've scrolled a bit)
+      else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsVisible(false);
+      }
 
       setLastScrollY(currentScrollY);
     };
@@ -68,7 +74,7 @@ export default function MobileHeader() {
     return () => {
       window.removeEventListener("scroll", controlHeader);
     };
-  }, []);
+  }, [lastScrollY]);
 
   // Add/remove a class to the document body when search is focused
   useEffect(() => {
@@ -154,13 +160,18 @@ export default function MobileHeader() {
       <style jsx global>{`
         /* Hide the credit announcement bar when search dropdown is active */
         body.search-dropdown-active
-          div[class*="lg:block bg-black text-white overflow-hidden whitespace-nowrap border-t"] {
+          div[class*="lg:block bg-primary text-white overflow-hidden whitespace-nowrap border-t"] {
           display: none !important;
+        }
+
+        /* Prevent scrolling when search is active */
+        body.search-dropdown-active {
+          overflow: hidden;
         }
       `}</style>
 
       <div
-        className={`sticky top-0 z-40 bg-white shadow-md md:hidden border-b border-gray-100 transition-transform duration-300 ${
+        className={`sticky top-0 z-40 bg-white shadow-md md:hidden border-b border-gray-100 transition-transform duration-200 ease-out ${
           isVisible ? "transform-none" : "-translate-y-full"
         }`}
       >
@@ -196,29 +207,54 @@ export default function MobileHeader() {
                 </a>
 
                 {/* Language switcher */}
-                <div className="flex items-center gap-1 border-l pl-3">
+                <div className="flex items-center gap-2 border-l pl-3">
                   <button
                     className={cn(
-                      "text-xs transition-colors px-2 py-1 rounded-md",
+                      "transition-all duration-200 w-7 h-7 overflow-hidden rounded-full relative",
                       language === "ro"
-                        ? "bg-primary text-primary-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "ring-2 ring-primary ring-offset-1"
+                        : "opacity-70 hover:opacity-100"
                     )}
                     onClick={() => setLanguage("ro")}
+                    aria-label="Romanian Language"
+                    title="Romanian Language"
                   >
-                    RO
+                    <Image
+                      src="https://cdn.countryflags.com/thumbs/moldova/flag-round-250.png"
+                      alt="Moldova Flag"
+                      width={28}
+                      height={28}
+                      className="object-cover"
+                    />
                   </button>
-                  <span className="text-muted-foreground">/</span>
                   <button
                     className={cn(
-                      "text-xs transition-colors px-2 py-1 rounded-md",
+                      "transition-all duration-200 w-7 h-7 overflow-hidden rounded-full relative",
                       language === "ru"
-                        ? "bg-primary text-primary-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "ring-2 ring-primary ring-offset-1"
+                        : "opacity-70 hover:opacity-100"
                     )}
                     onClick={() => setLanguage("ru")}
+                    aria-label="Russian Language"
+                    title="Russian Language"
                   >
-                    RU
+                    <svg className="w-full h-full" viewBox="0 0 512 512">
+                      <circle
+                        style={{ fill: "#F0F0F0" }}
+                        cx="256"
+                        cy="256"
+                        r="256"
+                      />
+                      <path
+                        style={{ fill: "#0052B4" }}
+                        d="M496.077,345.043C506.368,317.31,512,287.314,512,256s-5.632-61.31-15.923-89.043H15.923
+                        C5.633,194.69,0,224.686,0,256s5.633,61.31,15.923,89.043L256,367.304L496.077,345.043z"
+                      />
+                      <path
+                        style={{ fill: "#D80027" }}
+                        d="M256,512c110.071,0,203.906-69.472,240.077-166.957H15.923C52.094,442.528,145.929,512,256,512z"
+                      />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -264,18 +300,17 @@ export default function MobileHeader() {
                   </button>
                 </form>
 
-                {/* Background overlay when search is active to hide the credit band */}
+                {/* Background overlay when search is active */}
                 {isSearchFocused && (
                   <div
-                    className="fixed left-0 right-0 bottom-0 bg-white z-[990]"
-                    style={{ height: "200px" }}
+                    className="fixed inset-0 bg-black/20 z-[990]"
                     onClick={() => setIsSearchFocused(false)}
                   />
                 )}
 
                 {/* Search Results Dropdown */}
                 {isSearchFocused && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden z-[999] max-h-[70vh] overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden z-[9999] max-h-[70vh] overflow-y-auto">
                     {isSearching ? (
                       <div className="py-4 px-3 flex items-center justify-center text-muted-foreground">
                         <Loader2 className="h-5 w-5 mr-2 animate-spin" />
