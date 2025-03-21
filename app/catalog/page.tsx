@@ -11,6 +11,10 @@ declare global {
   var productCacheInitialized: boolean;
 }
 
+// Add proper Next.js caching options
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate this page at most once per hour
+
 // This is the server component
 export default async function CatalogPage({
   searchParams,
@@ -56,159 +60,68 @@ export default async function CatalogPage({
     category => category.subcategories.map(sub => sub.id)
   );
 
-  // Force a fresh initialization on each page load to ensure cache is up to date
-  try {
-    // Ensure cache is initialized with our categories
-    console.log("Initializing product cache with defined subcategories...");
-    await initializeProductCache(allDefinedSubcategoryIds);
-    global.productCacheInitialized = true;
-  } catch (error) {
-    console.error("Error initializing product cache:", error);
+  // Only initialize if not already done
+  if (!global.productCacheInitialized) {
+    try {
+      await initializeProductCache(allDefinedSubcategoryIds);
+      global.productCacheInitialized = true;
+    } catch (error) {
+      console.error("Error initializing product cache:", error);
+    }
   }
 
   // Determine which API endpoint to use based on category
   let initialProducts: any[] = [];
 
   try {
-    // Debug log
-    console.log("Starting catalog fetch with parameters:", {
-      category: categoryParam,
-      subcategory: subcategoryParam
-    });
-
+    // More efficient approach to fetch products
     if (categoryParam) {
-      // Case 1: If a specific main category is requested
-      console.log(`Fetching products for main category: ${categoryParam}`);
-
-      // Get all subcategories for this main category
+      // Case 1: Specific main category requested
       const categorySubcategoryIds = ALL_CATEGORIES
         .find(cat => cat.id === categoryParam)
         ?.subcategories.map(sub => sub.id) || [];
 
-      console.log(`Found ${categorySubcategoryIds.length} subcategories for category ${categoryParam}:`, categorySubcategoryIds);
-
       if (categorySubcategoryIds.length > 0) {
-        // Try to get products for each subcategory individually and combine them
-        const allProducts = await Promise.all(
-          categorySubcategoryIds.map(subcatId => getProductsByCategory(subcatId))
-        );
-
-        // Flatten the arrays
-        initialProducts = allProducts.flat();
-
-        // Deduplicate products by ID
-        initialProducts = Array.from(
-          new Map(initialProducts.map(product => [product.id, product])).values()
-        );
-
-        if (initialProducts.length === 0) {
-          console.log("No products found for subcategories, falling back to all products");
-          const allApiProducts = await getAllProducts();
-
-          // Filter to include only products from these subcategories
-          initialProducts = allApiProducts.filter((product: any) =>
-            categorySubcategoryIds.includes(product.category)
-          );
-        }
+        // Fetch all products at once for better performance
+        initialProducts = await getProductsByCategories(categorySubcategoryIds);
       }
-      console.log(`Fetched ${initialProducts.length} products for category ${categoryParam}`);
     }
     else if (subcategoryParam) {
-      // Case 2: If a specific subcategory is requested
-      console.log(`Fetching products for subcategory: ${subcategoryParam}`);
-      const productsData = await getProductsByCategory(subcategoryParam);
-
-      if (productsData.length === 0) {
-        console.log(`No products found for subcategory ${subcategoryParam}, falling back to all products`);
-        const allApiProducts = await getAllProducts();
-
-        // Filter to include only products from this subcategory
-        initialProducts = allApiProducts.filter((product: any) =>
-          product.category === subcategoryParam
-        );
-      } else {
-        initialProducts = productsData;
-      }
-
-      console.log(`Fetched ${initialProducts.length} products for subcategory ${subcategoryParam}`);
+      // Case 2: Specific subcategory requested
+      initialProducts = await getProductsByCategory(subcategoryParam);
     }
     else {
-      // Case 3: No specific category - fetch products from ALL defined categories
-      console.log("Fetching products from all defined categories");
+      // Case 3: No specific category - fetch from all defined categories at once
+      initialProducts = await getProductsByCategories(allDefinedSubcategoryIds);
+    }
 
-      // Extract all subcategory IDs from ALL_CATEGORIES
-      const allDefinedSubcategoryIds = ALL_CATEGORIES.flatMap(
-        category => category.subcategories.map(sub => sub.id)
-      );
+    // If we still have no products, use a fallback approach
+    if (initialProducts.length === 0) {
+      const allProducts = await getAllProducts();
 
-      console.log(`Fetching products for ${allDefinedSubcategoryIds.length} defined subcategories:`, allDefinedSubcategoryIds);
+      // Only filter if we have category params
+      if (categoryParam || subcategoryParam) {
+        const filterCategories = subcategoryParam
+          ? [subcategoryParam]
+          : ALL_CATEGORIES.find(cat => cat.id === categoryParam)?.subcategories.map(sub => sub.id) || [];
 
-      // Try to get products for each subcategory individually and combine them
-      const allSubcategoryProducts = await Promise.all(
-        allDefinedSubcategoryIds.map(async (subcatId) => {
-          try {
-            const products = await getProductsByCategory(subcatId);
-            console.log(`Fetched ${products.length} products for subcategory ${subcatId}`);
-            return products;
-          } catch (error) {
-            console.error(`Error fetching products for subcategory ${subcatId}:`, error);
-            return [];
-          }
-        })
-      );
-
-      // Check if we got any products
-      const totalProductsFound = allSubcategoryProducts.reduce((acc, curr) => acc + curr.length, 0);
-      console.log(`Total products found from subcategory fetching: ${totalProductsFound}`);
-
-      // Flatten the arrays
-      initialProducts = allSubcategoryProducts.flat();
-
-      // Deduplicate products by ID
-      initialProducts = Array.from(
-        new Map(initialProducts.map(product => [product.id, product])).values()
-      );
-
-      if (initialProducts.length === 0) {
-        // If no products found using categories, fall back to all products
-        console.log("No products found by categories, falling back to all products");
-        try {
-          const allApiProducts = await getAllProducts();
-          console.log(`getAllProducts returned ${allApiProducts.length} total products`);
-
-          // Filter to only include products in our defined categories
-          initialProducts = allApiProducts.filter((product: any) => {
-            const isInCategory = allDefinedSubcategoryIds.includes(product.category);
-            return isInCategory;
-          });
-
-          console.log(`After filtering, found ${initialProducts.length} products in our defined categories`);
-
-          // If we still have zero products, just use all products
-          if (initialProducts.length === 0) {
-            console.log("No products found in our categories, using all products instead");
-            initialProducts = allApiProducts;
-          }
-        } catch (error) {
-          console.error("Error fetching all products:", error);
-          // Provide a minimal set of products as fallback
-          initialProducts = [];
-        }
+        initialProducts = allProducts.filter((product: any) =>
+          filterCategories.includes(product.category)
+        );
+      } else {
+        // Just use all products
+        initialProducts = allProducts;
       }
-
-      console.log(`Fetched ${initialProducts.length} products from defined categories`);
     }
   } catch (error) {
     console.error("Error loading catalog products:", error);
     initialProducts = [];
   }
 
-  // Final deduplication to ensure no duplicates
+  // Simple deduplication - the map approach is more efficient
   initialProducts = Array.from(
     new Map(initialProducts.map(product => [product.id, product])).values()
   );
-
-  console.log(`Final count after deduplication: ${initialProducts.length} products`);
 
   // Set initial filters based on URL parameters
   const initialFilters: FilterOptions = {
