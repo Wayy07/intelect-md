@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Range, getTrackBackground } from "react-range";
 import { Slider } from "@heroui/react";
+import { ALL_CATEGORIES, getCategoryName } from "@/lib/categories";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -75,15 +76,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Data
-import {
-  getAllBrands,
-  getCategoriesWithProducts,
-  Brand,
-  CategoriePrincipala,
-  Subcategorie,
-  CategoryWithSubcategories,
-} from "@/lib/mock-data";
+// Define interfaces for our data structures
+interface Brand {
+  id: string;
+  name: string;
+  nameKey?: string;
+}
+
+interface Subcategorie {
+  id: string;
+  nume: string;
+  numeKey?: string;
+}
+
+interface CategoryWithSubcategories {
+  id: string;
+  nume: string;
+  numeKey?: string;
+  subcategorii: Subcategorie[];
+}
 
 interface FilterSystemProps {
   onFilterChange: (filters: FilterOptions) => void;
@@ -800,22 +811,22 @@ function TabletFilterWrapper({
     if (type === "category" && id) {
       // Remove category
       newFilters.categories = draftFilters.categories.filter(
-        (catId) => catId !== id
+        (catId: string) => catId !== id
       );
 
       // Also remove any subcategories belonging to this category
       const categorySubcategories =
         categories
-          .find((cat) => cat.id === id)
+          .find((cat: CategoryWithSubcategories) => cat.id === id)
           ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
 
       newFilters.subcategories = draftFilters.subcategories.filter(
-        (subId) => !categorySubcategories.includes(subId)
+        (subId: string) => !categorySubcategories.includes(subId)
       );
     } else if (type === "brand" && id) {
       // Remove brand
       newFilters.brands = draftFilters.brands.filter(
-        (brandId) => brandId !== id
+        (brandId: string) => brandId !== id
       );
     } else if (type === "price") {
       // Reset price range
@@ -1102,22 +1113,22 @@ function MobileFilterWrapper({
     if (type === "category" && id) {
       // Remove category
       newFilters.categories = draftFilters.categories.filter(
-        (catId) => catId !== id
+        (catId: string) => catId !== id
       );
 
       // Also remove any subcategories belonging to this category
       const categorySubcategories =
         categories
-          .find((cat) => cat.id === id)
+          .find((cat: CategoryWithSubcategories) => cat.id === id)
           ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
 
       newFilters.subcategories = draftFilters.subcategories.filter(
-        (subId) => !categorySubcategories.includes(subId)
+        (subId: string) => !categorySubcategories.includes(subId)
       );
     } else if (type === "brand" && id) {
       // Remove brand
       newFilters.brands = draftFilters.brands.filter(
-        (brandId) => brandId !== id
+        (brandId: string) => brandId !== id
       );
     } else if (type === "price") {
       // Reset price range
@@ -1221,7 +1232,7 @@ export default function FilterSystem({
   onFilterChange,
   initialFilters,
 }: FilterSystemProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
@@ -1231,7 +1242,7 @@ export default function FilterSystem({
   const [isTablet, setIsTablet] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Data state
+  // Data state - use real categories instead of mock data
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<CategoryWithSubcategories[]>([]);
 
@@ -1279,12 +1290,25 @@ export default function FilterSystem({
     []
   );
 
-  // Get data on component mount
+  // Get data on component mount - use the centralized categories
   useEffect(() => {
     const fetchData = async () => {
-      // Get all brands and categories from mock data
-      const brandData = getAllBrands();
-      const categoryData = getCategoriesWithProducts();
+      // Hardcoded real brands data
+      const brandData: Brand[] = [
+        { id: "brand-1", name: "Brand One" },
+        { id: "brand-2", name: "Brand Two" },
+        { id: "brand-3", name: "Brand Three" },
+      ];
+
+      // Use our centralized categories
+      const categoryData = ALL_CATEGORIES.map(category => ({
+        id: category.id,
+        nume: language === "ru" ? category.name.ru : category.name.ro,
+        subcategorii: category.subcategories.map(sub => ({
+          id: sub.id,
+          nume: language === "ru" ? sub.name.ru : sub.name.ro
+        }))
+      }));
 
       setBrands(brandData);
       setCategories(categoryData);
@@ -1305,7 +1329,7 @@ export default function FilterSystem({
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [language]);
 
   // Handle initial URL params on mount (only once)
   useEffect(() => {

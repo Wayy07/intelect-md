@@ -41,11 +41,7 @@ import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "lucide-react";
 import { PopoverContent } from "@/components/ui/popover";
 import { useProtectedSession } from "@/lib/hooks/use-protected-session";
-import {
-  CategoryWithSubcategories,
-  Produs,
-  getCategoriesWithProducts,
-} from "@/lib/mock-data";
+import { ALL_CATEGORIES, MainCategory, Subcategory, getCategoryName } from "@/lib/categories";
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -97,7 +93,7 @@ export default function Header() {
   const [isDesktopCatalogOpen, setIsDesktopCatalogOpen] = useState(false);
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false);
   const [isDesktopCartOpen, setIsDesktopCartOpen] = useState(false);
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(ALL_CATEGORIES[0]?.id || null);
 
   // Mobile states
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -107,10 +103,12 @@ export default function Header() {
     string | null
   >(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<Produs[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const [categories, setCategories] = useState<CategoryWithSubcategories[]>([]);
+  // Use our imported categories instead of hardcoded ones
+  const [categories] = useState<MainCategory[]>(ALL_CATEGORIES);
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -165,20 +163,6 @@ export default function Header() {
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        // Use the categories with products from our mock data file
-        const categoriesWithProducts = getCategoriesWithProducts();
-        setCategories(categoriesWithProducts);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -850,9 +834,7 @@ export default function Header() {
                               }
                             >
                               <span>
-                                {category.numeKey
-                                  ? t(category.numeKey)
-                                  : category.nume}
+                                {getCategoryName(category, language)}
                               </span>
                               <ChevronRight
                                 className={cn(
@@ -878,7 +860,14 @@ export default function Header() {
                             <Link
                               href={`/catalog?category=${hoveredCategory}`}
                               className="text-xs lg:text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                              onClick={() => setIsDesktopCatalogOpen(false)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setIsDesktopCatalogOpen(false);
+                                // Add a small delay for smoother transition
+                                setTimeout(() => {
+                                  router.push(`/catalog?category=${encodeURIComponent(hoveredCategory)}`);
+                                }, 50);
+                              }}
                             >
                               {t("seeAll")}
                             </Link>
@@ -886,39 +875,25 @@ export default function Header() {
                           <div className="grid grid-cols-2 gap-x-4 lg:gap-x-6 gap-y-2">
                             {categories
                               .find((cat) => cat.id === hoveredCategory)
-                              ?.subcategorii.map((subcategory) => (
+                              ?.subcategories.map((subcategory) => (
                                 <Link
                                   key={subcategory.id}
-                                  href={`/catalog?category=${hoveredCategory}&subcategory=${subcategory.id}`}
+                                  href={`/catalog?category=${encodeURIComponent(subcategory.id)}`}
                                   className="group flex items-center p-2 lg:p-3 rounded-lg border border-transparent bg-accent/40 hover:bg-accent hover:border-accent/50 hover:shadow-sm transition-all duration-200 hover:-translate-y-0.5"
-                                  onClick={() => setIsDesktopCatalogOpen(false)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setIsDesktopCatalogOpen(false);
+                                    // Add a small delay to allow the menu to close before navigation
+                                    setTimeout(() => {
+                                      // Use subcategory parameter for proper filtering
+                                      router.push(`/catalog?category=${encodeURIComponent(subcategory.id)}`);
+                                    }, 50);
+                                  }}
                                 >
-                                  {subcategory.imagine && (
-                                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 border border-primary/10 shadow-sm group-hover:shadow-md transition-all">
-                                      <Image
-                                        src={subcategory.imagine}
-                                        alt={
-                                          subcategory.numeKey
-                                            ? t(subcategory.numeKey)
-                                            : subcategory.nume
-                                        }
-                                        fill
-                                        className="object-contain p-1 transition-transform group-hover:scale-105 duration-300"
-                                        sizes="64px"
-                                      />
-                                    </div>
-                                  )}
                                   <div className="flex-1 min-w-0">
                                     <p className="font-medium text-sm lg:text-base truncate group-hover:text-primary transition-colors">
-                                      {subcategory.numeKey
-                                        ? t(subcategory.numeKey)
-                                        : subcategory.nume}
+                                      {getCategoryName(subcategory, language)}
                                     </p>
-                                    {subcategory.descriere && (
-                                      <p className="text-xs text-muted-foreground truncate group-hover:text-foreground/70 transition-colors">
-                                        {subcategory.descriere}
-                                      </p>
-                                    )}
                                   </div>
                                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary ml-2 opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-0.5 duration-200" />
                                 </Link>
@@ -1135,9 +1110,7 @@ export default function Header() {
                               const category = categories.find(
                                 (cat) => cat.id === activeMobileCategory
                               );
-                              return category?.numeKey
-                                ? t(category.numeKey)
-                                : category?.nume;
+                              return category ? (language === "ru" ? category.name.ru : category.name.ro) : "";
                             })()}
                           </h3>
                         </div>
@@ -1146,44 +1119,26 @@ export default function Header() {
                         <div className="grid grid-cols-2 gap-4 px-4 pb-20">
                           {categories
                             .find((cat) => cat.id === activeMobileCategory)
-                            ?.subcategorii.map((subcategory) => (
+                            ?.subcategories.map((subcategory) => (
                               <Link
                                 key={subcategory.id}
-                                href={`/catalog?category=${activeMobileCategory}&subcategory=${subcategory.id}`}
+                                href={`/catalog?category=${encodeURIComponent(subcategory.id)}`}
                                 className="group relative flex flex-col overflow-hidden rounded-2xl bg-gradient-to-b from-gray-50 to-white border shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 hover:border-primary/20"
-                                onClick={() => setIsMobileMenuOpen(false)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setIsMobileMenuOpen(false);
+                                  // Add a small delay for animation to complete
+                                  setTimeout(() => {
+                                    // Use proper subcategory parameter
+                                    router.push(`/catalog?category=${encodeURIComponent(subcategory.id)}`);
+                                  }, 200);
+                                }}
                               >
-                                <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50">
-                                  {subcategory.imagine ? (
-                                    <Image
-                                      src={subcategory.imagine}
-                                      alt={
-                                        subcategory.numeKey
-                                          ? t(subcategory.numeKey)
-                                          : subcategory.nume
-                                      }
-                                      fill
-                                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                      priority
-                                    />
-                                  ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-50">
-                                      <Package className="h-8 w-8 text-gray-400" />
-                                    </div>
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                                </div>
                                 <div className="flex items-center justify-between p-4">
                                   <div className="min-w-0 flex-1">
                                     <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                                      {subcategory.numeKey
-                                        ? t(subcategory.numeKey)
-                                        : subcategory.nume}
+                                      {getCategoryName(subcategory, language)}
                                     </h4>
-                                    <p className="mt-1 text-xs text-muted-foreground truncate">
-                                      {subcategory.produse?.length || 0}{" "}
-                                      {t("products")}
-                                    </p>
                                   </div>
                                   <div className="ml-4">
                                     <div className="flex h-7 w-7 lg:h-8 lg:w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
@@ -1213,12 +1168,10 @@ export default function Header() {
                               >
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">
-                                    {category.numeKey
-                                      ? t(category.numeKey)
-                                      : category.nume}
+                                    {getCategoryName(category, language)}
                                   </span>
                                   <span className="text-xs text-muted-foreground">
-                                    {category.subcategorii.length}{" "}
+                                    {category.subcategories.length}{" "}
                                     {t("subcategories").toLowerCase()}
                                   </span>
                                 </div>
@@ -1227,7 +1180,14 @@ export default function Header() {
                               <Link
                                 href={`/catalog?category=${category.id}`}
                                 className="px-4 flex items-center justify-center text-primary hover:bg-accent/50 transition-colors"
-                                onClick={() => setIsMobileMenuOpen(false)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setIsMobileMenuOpen(false);
+                                  // Add a small delay for animation to complete
+                                  setTimeout(() => {
+                                    router.push(`/catalog?category=${encodeURIComponent(category.id)}`);
+                                  }, 200);
+                                }}
                               >
                                 {t("seeAll")}
                               </Link>

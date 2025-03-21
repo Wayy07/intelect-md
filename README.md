@@ -4,6 +4,23 @@
 
 This is a Next.js application with React, Shadcn UI, and Tailwind CSS. The database connections and API routes have been removed to allow integration with a custom API.
 
+## Product API Integration
+
+The application now integrates with the ROST products API. Products are fetched at build time and stored in memory for efficient access.
+
+### Features
+
+- Server-side fetching and caching at build time
+- Filtering by product categories
+- Multi-language product data (Romanian/Russian)
+- Revalidation endpoint to refresh the cache
+
+### Configuration
+
+- Set `ROST_API_KEY` in `.env` to your API endpoint
+- Configure product categories in `lib/server-init.ts`
+- Set `REVALIDATION_SECRET` for the cache refresh API
+
 ## Changes Made
 
 The following components were removed:

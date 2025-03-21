@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/lib/language-context";
 import { CartProvider } from "@/app/contexts/cart-context";
 import { Providers } from "./providers";
 import { FavoritesProvider } from "@/app/contexts/favorites-context";
+import { ServerInitializer } from "./components/server-initializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -137,7 +138,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -150,6 +151,9 @@ export default function RootLayout({
           "min-h-screen bg-background flex flex-col"
         )}
       >
+        {/* Server Initializer - runs during build time */}
+        <ServerInitializer />
+
         <Providers>
           <FavoritesProvider>
             <LanguageProvider>
