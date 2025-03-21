@@ -24,20 +24,29 @@ interface CategoryMapping {
   en?: string;
 }
 
-// Cache for products
-let productsCache: Product[] = [];
-let categoriesCache: Set<string> = new Set();
-let categoryProductsMap: Map<string, Product[]> = new Map();
-let initialized = false;
+// Declare global cache state
+declare global {
+  var productCache: {
+    allProducts: Product[];
+    categoryMap: Map<string, Product[]>;
+    isInitialized: boolean;
+    initializationPromise: Promise<void> | null;
+  } | undefined;
+}
 
-// Category mappings for translations (to be filled with your specific categories)
+// Initialize global cache if not already done
+if (!global.productCache) {
+  global.productCache = {
+    allProducts: [],
+    categoryMap: new Map(),
+    isInitialized: false,
+    initializationPromise: null
+  };
+}
+
+// Category mappings for translations
 const categoryMappings: Record<string, CategoryMapping> = {
-  // Example: Map the same category in different languages
-  // "smartphones": {
-  //   ro: "Smartphone-uri",
-  //   ru: "Смартфоны",
-  //   en: "Smartphones"
-  // },
+  // Example mappings...
 };
 
 /**
@@ -56,9 +65,9 @@ export async function getCategoryByLanguage(category: string, language: 'ro' | '
 }
 
 /**
- * Fetches products from the API
+ * Fetches all products from the API - only called once at server startup
  */
-async function fetchProducts(targetCategories?: string[]): Promise<Product[]> {
+async function fetchAllProducts(): Promise<Product[]> {
   try {
     const apiUrl = process.env.ROST_API_KEY;
 
@@ -66,20 +75,11 @@ async function fetchProducts(targetCategories?: string[]): Promise<Product[]> {
       throw new Error("ROST_API_KEY is not defined in environment variables");
     }
 
-    // Build the complete URL with any additional parameters
-    let url = apiUrl;
+    console.log("🔄 Fetching all products from API (one-time operation)...");
 
-    // Add category filters if specified
-    if (targetCategories && targetCategories.length > 0) {
-      // Check if URL already has parameters
-      const separator = url.includes('?') ? '&' : '?';
-      url += `${separator}categories=${targetCategories.join(',')}`;
-    }
-
-    console.log(`Fetching products from: ${url.split('?')[0]}...`); // Log the base URL for debugging
-
-    const response = await fetch(url, {
-      next: { tags: ['products'] }, // For revalidation
+    // Use cache: 'no-store' to disable caching for large responses
+    const response = await fetch(apiUrl, {
+      cache: 'no-store', // Don't cache large responses
     });
 
     if (!response.ok) {
@@ -87,6 +87,8 @@ async function fetchProducts(targetCategories?: string[]): Promise<Product[]> {
     }
 
     const products = await response.json();
+    console.log(`✅ Successfully fetched ${products.length} products`);
+
     return products;
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -95,68 +97,102 @@ async function fetchProducts(targetCategories?: string[]): Promise<Product[]> {
 }
 
 /**
- * Initializes the product cache
+ * Initializes the product cache - called once at server startup
  */
-export async function initializeProductCache(targetCategories?: string[]) {
-  if (initialized) return;
+export async function initializeProductCache(): Promise<void> {
+  const cache = global.productCache!;
 
-  console.log("🚀 Initializing product cache...");
-  const products = await fetchProducts(targetCategories);
-  productsCache = products;
+  // If already initialized or initializing, return existing promise
+  if (cache.isInitialized) {
+    return Promise.resolve();
+  }
 
-  // Build category cache and map
-  products.forEach(product => {
-    if (product.category) {
-      categoriesCache.add(product.category);
+  if (cache.initializationPromise) {
+    return cache.initializationPromise;
+  }
 
-      const categoryProducts = categoryProductsMap.get(product.category) || [];
-      categoryProducts.push(product);
-      categoryProductsMap.set(product.category, categoryProducts);
+  // Create a new initialization promise
+  cache.initializationPromise = (async () => {
+    try {
+      // Check again in case another request already initialized
+      if (cache.isInitialized) {
+        return;
+      }
+
+      console.log("🚀 Initializing product cache (one-time operation)...");
+
+      // Fetch all products
+      const products = await fetchAllProducts();
+      cache.allProducts = products;
+
+      // Build category map
+      products.forEach(product => {
+        if (product.category) {
+          const categoryProducts = cache.categoryMap.get(product.category) || [];
+          categoryProducts.push(product);
+          cache.categoryMap.set(product.category, categoryProducts);
+        }
+      });
+
+      console.log(`✅ Product cache initialized with ${products.length} products and ${cache.categoryMap.size} categories`);
+      cache.isInitialized = true;
+    } catch (error) {
+      console.error("Error initializing product cache:", error);
+      // Reset initialization state on error
+      cache.initializationPromise = null;
     }
-  });
+  })();
 
-  initialized = true;
-  console.log(`✅ Product cache initialized with ${products.length} products and ${categoriesCache.size} categories`);
+  return cache.initializationPromise;
 }
 
 /**
- * Gets all products (from cache)
+ * Gets all products from cache
  */
 export async function getAllProducts(): Promise<Product[]> {
-  return productsCache;
+  await initializeProductCache();
+  return global.productCache!.allProducts;
 }
 
 /**
- * Gets all categories (from cache)
+ * Gets all categories from cache
  */
 export async function getAllCategories(): Promise<string[]> {
-  return Array.from(categoriesCache);
+  await initializeProductCache();
+  return Array.from(global.productCache!.categoryMap.keys());
 }
 
 /**
- * Gets products by category (from cache)
+ * Gets products by category
  */
 export async function getProductsByCategory(category: string): Promise<Product[]> {
-  return categoryProductsMap.get(category) || [];
+  await initializeProductCache();
+  return global.productCache!.categoryMap.get(category) || [];
 }
 
 /**
- * Gets products by categories (from cache)
+ * Gets products by multiple categories
  */
 export async function getProductsByCategories(categories: string[]): Promise<Product[]> {
-  // Since we're in a server component, we can directly access the map
-  // without needing to await the getProductsByCategory function
-  return categories.flatMap(category =>
-    categoryProductsMap.get(category) || []
+  await initializeProductCache();
+
+  // Get products for all requested categories
+  const products = categories.flatMap(category =>
+    global.productCache!.categoryMap.get(category) || []
   );
+
+  // Deduplicate in case products appear in multiple categories
+  return Array.from(new Map(products.map(product => [product.id, product])).values());
 }
 
 /**
- * Searches for products by query in title (RO, RU, EN)
+ * Searches for products by query in title
  */
 export async function searchProducts(query: string): Promise<Product[]> {
+  await initializeProductCache();
+
   const normalizedQuery = query.toLowerCase();
-  return productsCache.filter(product =>
+  return global.productCache!.allProducts.filter(product =>
     product.titleRO.toLowerCase().includes(normalizedQuery) ||
     product.titleRU.toLowerCase().includes(normalizedQuery) ||
     product.titleEN.toLowerCase().includes(normalizedQuery)
@@ -167,5 +203,6 @@ export async function searchProducts(query: string): Promise<Product[]> {
  * Gets a single product by ID
  */
 export async function getProductById(id: string): Promise<Product | undefined> {
-  return productsCache.find(product => product.id === id);
+  await initializeProductCache();
+  return global.productCache!.allProducts.find(product => product.id === id);
 }

@@ -6,14 +6,12 @@ import CatalogLoading from "./CatalogLoading";
 import { FilterOptions } from "./_types";
 import ClientWrapper from "./ClientWrapper";
 
-// Global flag to track cache initialization
-declare global {
-  var productCacheInitialized: boolean;
-}
-
-// Add proper Next.js caching options
+// Use dynamic rendering for pages with searchParams
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Revalidate this page at most once per hour
+
+// Maximum number of products to show initially
+const MAX_INITIAL_PRODUCTS = 250;
 
 // This is the server component
 export default async function CatalogPage({
@@ -55,70 +53,50 @@ export default async function CatalogPage({
   // Parse the initial page
   const initialPage = parseInt(pageParam, 10) || 1;
 
-  // Make sure the product cache is initialized with our target categories
-  const allDefinedSubcategoryIds = ALL_CATEGORIES.flatMap(
-    category => category.subcategories.map(sub => sub.id)
-  );
-
-  // Only initialize if not already done
-  if (!global.productCacheInitialized) {
-    try {
-      await initializeProductCache(allDefinedSubcategoryIds);
-      global.productCacheInitialized = true;
-    } catch (error) {
-      console.error("Error initializing product cache:", error);
-    }
-  }
+  // Initialize the product cache (will only fetch data once per server instance)
+  await initializeProductCache();
 
   // Determine which API endpoint to use based on category
   let initialProducts: any[] = [];
 
   try {
-    // More efficient approach to fetch products
-    if (categoryParam) {
-      // Case 1: Specific main category requested
+    // Fetch products based on the requested filters
+    if (subcategoryParam) {
+      // Case 1: Specific subcategory requested
+      initialProducts = await getProductsByCategory(subcategoryParam);
+      console.log(`Found ${initialProducts.length} products for subcategory: ${subcategoryParam}`);
+    }
+    else if (categoryParam) {
+      // Case 2: Specific main category requested
       const categorySubcategoryIds = ALL_CATEGORIES
         .find(cat => cat.id === categoryParam)
         ?.subcategories.map(sub => sub.id) || [];
 
       if (categorySubcategoryIds.length > 0) {
-        // Fetch all products at once for better performance
         initialProducts = await getProductsByCategories(categorySubcategoryIds);
+        console.log(`Found ${initialProducts.length} products for category ${categoryParam}`);
       }
-    }
-    else if (subcategoryParam) {
-      // Case 2: Specific subcategory requested
-      initialProducts = await getProductsByCategory(subcategoryParam);
     }
     else {
-      // Case 3: No specific category - fetch from all defined categories at once
-      initialProducts = await getProductsByCategories(allDefinedSubcategoryIds);
+      // Case 3: No specific category - fetch a sample of products
+      // This approach is very efficient since all filtering is done in memory
+      const sampleCategories = ALL_SUBCATEGORY_IDS.slice(0, 3);
+      initialProducts = await getProductsByCategories(sampleCategories);
+      console.log(`Found ${initialProducts.length} products from sample categories`);
     }
 
-    // If we still have no products, use a fallback approach
-    if (initialProducts.length === 0) {
-      const allProducts = await getAllProducts();
-
-      // Only filter if we have category params
-      if (categoryParam || subcategoryParam) {
-        const filterCategories = subcategoryParam
-          ? [subcategoryParam]
-          : ALL_CATEGORIES.find(cat => cat.id === categoryParam)?.subcategories.map(sub => sub.id) || [];
-
-        initialProducts = allProducts.filter((product: any) =>
-          filterCategories.includes(product.category)
-        );
-      } else {
-        // Just use all products
-        initialProducts = allProducts;
-      }
+    // Limit initial products to prevent memory issues
+    if (initialProducts.length > MAX_INITIAL_PRODUCTS) {
+      console.log(`Limiting initial products from ${initialProducts.length} to ${MAX_INITIAL_PRODUCTS}`);
+      initialProducts = initialProducts.slice(0, MAX_INITIAL_PRODUCTS);
     }
+
   } catch (error) {
     console.error("Error loading catalog products:", error);
     initialProducts = [];
   }
 
-  // Simple deduplication - the map approach is more efficient
+  // Simple deduplication
   initialProducts = Array.from(
     new Map(initialProducts.map(product => [product.id, product])).values()
   );
