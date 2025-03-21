@@ -77,9 +77,9 @@ async function fetchAllProducts(): Promise<Product[]> {
 
     console.log("🔄 Fetching all products from API (one-time operation)...");
 
-    // Use cache: 'no-store' to disable caching for large responses
+    // Use revalidation instead of no-store to be compatible with static rendering
     const response = await fetch(apiUrl, {
-      cache: 'no-store', // Don't cache large responses
+      next: { revalidate: 3600 }, // Revalidate after 1 hour
     });
 
     if (!response.ok) {
@@ -123,6 +123,17 @@ export async function initializeProductCache(): Promise<void> {
 
       // Fetch all products
       const products = await fetchAllProducts();
+
+      // Check if we got products back
+      if (!products || products.length === 0) {
+        console.warn("⚠️ Warning: No products were fetched. The API might be unavailable.");
+        // We'll continue with an empty cache, but won't mark as initialized
+        // so we can try again later
+        cache.initializationPromise = null;
+        return;
+      }
+
+      // Store products in cache
       cache.allProducts = products;
 
       // Build category map

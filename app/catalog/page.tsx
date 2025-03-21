@@ -6,8 +6,9 @@ import CatalogLoading from "./CatalogLoading";
 import { FilterOptions } from "./_types";
 import ClientWrapper from "./ClientWrapper";
 
-// Use dynamic rendering for pages with searchParams
-export const dynamic = 'force-dynamic';
+// Use appropriate rendering strategy
+// This allows using searchParams while still working with revalidation
+export const dynamic = 'auto';
 export const revalidate = 3600; // Revalidate this page at most once per hour
 
 // Maximum number of products to show initially
