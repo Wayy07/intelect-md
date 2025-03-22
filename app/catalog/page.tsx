@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getProductsByCategory, getProductsByCategories, getAllProducts, initializeProductCache } from "@/lib/product-api";
+import { getProductsByCategory, getProductsByCategories } from "@/lib/product-api";
 import { ALL_CATEGORIES, ALL_SUBCATEGORY_IDS } from "@/lib/categories";
 import CatalogContent from "./CatalogContent";
 import CatalogLoading from "./CatalogLoading";
@@ -12,78 +12,68 @@ export const dynamic = 'auto';
 export const revalidate = 3600; // Revalidate this page at most once per hour
 
 // Maximum number of products to show initially
-const MAX_INITIAL_PRODUCTS = 250;
+const MAX_INITIAL_PRODUCTS = 100;
+
+// Helper function to safely extract parameters
+function getParameterValue(param: string | string[] | undefined): string {
+  if (!param) return '';
+  return typeof param === 'string' ? param : param[0] || '';
+}
 
 // This is the server component
 export default async function CatalogPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams?: { [key: string]: string | string[] | undefined }
 }) {
-  // Await the searchParams object to access its properties (Next.js 15 requirement)
-  const resolvedParams = await searchParams;
+  // await searchParams before accessing properties (required in Next.js 15+)
+  const params = await searchParams || {};
 
-  // Extract parameters directly after awaiting
-  const categoryParam = typeof resolvedParams.category === 'string' ? resolvedParams.category :
-                       (Array.isArray(resolvedParams.category) && resolvedParams.category.length > 0 ? resolvedParams.category[0] : '');
-
-  const subcategoryParam = typeof resolvedParams.subcategory === 'string' ? resolvedParams.subcategory :
-                          (Array.isArray(resolvedParams.subcategory) && resolvedParams.subcategory.length > 0 ? resolvedParams.subcategory[0] : '');
-
-  const brandParam = typeof resolvedParams.brand === 'string' ? resolvedParams.brand :
-                    (Array.isArray(resolvedParams.brand) && resolvedParams.brand.length > 0 ? resolvedParams.brand[0] : '');
-
-  const minPriceParam = typeof resolvedParams.minPrice === 'string' ? resolvedParams.minPrice :
-                       (Array.isArray(resolvedParams.minPrice) && resolvedParams.minPrice.length > 0 ? resolvedParams.minPrice[0] : '');
-
-  const maxPriceParam = typeof resolvedParams.maxPrice === 'string' ? resolvedParams.maxPrice :
-                       (Array.isArray(resolvedParams.maxPrice) && resolvedParams.maxPrice.length > 0 ? resolvedParams.maxPrice[0] : '');
-
-  const searchQuery = typeof resolvedParams.q === 'string' ? resolvedParams.q :
-                     (Array.isArray(resolvedParams.q) && resolvedParams.q.length > 0 ? resolvedParams.q[0] : '');
-
-  const sortParam = typeof resolvedParams.sort === 'string' ? resolvedParams.sort :
-                   (Array.isArray(resolvedParams.sort) && resolvedParams.sort.length > 0 ? resolvedParams.sort[0] : '');
-
-  const inStockParam = typeof resolvedParams.inStock === 'string' ? resolvedParams.inStock :
-                      (Array.isArray(resolvedParams.inStock) && resolvedParams.inStock.length > 0 ? resolvedParams.inStock[0] : '');
-
-  const pageParam = typeof resolvedParams.page === 'string' ? resolvedParams.page :
-                   (Array.isArray(resolvedParams.page) && resolvedParams.page.length > 0 ? resolvedParams.page[0] : '1');
+  // Extract parameters directly
+  const categoryParam = getParameterValue(params.category);
+  const subcategoryParam = getParameterValue(params.subcategory);
+  const brandParam = getParameterValue(params.brand);
+  const minPriceParam = getParameterValue(params.minPrice);
+  const maxPriceParam = getParameterValue(params.maxPrice);
+  const searchQuery = getParameterValue(params.q);
+  const sortParam = getParameterValue(params.sort);
+  const inStockParam = getParameterValue(params.inStock);
+  const pageParam = getParameterValue(params.page) || '1';
 
   // Parse the initial page
   const initialPage = parseInt(pageParam, 10) || 1;
 
-  // Initialize the product cache (will only fetch data once per server instance)
-  await initializeProductCache();
-
-  // Determine which API endpoint to use based on category
+  // Determine which categories to fetch based on filters
+  let categoriesToFetch: string[] = [];
   let initialProducts: any[] = [];
 
   try {
-    // Fetch products based on the requested filters
+    console.log("Loading catalog products with on-demand approach...");
+
+    // Determine which categories to fetch
     if (subcategoryParam) {
       // Case 1: Specific subcategory requested
-      initialProducts = await getProductsByCategory(subcategoryParam);
-      console.log(`Found ${initialProducts.length} products for subcategory: ${subcategoryParam}`);
+      categoriesToFetch = [subcategoryParam];
+      console.log(`Fetching subcategory: ${subcategoryParam}`);
     }
     else if (categoryParam) {
       // Case 2: Specific main category requested
-      const categorySubcategoryIds = ALL_CATEGORIES
+      categoriesToFetch = ALL_CATEGORIES
         .find(cat => cat.id === categoryParam)
         ?.subcategories.map(sub => sub.id) || [];
 
-      if (categorySubcategoryIds.length > 0) {
-        initialProducts = await getProductsByCategories(categorySubcategoryIds);
-        console.log(`Found ${initialProducts.length} products for category ${categoryParam}`);
-      }
+      console.log(`Fetching ${categoriesToFetch.length} subcategories for category: ${categoryParam}`);
     }
     else {
-      // Case 3: No specific category - fetch a sample of products
-      // This approach is very efficient since all filtering is done in memory
-      const sampleCategories = ALL_SUBCATEGORY_IDS.slice(0, 3);
-      initialProducts = await getProductsByCategories(sampleCategories);
-      console.log(`Found ${initialProducts.length} products from sample categories`);
+      // Case 3: No specific category - fetch a sample of subcategories
+      categoriesToFetch = ALL_SUBCATEGORY_IDS.slice(0, 5);
+      console.log(`Fetching ${categoriesToFetch.length} sample subcategories`);
+    }
+
+    // Fetch products for the selected categories (this will cache them automatically)
+    if (categoriesToFetch.length > 0) {
+      initialProducts = await getProductsByCategories(categoriesToFetch);
+      console.log(`Found ${initialProducts.length} products from selected categories`);
     }
 
     // Limit initial products to prevent memory issues
@@ -96,11 +86,6 @@ export default async function CatalogPage({
     console.error("Error loading catalog products:", error);
     initialProducts = [];
   }
-
-  // Simple deduplication
-  initialProducts = Array.from(
-    new Map(initialProducts.map(product => [product.id, product])).values()
-  );
 
   // Set initial filters based on URL parameters
   const initialFilters: FilterOptions = {

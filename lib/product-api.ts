@@ -27,20 +27,21 @@ interface CategoryMapping {
 // Declare global cache state
 declare global {
   var productCache: {
-    allProducts: Product[];
-    categoryMap: Map<string, Product[]>;
-    isInitialized: boolean;
-    initializationPromise: Promise<void> | null;
+    // Store products by category ID
+    categoryProducts: Map<string, Product[]>;
+    // Track which categories have been fetched
+    fetchedCategories: Set<string>;
+    // Last fetch time by category to handle TTL
+    lastFetchTime: Map<string, number>;
   } | undefined;
 }
 
 // Initialize global cache if not already done
 if (!global.productCache) {
   global.productCache = {
-    allProducts: [],
-    categoryMap: new Map(),
-    isInitialized: false,
-    initializationPromise: null
+    categoryProducts: new Map(),
+    fetchedCategories: new Set(),
+    lastFetchTime: new Map()
   };
 }
 
@@ -48,6 +49,26 @@ if (!global.productCache) {
 const categoryMappings: Record<string, CategoryMapping> = {
   // Example mappings...
 };
+
+// Cache TTL in milliseconds (1 hour)
+const CACHE_TTL = 3600 * 1000;
+
+/**
+ * Initialize product cache with specific categories
+ * This is a compatibility function for the old API approach
+ */
+export async function initializeProductCache(categories?: string[]): Promise<void> {
+  console.log("Using new on-demand product cache system");
+
+  if (categories && categories.length > 0) {
+    // If specific categories are requested, preload them
+    console.log(`Pre-loading ${categories.length} categories`);
+    await ensureCategoriesLoaded(categories);
+    console.log("Categories pre-loaded successfully");
+  } else {
+    console.log("No specific categories requested for preloading");
+  }
+}
 
 /**
  * Get category by language
@@ -65,20 +86,27 @@ export async function getCategoryByLanguage(category: string, language: 'ro' | '
 }
 
 /**
- * Fetches all products from the API - only called once at server startup
+ * Fetches products for specific categories
  */
-async function fetchAllProducts(): Promise<Product[]> {
+async function fetchProductsByCategory(categories: string[]): Promise<Product[]> {
   try {
     const apiUrl = process.env.ROST_API_KEY;
-
     if (!apiUrl) {
       throw new Error("ROST_API_KEY is not defined in environment variables");
     }
 
-    console.log("🔄 Fetching all products from API (one-time operation)...");
+    // Build URL with category filter
+    let url = apiUrl;
+    const separator = url.includes('?') ? '&' : '?';
 
-    // Use revalidation instead of no-store to be compatible with static rendering
-    const response = await fetch(apiUrl, {
+    // Join categories with proper URL encoding
+    const encodedCategories = categories.map(cat => encodeURIComponent(cat)).join(',');
+    url += `${separator}categories=${encodedCategories}`;
+
+    console.log(`Fetching products for categories: ${categories.join(', ')}`);
+
+    // Use revalidation to be compatible with static rendering
+    const response = await fetch(url, {
       next: { revalidate: 3600 }, // Revalidate after 1 hour
     });
 
@@ -87,9 +115,15 @@ async function fetchAllProducts(): Promise<Product[]> {
     }
 
     const products = await response.json();
-    console.log(`✅ Successfully fetched ${products.length} products`);
 
-    return products;
+    // Filter to ensure we only get products from the requested categories
+    const filteredProducts = products.filter((product: Product) =>
+      categories.includes(product.category)
+    );
+
+    console.log(`Fetched ${filteredProducts.length} products for the requested categories`);
+
+    return filteredProducts;
   } catch (error) {
     console.error("Error fetching products:", error);
     return [];
@@ -97,99 +131,80 @@ async function fetchAllProducts(): Promise<Product[]> {
 }
 
 /**
- * Initializes the product cache - called once at server startup
+ * Ensures categories are loaded, fetching them if necessary
  */
-export async function initializeProductCache(): Promise<void> {
+async function ensureCategoriesLoaded(categories: string[]): Promise<void> {
+  if (!categories || categories.length === 0) return;
+
   const cache = global.productCache!;
 
-  // If already initialized or initializing, return existing promise
-  if (cache.isInitialized) {
-    return Promise.resolve();
+  // Filter out categories we've already fetched recently
+  const categoriesToFetch = categories.filter(category => {
+    const lastFetch = cache.lastFetchTime.get(category) || 0;
+    const isCacheValid = Date.now() - lastFetch < CACHE_TTL;
+    return !isCacheValid || !cache.fetchedCategories.has(category);
+  });
+
+  if (categoriesToFetch.length === 0) {
+    console.log("All requested categories are already in cache");
+    return;
   }
 
-  if (cache.initializationPromise) {
-    return cache.initializationPromise;
-  }
+  console.log(`Fetching ${categoriesToFetch.length} categories that need updating`);
 
-  // Create a new initialization promise
-  cache.initializationPromise = (async () => {
-    try {
-      // Check again in case another request already initialized
-      if (cache.isInitialized) {
-        return;
-      }
+  // Fetch products for these categories
+  const newProducts = await fetchProductsByCategory(categoriesToFetch);
 
-      console.log("🚀 Initializing product cache (one-time operation)...");
-
-      // Fetch all products
-      const products = await fetchAllProducts();
-
-      // Check if we got products back
-      if (!products || products.length === 0) {
-        console.warn("⚠️ Warning: No products were fetched. The API might be unavailable.");
-        // We'll continue with an empty cache, but won't mark as initialized
-        // so we can try again later
-        cache.initializationPromise = null;
-        return;
-      }
-
-      // Store products in cache
-      cache.allProducts = products;
-
-      // Build category map
-      products.forEach(product => {
-        if (product.category) {
-          const categoryProducts = cache.categoryMap.get(product.category) || [];
-          categoryProducts.push(product);
-          cache.categoryMap.set(product.category, categoryProducts);
-        }
-      });
-
-      console.log(`✅ Product cache initialized with ${products.length} products and ${cache.categoryMap.size} categories`);
-      cache.isInitialized = true;
-    } catch (error) {
-      console.error("Error initializing product cache:", error);
-      // Reset initialization state on error
-      cache.initializationPromise = null;
-    }
-  })();
-
-  return cache.initializationPromise;
+  // Update the cache with new products
+  categoriesToFetch.forEach(category => {
+    // Initialize with an empty array if no products for this category
+    const categoryProducts = newProducts.filter(p => p.category === category);
+    cache.categoryProducts.set(category, categoryProducts);
+    cache.fetchedCategories.add(category);
+    cache.lastFetchTime.set(category, Date.now());
+  });
 }
 
 /**
- * Gets all products from cache
+ * Gets all products from categories that have been fetched
  */
 export async function getAllProducts(): Promise<Product[]> {
-  await initializeProductCache();
-  return global.productCache!.allProducts;
+  const cache = global.productCache!;
+  // Return products from all categories that have been loaded
+  return Array.from(cache.categoryProducts.values()).flat();
 }
 
 /**
- * Gets all categories from cache
+ * Gets all categories that have been fetched
  */
 export async function getAllCategories(): Promise<string[]> {
-  await initializeProductCache();
-  return Array.from(global.productCache!.categoryMap.keys());
+  const cache = global.productCache!;
+  return Array.from(cache.fetchedCategories);
 }
 
 /**
- * Gets products by category
+ * Gets products by category - fetches if needed
  */
 export async function getProductsByCategory(category: string): Promise<Product[]> {
-  await initializeProductCache();
-  return global.productCache!.categoryMap.get(category) || [];
+  // Make sure the category is loaded
+  await ensureCategoriesLoaded([category]);
+
+  // Return products for this category
+  return global.productCache!.categoryProducts.get(category) || [];
 }
 
 /**
- * Gets products by multiple categories
+ * Gets products by multiple categories - fetches if needed
  */
 export async function getProductsByCategories(categories: string[]): Promise<Product[]> {
-  await initializeProductCache();
+  // Make sure all categories are loaded
+  await ensureCategoriesLoaded(categories);
+
+  const cache = global.productCache!;
 
   // Get products for all requested categories
   const products = categories.flatMap(category =>
-    global.productCache!.categoryMap.get(category) || []
+    cache.categoryProducts.get(category) || []
   );
 
   // Deduplicate in case products appear in multiple categories
@@ -198,12 +213,13 @@ export async function getProductsByCategories(categories: string[]): Promise<Pro
 
 /**
  * Searches for products by query in title
+ * Note: This only searches through categories that have already been fetched
  */
 export async function searchProducts(query: string): Promise<Product[]> {
-  await initializeProductCache();
+  const allProducts = await getAllProducts();
 
   const normalizedQuery = query.toLowerCase();
-  return global.productCache!.allProducts.filter(product =>
+  return allProducts.filter(product =>
     product.titleRO.toLowerCase().includes(normalizedQuery) ||
     product.titleRU.toLowerCase().includes(normalizedQuery) ||
     product.titleEN.toLowerCase().includes(normalizedQuery)
@@ -212,8 +228,9 @@ export async function searchProducts(query: string): Promise<Product[]> {
 
 /**
  * Gets a single product by ID
+ * Note: This only searches through categories that have already been fetched
  */
 export async function getProductById(id: string): Promise<Product | undefined> {
-  await initializeProductCache();
-  return global.productCache!.allProducts.find(product => product.id === id);
+  const allProducts = await getAllProducts();
+  return allProducts.find(product => product.id === id);
 }
