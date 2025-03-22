@@ -1,5 +1,11 @@
 import { Suspense } from "react";
-import { getProductsByCategory, getProductsByCategories } from "@/lib/product-api";
+import {
+  getRandomProductsFromCategories,
+  getEstimatedProductCount,
+  getProductsFromCategoriesWithPriceFilter
+} from "@/lib/product-api";
+import { Product } from "@/lib/product-api";
+import { ensureCategoriesLoaded } from "@/lib/product-api";
 import { ALL_CATEGORIES, ALL_SUBCATEGORY_IDS } from "@/lib/categories";
 import CatalogContent from "./CatalogContent";
 import CatalogLoading from "./CatalogLoading";
@@ -20,6 +26,50 @@ function getParameterValue(param: string | string[] | undefined): string {
   return typeof param === 'string' ? param : param[0] || '';
 }
 
+// Add a new function to get the total product count with price filter
+/**
+ * Get the total count of products that match the price filter
+ * This is more accurate than the estimate for pagination
+ */
+async function getFilteredProductCount(categories: string[], priceRange: [number, number]): Promise<number> {
+  try {
+    // Make sure all categories are loaded first
+    await ensureCategoriesLoaded(categories);
+
+    const cache = global.productCache!;
+    const allProducts: Product[] = [];
+
+    // Collect products from all requested categories
+    categories.forEach(category => {
+      const categoryProducts = cache.categoryProducts.get(category) || [];
+      allProducts.push(...categoryProducts);
+    });
+
+    // Deduplicate products
+    const uniqueProducts = Array.from(
+      new Map(allProducts.map(product => [product.id, product])).values()
+    );
+
+    // Apply price filter to get actual count
+    const filteredCount = uniqueProducts.filter(product => {
+      const regularPrice = typeof product.price === 'number' ?
+        product.price : parseFloat(String(product.price)) || 0;
+
+      const reducedPrice = product.reduced_price ?
+        (typeof product.reduced_price === 'number' ?
+          product.reduced_price : parseFloat(String(product.reduced_price))) : null;
+
+      const finalPrice = reducedPrice !== null ? reducedPrice : regularPrice;
+      return finalPrice >= priceRange[0] && finalPrice <= priceRange[1];
+    }).length;
+
+    return filteredCount;
+  } catch (error) {
+    console.error("Error counting filtered products:", error);
+    return 0;
+  }
+}
+
 // This is the server component
 export default async function CatalogPage({
   searchParams,
@@ -33,6 +83,12 @@ export default async function CatalogPage({
   const categoryParam = getParameterValue(params.category);
   const subcategoryParam = getParameterValue(params.subcategory);
   const brandParam = getParameterValue(params.brand);
+
+  // Parse comma-separated values for multiple categories/subcategories/brands
+  const categories = categoryParam ? categoryParam.split(',') : [];
+  const subcategories = subcategoryParam ? subcategoryParam.split(',') : [];
+  const brands = brandParam ? brandParam.split(',') : [];
+
   const minPriceParam = getParameterValue(params.minPrice);
   const maxPriceParam = getParameterValue(params.maxPrice);
   const searchQuery = getParameterValue(params.q);
@@ -43,65 +99,107 @@ export default async function CatalogPage({
   // Parse the initial page
   const initialPage = parseInt(pageParam, 10) || 1;
 
-  // Calculate pagination parameters
-  const offset = (initialPage - 1) * PRODUCTS_PER_PAGE;
-  const limit = PRODUCTS_PER_PAGE;
+  // Parse price range
+  const minPrice = minPriceParam ? parseFloat(minPriceParam) : 0;
+  const maxPrice = maxPriceParam ? parseFloat(maxPriceParam) : 9999;
+  const hasPriceFilter = (minPrice > 0 || maxPrice < 9999);
+
+  // Set price range for filtering
+  const priceRange: [number, number] = [minPrice, maxPrice];
 
   // Determine which categories to fetch based on filters
   let categoriesToFetch: string[] = [];
   let initialProducts: any[] = [];
-  let totalProducts = 0;
+  let estimatedTotal = 0;
 
   try {
-    console.log("Loading catalog products with server-side pagination...");
-
     // Determine which categories to fetch
-    if (subcategoryParam) {
-      // Case 1: Specific subcategory requested
-      categoriesToFetch = [subcategoryParam];
-      console.log(`Fetching subcategory: ${subcategoryParam}`);
+    if (subcategories.length > 0) {
+      // Case 1: Specific subcategory(ies) requested
+      categoriesToFetch = subcategories;
+      console.log(`Using ${subcategories.length} subcategories: ${subcategories.join(', ')}`);
     }
-    else if (categoryParam) {
-      // Case 2: Specific main category requested
-      categoriesToFetch = ALL_CATEGORIES
-        .find(cat => cat.id === categoryParam)
-        ?.subcategories.map(sub => sub.id) || [];
+    else if (categories.length > 0) {
+      // Case 2: Specific main category(ies) requested
+      const allSubcategories: string[] = [];
 
-      console.log(`Fetching ${categoriesToFetch.length} subcategories for category: ${categoryParam}`);
+      // Collect all subcategories for each requested category
+      categories.forEach(categoryId => {
+        const categorySubcategories = ALL_CATEGORIES
+          .find(cat => cat.id === categoryId)
+          ?.subcategories.map(sub => sub.id) || [];
+
+        allSubcategories.push(...categorySubcategories);
+      });
+
+      categoriesToFetch = allSubcategories;
+      console.log(`Using ${categoriesToFetch.length} subcategories for ${categories.length} categories`);
     }
     else {
-      // Case 3: No specific category - fetch a sample of subcategories
-      categoriesToFetch = ALL_SUBCATEGORY_IDS.slice(0, 5);
-      console.log(`Fetching ${categoriesToFetch.length} sample subcategories`);
+      // Case 3: No specific category - use all subcategories
+      categoriesToFetch = ALL_SUBCATEGORY_IDS;
+      console.log(`Using all ${categoriesToFetch.length} subcategories`);
     }
 
-    // First get total count (we need this for client-side pagination)
-    if (categoriesToFetch.length > 0) {
-      // Get all products to determine total count
-      const allCategoryProducts = await getProductsByCategories(categoriesToFetch);
-      totalProducts = allCategoryProducts.length;
-      console.log(`Total products in selected categories: ${totalProducts}`);
+    // Calculate pagination offset
+    const offset = (initialPage - 1) * PRODUCTS_PER_PAGE;
 
-      // Now fetch only the paginated products for this page
-      initialProducts = await getProductsByCategories(categoriesToFetch, { offset, limit });
-      console.log(`Fetched ${initialProducts.length} products for page ${initialPage}`);
+    // Get estimated product count for pagination UI
+    estimatedTotal = await getEstimatedProductCount(categoriesToFetch);
+    console.log(`Estimated total products: ~${estimatedTotal}`);
+
+    // Check if the user has applied a price filter
+    if (hasPriceFilter) {
+      console.log(`Using price filter: ${minPrice} - ${maxPrice} MDL`);
+
+      // Get the actual total count of products matching the price filter
+      const actualFilteredCount = await getFilteredProductCount(categoriesToFetch, priceRange);
+      console.log(`Found ${actualFilteredCount} total products matching price filter ${priceRange[0]}-${priceRange[1]}`);
+
+      // Update estimated total with the accurate count
+      estimatedTotal = actualFilteredCount;
+
+      // Calculate the total number of pages
+      const totalPages = Math.ceil(actualFilteredCount / PRODUCTS_PER_PAGE);
+
+      // Make sure we're not requesting a page that doesn't exist
+      const safeInitialPage = Math.min(initialPage, Math.max(1, totalPages));
+
+      // Use price-filtered product fetching
+      const startTime = Date.now();
+      initialProducts = await getProductsFromCategoriesWithPriceFilter(
+        categoriesToFetch,
+        priceRange,
+        PRODUCTS_PER_PAGE,
+        (safeInitialPage - 1) * PRODUCTS_PER_PAGE
+      );
+      const duration = Date.now() - startTime;
+      console.log(`Fetched ${initialProducts.length} price-filtered products in ${duration}ms`);
+    } else {
+      // No price filter, use regular random product selection
+      console.log("Fast loading catalog with random product sampling...");
+
+      // Get random selection of products for this page
+      if (categoriesToFetch.length > 0) {
+        const startTime = Date.now();
+        initialProducts = await getRandomProductsFromCategories(categoriesToFetch, PRODUCTS_PER_PAGE);
+        const duration = Date.now() - startTime;
+        console.log(`Fetched ${initialProducts.length} random products in ${duration}ms`);
+      }
     }
 
   } catch (error) {
     console.error("Error loading catalog products:", error);
     initialProducts = [];
-    totalProducts = 0;
+    estimatedTotal = 0;
   }
 
   // Set initial filters based on URL parameters
   const initialFilters: FilterOptions = {
-    priceRange: [
-      minPriceParam ? parseFloat(minPriceParam) : 0,
-      maxPriceParam ? parseFloat(maxPriceParam) : 9999
-    ],
-    categories: categoryParam ? [categoryParam] : [],
-    subcategories: subcategoryParam ? [subcategoryParam] : [],
-    brands: brandParam ? [brandParam] : [],
+    priceRange: priceRange,
+    categories: categories,
+    subcategories: subcategories,
+    brands: brands,
     sortOption: sortParam || "price-asc",
     inStock: inStockParam === "true" ? true : false,
   };
@@ -114,9 +212,10 @@ export default async function CatalogPage({
           initialFilters={initialFilters}
           initialPage={initialPage}
           searchQuery={searchQuery}
-          totalProducts={totalProducts}
+          totalProducts={estimatedTotal}
           productsPerPage={PRODUCTS_PER_PAGE}
           serverPagination={true}
+          randomSampling={!hasPriceFilter} /* Only use random sampling when not filtering by price */
         />
       </ClientWrapper>
     </Suspense>

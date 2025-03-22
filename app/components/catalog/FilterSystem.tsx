@@ -14,7 +14,8 @@ import {
   Home,
 } from "lucide-react";
 import { Range, getTrackBackground } from "react-range";
-import { Slider } from "@heroui/react";
+import * as SliderPrimitive from "@radix-ui/react-slider";
+import { Slider } from "@/components/ui/slider";
 import { ALL_CATEGORIES, getCategoryName } from "@/lib/categories";
 
 // Shadcn Components
@@ -120,14 +121,14 @@ const sortOptions = [
 ];
 
 // Add this custom SliderWrapper component
-function SliderWrapper({
+const SliderWrapper = ({
   value,
   onFinalChange,
   min,
   max,
-  step = 10,
+  step = 1,
   label,
-  formatOptions,
+  formatOptions = {},
 }: {
   value: [number, number];
   onFinalChange: (value: [number, number]) => void;
@@ -135,43 +136,73 @@ function SliderWrapper({
   max: number;
   step?: number;
   label?: string;
-  formatOptions?: { style: "currency"; currency: string };
-}) {
-  // Local state for dragging - completely isolated from parent state
-  const [localValue, setLocalValue] = useState<[number, number]>(value);
-  const isDraggingRef = useRef(false);
+  formatOptions?: Intl.NumberFormatOptions;
+}) => {
+  const [localValue, setLocalValue] = React.useState<[number, number]>(value);
 
-  // Update local value when prop value changes (but not while dragging)
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      setLocalValue(value);
+  // Format value for display
+  const formatValue = (val: number) => {
+    if (formatOptions.style === 'currency') {
+      // Format as currency with the specified currency
+      return `${val.toLocaleString()} ${formatOptions.currency || 'MDL'}`;
     }
+    return val.toString();
+  };
+
+  // Update local value when dragging
+  const handleValueChange = (newValue: number[]) => {
+    // Ensure we're working with numbers
+    const numericValues: [number, number] = [
+      typeof newValue[0] === 'number' ? newValue[0] : parseFloat(String(newValue[0])) || min,
+      typeof newValue[1] === 'number' ? newValue[1] : parseFloat(String(newValue[1])) || max
+    ];
+    setLocalValue(numericValues);
+  };
+
+  // Call the parent callback only when dragging ends
+  const handleValueCommit = (newValue: number[]) => {
+    // Ensure we're working with numbers
+    const numericValues: [number, number] = [
+      typeof newValue[0] === 'number' ? newValue[0] : parseFloat(String(newValue[0])) || min,
+      typeof newValue[1] === 'number' ? newValue[1] : parseFloat(String(newValue[1])) || max
+    ];
+
+    console.log('Slider committed values:', numericValues);
+
+    // Only call onFinalChange if the values actually changed
+    if (numericValues[0] !== value[0] || numericValues[1] !== value[1]) {
+      onFinalChange(numericValues);
+    }
+  };
+
+  // Update local value when props change
+  React.useEffect(() => {
+    setLocalValue(value);
   }, [value]);
 
   return (
-    <div>
+    <div className="space-y-3">
+      <div className="flex justify-between text-sm text-muted-foreground mb-1">
+        <span>{formatValue(localValue[0])}</span>
+        <span>{formatValue(localValue[1])}</span>
+      </div>
       <Slider
-        className="my-4"
-        minValue={min}
-        maxValue={max}
-        step={step}
-        label={label}
-        formatOptions={formatOptions}
         value={localValue}
-        onChange={(values) => {
-          // Start dragging and update only local state
-          isDraggingRef.current = true;
-          setLocalValue(values as [number, number]);
-        }}
-        onChangeEnd={(values) => {
-          // End dragging and notify parent
-          isDraggingRef.current = false;
-          onFinalChange(values as [number, number]);
-        }}
+        onValueChange={handleValueChange}
+        onValueCommit={handleValueCommit}
+        step={step}
+        min={min}
+        max={max}
+        className="w-full"
       />
+      {label && (
+        <div className="text-xs text-muted-foreground text-center mt-1">
+          {label}
+        </div>
+      )}
     </div>
   );
-}
+};
 
 // Add this custom FilterBreadcrumb component
 function FilterBreadcrumb({
@@ -406,6 +437,63 @@ const MemoizedFilterContent = memo(function MemoizedFilterContent({
   sortOptions,
   t,
 }: FilterContentProps) {
+  // Track expanded categories for animations
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+
+  // Toggle category expansion
+  const toggleCategoryExpansion = (categoryId: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  // Check if a category is expanded
+  const isCategoryExpanded = (categoryId: string) => {
+    return expandedCategories.includes(categoryId) || filters.categories.includes(categoryId);
+  };
+
+  // Animation variants for checkbox items
+  const checkboxAnimationVariants = {
+    checked: { scale: [1, 1.2, 1], backgroundColor: "var(--primary)" },
+    unchecked: { scale: 1, backgroundColor: "transparent" }
+  };
+
+  // Animation variants for subcategory container
+  const subcategoryContainerVariants = {
+    open: {
+      height: "auto",
+      opacity: 1,
+      transition: {
+        height: { duration: 0.3, ease: [0.33, 1, 0.68, 1] },
+        opacity: { duration: 0.2, delay: 0.1 }
+      }
+    },
+    closed: {
+      height: 0,
+      opacity: 0,
+      transition: {
+        height: { duration: 0.3, ease: [0.33, 1, 0.68, 1] },
+        opacity: { duration: 0.2 }
+      }
+    }
+  };
+
+  // Animation variants for subcategory items
+  const subcategoryItemVariants = {
+    open: (index: number) => ({
+      x: 0,
+      opacity: 1,
+      transition: {
+        x: { duration: 0.3, ease: "easeOut" },
+        opacity: { duration: 0.3 },
+        delay: index * 0.05
+      }
+    }),
+    closed: { x: -10, opacity: 0 }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* Sort - always visible on all devices */}
@@ -535,79 +623,128 @@ const MemoizedFilterContent = memo(function MemoizedFilterContent({
         </div>
       </div>
 
-      {/* Categories Filter */}
+      {/* Categories Filter - Updated with animations */}
       <div className="bg-card rounded-lg border p-3 shadow-sm">
-        <h3 className="font-semibold text-sm mb-2">{t("categories")}</h3>
-        <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+        <h3 className="font-semibold text-sm mb-3">{t("categories")}</h3>
+        <div className="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-none hover:pr-1 select-none">
           {categories.map((category: CategoryWithSubcategories) => (
             <div key={category.id} className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={`category-${category.id}`}
-                  checked={filters.categories.includes(category.id)}
-                  onCheckedChange={() => handleCategoryChange(category.id)}
-                  className="border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4"
-                />
-                <Label
-                  htmlFor={`category-${category.id}`}
-                  className="cursor-pointer font-medium text-foreground text-base"
-                >
-                  {category.numeKey ? t(category.numeKey) : category.nume}
-                </Label>
+              <div
+                className="flex items-center justify-between group cursor-pointer py-1 pr-1 rounded-md hover:bg-accent/50 transition-colors"
+                onClick={() => toggleCategoryExpansion(category.id)}
+              >
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`category-${category.id}`}
+                    checked={filters.categories.includes(category.id)}
+                    onCheckedChange={(checked) => {
+                      // Don't trigger category expansion on checkbox click
+                      setTimeout(() => handleCategoryChange(category.id), 0);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4"
+                  />
+                  <Label
+                    htmlFor={`category-${category.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="cursor-pointer font-medium text-foreground text-base"
+                  >
+                    {category.numeKey ? t(category.numeKey) : category.nume}
+                  </Label>
+                </div>
+                {category.subcategorii.length > 0 && (
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:text-primary ${
+                      isCategoryExpanded(category.id) ? 'rotate-180' : ''
+                    }`}
+                  />
+                )}
               </div>
 
-              {/* Subcategories */}
-              {filters.categories.includes(category.id) && (
-                <div className="pl-6 space-y-1.5 mt-1">
-                  {category.subcategorii.map((subcategory: Subcategorie) => (
-                    <div
-                      key={subcategory.id}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={`subcategory-${subcategory.id}`}
-                        checked={filters.subcategories.includes(subcategory.id)}
-                        onCheckedChange={() =>
-                          handleSubcategoryChange(subcategory.id, category.id)
-                        }
-                        className="border-2 border-primary/30 data-[state=checked]:bg-primary/80 h-3.5 w-3.5"
-                      />
-                      <Label
-                        htmlFor={`subcategory-${subcategory.id}`}
-                        className="cursor-pointer text-sm"
+              {/* Subcategories with animation */}
+              {category.subcategorii.length > 0 && (
+                <motion.div
+                  initial={false}
+                  variants={subcategoryContainerVariants}
+                  animate={isCategoryExpanded(category.id) ? "open" : "closed"}
+                  className="overflow-hidden"
+                >
+                  <div className="pl-6 space-y-1.5 mt-1 py-1">
+                    {category.subcategorii.map((subcategory: Subcategorie, index) => (
+                      <motion.div
+                        key={subcategory.id}
+                        className="flex items-center space-x-2 group py-0.5 rounded-md hover:bg-accent/30 transition-colors"
+                        variants={subcategoryItemVariants}
+                        initial="closed"
+                        animate={isCategoryExpanded(category.id) ? "open" : "closed"}
+                        custom={index}
                       >
-                        {subcategory.numeKey
-                          ? t(subcategory.numeKey)
-                          : subcategory.nume}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                        <div className="relative">
+                          <Checkbox
+                            id={`subcategory-${subcategory.id}`}
+                            checked={filters.subcategories.includes(subcategory.id)}
+                            onCheckedChange={() =>
+                              handleSubcategoryChange(subcategory.id, category.id)
+                            }
+                            className="border-2 border-primary/30 data-[state=checked]:bg-primary/80 h-3.5 w-3.5 relative z-10"
+                          />
+                          <motion.div
+                            className="absolute inset-0 rounded-sm bg-primary/0 z-0"
+                            variants={checkboxAnimationVariants}
+                            animate={filters.subcategories.includes(subcategory.id) ? "checked" : "unchecked"}
+                            transition={{ duration: 0.2 }}
+                          />
+                        </div>
+                        <Label
+                          htmlFor={`subcategory-${subcategory.id}`}
+                          className="cursor-pointer text-sm group-hover:text-primary transition-colors"
+                        >
+                          {subcategory.numeKey
+                            ? t(subcategory.numeKey)
+                            : subcategory.nume}
+                        </Label>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Brands Filter */}
+      {/* Brands Filter - Updated for better visual appearance */}
       <div className="bg-card rounded-lg border p-3 shadow-sm">
-        <h3 className="font-semibold text-sm mb-2">{t("brands")}</h3>
-        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-2">
+        <h3 className="font-semibold text-sm mb-3">{t("brands")}</h3>
+        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-2 scrollbar-none hover:pr-1 select-none">
           {brands.map((brand: Brand) => (
-            <div key={brand.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={`brand-${brand.id}`}
-                checked={filters.brands.includes(brand.id)}
-                onCheckedChange={() => handleBrandChange(brand.id)}
-                className="border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4"
-              />
+            <motion.div
+              key={brand.id}
+              className="flex items-center space-x-2 py-1 px-1 rounded-md hover:bg-accent/50 transition-colors group"
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="relative">
+                <Checkbox
+                  id={`brand-${brand.id}`}
+                  checked={filters.brands.includes(brand.id)}
+                  onCheckedChange={() => handleBrandChange(brand.id)}
+                  className="border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4 relative z-10"
+                />
+                <motion.div
+                  className="absolute inset-0 rounded-sm bg-primary/0 z-0"
+                  variants={checkboxAnimationVariants}
+                  animate={filters.brands.includes(brand.id) ? "checked" : "unchecked"}
+                  transition={{ duration: 0.2 }}
+                />
+              </div>
               <Label
                 htmlFor={`brand-${brand.id}`}
-                className="cursor-pointer font-medium text-base"
+                className="cursor-pointer font-medium text-base group-hover:text-primary transition-colors w-full"
               >
                 {brand.nameKey ? t(brand.nameKey) : brand.name}
               </Label>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -1294,11 +1431,7 @@ export default function FilterSystem({
   useEffect(() => {
     const fetchData = async () => {
       // Hardcoded real brands data
-      const brandData: Brand[] = [
-        { id: "brand-1", name: "Brand One" },
-        { id: "brand-2", name: "Brand Two" },
-        { id: "brand-3", name: "Brand Three" },
-      ];
+
 
       // Use our centralized categories
       const categoryData = ALL_CATEGORIES.map(category => ({
@@ -1310,7 +1443,7 @@ export default function FilterSystem({
         }))
       }));
 
-      setBrands(brandData);
+
       setCategories(categoryData);
     };
 
@@ -1331,77 +1464,71 @@ export default function FilterSystem({
     return () => window.removeEventListener("resize", handleResize);
   }, [language]);
 
-  // Handle initial URL params on mount (only once)
+  // Read URL params on mount
   useEffect(() => {
-    if (!isMounted || !categories.length || !brands.length) return;
+    if (searchParams && isMounted) {
+      try {
+        const urlParams = new URLSearchParams(searchParams.toString());
 
-    // Use a ref to track if this is the first load to avoid infinite updates
-    const categoryParam = searchParams.get("category");
-    const subcategoryParam = searchParams.get("subcategory");
-    const brandParam = searchParams.get("brand");
-    const minPriceParam = searchParams.get("minPrice");
-    const maxPriceParam = searchParams.get("maxPrice");
-    const sortParam = searchParams.get("sort");
-    const inStockParam = searchParams.get("inStock");
+        // Parse categories and subcategories from URL (comma-separated values)
+        const categoryParam = urlParams.get("category") || "";
+        const subcategoryParam = urlParams.get("subcategory") || "";
+        const brandParam = urlParams.get("brand") || "";
 
-    // Create a new filters object from scratch
-    const initialFiltersState: FilterOptions = {
-      priceRange: defaultPriceRange,
-      categories: [],
-      subcategories: [],
-      brands: [],
-      sortOption: "featured",
-      inStock: false,
-    };
+        const categoriesFromUrl = categoryParam ? categoryParam.split(',') : [];
+        const subcategoriesFromUrl = subcategoryParam ? subcategoryParam.split(',') : [];
+        const brandsFromUrl = brandParam ? brandParam.split(',') : [];
 
-    if (categoryParam) {
-      initialFiltersState.categories = categoryParam.split(",");
+        // Parse price range from URL
+        const minPrice = parseInt(urlParams.get("minPrice") || "0");
+        const maxPrice = parseInt(urlParams.get("maxPrice") || defaultPriceRange[1].toString());
+
+        // Only update if we have valid values
+        const priceRange: [number, number] = [
+          !isNaN(minPrice) ? minPrice : defaultPriceRange[0],
+          !isNaN(maxPrice) ? maxPrice : defaultPriceRange[1]
+        ];
+
+        // Parse other filter options
+        const sortOption = urlParams.get("sort") || "featured";
+        const inStock = urlParams.get("inStock") === "true";
+
+        // Update filter state
+        const newFilters: FilterOptions = {
+          categories: categoriesFromUrl,
+          subcategories: subcategoriesFromUrl,
+          brands: brandsFromUrl,
+          priceRange,
+          sortOption,
+          inStock,
+        };
+
+        // Only update if filters actually changed
+        if (JSON.stringify(newFilters) !== JSON.stringify(filters)) {
+          setFilters(newFilters);
+
+          // Update price input state
+          setPriceInput({
+            min: priceRange[0].toString(),
+            max: priceRange[1].toString(),
+          });
+
+          // Also update the local range state for the slider
+          setLocalPriceRange(priceRange);
+        }
+      } catch (error) {
+        console.error("Error parsing URL params:", error);
+      }
     }
+  }, [searchParams, isMounted]);
 
-    if (subcategoryParam) {
-      initialFiltersState.subcategories = subcategoryParam.split(",");
-    }
-
-    if (brandParam) {
-      initialFiltersState.brands = brandParam.split(",");
-    }
-
-    if (minPriceParam && maxPriceParam) {
-      const min = parseInt(minPriceParam);
-      const max = parseInt(maxPriceParam);
-      initialFiltersState.priceRange = [min, max];
-      setPriceInput({ min: min.toString(), max: max.toString() });
-    }
-
-    if (sortParam) {
-      initialFiltersState.sortOption = sortParam;
-    }
-
-    if (inStockParam) {
-      initialFiltersState.inStock = inStockParam === "true";
-    }
-
-    // Set filters only if something has changed
-    setFilters(initialFiltersState);
-
-    // Calculate active filter count
-    updateActiveFilterCount(initialFiltersState);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMounted, categories.length, brands.length]); // Remove searchParams to prevent infinite loop
-
-  // Update parent on filter changes - but only after initial mount
+  // Update active filter count whenever filters change
   useEffect(() => {
-    if (!isMounted) return;
-
-    // Notify parent about filter changes
-    onFilterChange(filters);
-
-    // Update active filter count
-    updateActiveFilterCount(filters);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, isMounted]); // Remove onFilterChange from dependencies
+    if (isMounted) {
+      // Update active filter count
+      updateActiveFilterCount(filters);
+    }
+  }, [filters, isMounted]);
 
   // Update active filter count
   const updateActiveFilterCount = (currentFilters: FilterOptions) => {
@@ -1427,35 +1554,42 @@ export default function FilterSystem({
       return; // Skip update if nothing changed
     }
 
+    // Update local state
     setFilters(newFilters);
 
     // Create new URL params
     const params = new URLSearchParams();
 
+    // Add categories as comma-separated values
     if (newFilters.categories.length > 0) {
       params.set("category", newFilters.categories.join(","));
     }
 
+    // Add subcategories as comma-separated values
     if (newFilters.subcategories.length > 0) {
       params.set("subcategory", newFilters.subcategories.join(","));
     }
 
+    // Add brands as comma-separated values
     if (newFilters.brands.length > 0) {
       params.set("brand", newFilters.brands.join(","));
     }
 
-    if (
-      newFilters.priceRange[0] > defaultPriceRange[0] ||
-      newFilters.priceRange[1] < defaultPriceRange[1]
-    ) {
+    // Add price range if different from default
+    if (newFilters.priceRange[0] > defaultPriceRange[0]) {
       params.set("minPrice", newFilters.priceRange[0].toString());
+    }
+
+    if (newFilters.priceRange[1] < defaultPriceRange[1]) {
       params.set("maxPrice", newFilters.priceRange[1].toString());
     }
 
+    // Add sort option if not the default
     if (newFilters.sortOption !== "featured") {
       params.set("sort", newFilters.sortOption);
     }
 
+    // Add in-stock filter if enabled
     if (newFilters.inStock) {
       params.set("inStock", "true");
     }
@@ -1468,23 +1602,49 @@ export default function FilterSystem({
     if (window.location.pathname + window.location.search !== newUrl) {
       router.replace(newUrl, { scroll: false });
     }
+
+    // Call the callback to notify parent component
+    onFilterChange(newFilters);
   };
 
   // Filter handlers
   const handlePriceChange = (value: number[]) => {
-    const newPriceRange = [value[0], value[1]] as [number, number];
+    // Log the original values received from the slider
+    console.log('Price slider values:', value);
+
+    // Ensure we're working with numbers
+    const minPrice = typeof value[0] === 'number' ? value[0] : parseInt(String(value[0]));
+    const maxPrice = typeof value[1] === 'number' ? value[1] : parseInt(String(value[1]));
+
+    console.log('Parsed price values:', minPrice, maxPrice);
+
+    // Create a new price range with validated numbers
+    const newPriceRange: [number, number] = [
+      !isNaN(minPrice) ? minPrice : defaultPriceRange[0],
+      !isNaN(maxPrice) ? maxPrice : defaultPriceRange[1]
+    ];
+
+    console.log('Final price range:', newPriceRange);
 
     const newFilters = {
       ...filters,
       priceRange: newPriceRange,
     };
 
-    applyFilters(newFilters);
+    // Log the filters being applied
+    console.log('Applying price filters:', newFilters);
 
+    // Update the UI
     setPriceInput({
-      min: value[0].toString(),
-      max: value[1].toString(),
+      min: newPriceRange[0].toString(),
+      max: newPriceRange[1].toString(),
     });
+
+    // Set the local range state for the slider
+    setLocalPriceRange(newPriceRange);
+
+    // Apply the filters
+    applyFilters(newFilters);
   };
 
   const handlePriceInputChange = (key: "min" | "max", value: string) => {

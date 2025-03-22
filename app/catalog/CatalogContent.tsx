@@ -32,7 +32,8 @@ export default function CatalogContent({
   searchQuery,
   totalProducts = 0,
   productsPerPage = 12,
-  serverPagination = false
+  serverPagination = false,
+  randomSampling = false
 }: CatalogContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -60,18 +61,18 @@ export default function CatalogContent({
   const transformProducts = (apiProducts: any[]): Product[] => {
     return apiProducts.map(product => ({
       id: product.id,
-      nume: product.name,
-      cod: product.SKU,
-      pret: parseFloat(product.price),
+      nume: product.name || product.titleRO || product.titleRU || "",
+      cod: product.SKU || "",
+      pret: parseFloat(product.price) || 0,
       pretRedus: product.reduced_price ? parseFloat(product.reduced_price) : null,
       imagini: product.img ? [product.img] : [],
-      stoc: parseInt(product.on_stock),
+      stoc: parseInt(product.on_stock || "0"),
       subcategorie: {
         id: product.subcategory_id || "unknown",
-        nume: product.subcategory_name || "Necunoscută",
+        nume: product.subcategory_name || product.subcategory || "",
         categoriePrincipala: {
           id: product.category_id || "unknown",
-          nume: product.category_name || "Necunoscută"
+          nume: product.category_name || product.category || ""
         }
       },
       stare: product.condition || ""
@@ -113,7 +114,8 @@ export default function CatalogContent({
       if (serverPagination) {
         // If using server pagination, we're already showing the correct products
         setDisplayedProducts(transformedProducts);
-        // Calculate total pages from the total product count provided by server
+
+        // Calculate total pages (with estimate if using random sampling)
         setTotalPages(Math.ceil(totalProducts / productsPerPageState));
         setTotalProductCount(totalProducts);
       } else {
@@ -156,13 +158,13 @@ export default function CatalogContent({
 
       // Update filter parameters
       if (categories.length > 0) {
-        currentParams.set("category", categories[0]);
+        currentParams.set("category", categories.join(','));
       } else {
         currentParams.delete("category");
       }
 
       if (subcategories.length > 0) {
-        currentParams.set("subcategory", subcategories[0]);
+        currentParams.set("subcategory", subcategories.join(','));
       } else {
         currentParams.delete("subcategory");
       }
@@ -180,7 +182,7 @@ export default function CatalogContent({
       }
 
       if (newFilters.brands.length > 0) {
-        currentParams.set("brand", newFilters.brands[0]);
+        currentParams.set("brand", newFilters.brands.join(','));
       } else {
         currentParams.delete("brand");
       }
@@ -206,8 +208,16 @@ export default function CatalogContent({
         return; // The navigation will trigger a server refetch
       }
 
-      // Continue with client-side filtering if not using server pagination
-      // ... rest of the existing handleFilterChange function ...
+      // For client-side filtering, apply filters directly
+      setCurrentFilters(newFilters);
+      const filtered = applyFilters(transformProducts(initialProducts), newFilters, searchQuery);
+      setFilteredProducts(filtered);
+      setTotalPages(Math.ceil(filtered.length / productsPerPageState));
+      setTotalProductCount(filtered.length);
+      updateDisplayedProducts(filtered, 1); // Reset to first page
+
+      // Update URL without full page navigation
+      router.replace(`/catalog?${currentParams.toString()}`, { scroll: false });
 
     } finally {
       setIsLoading(false);
@@ -258,8 +268,26 @@ export default function CatalogContent({
 
       // Filter by price range
       results = results.filter((product) => {
-        const price = product.pretRedus || product.pret;
-        return price >= filters.priceRange[0] && price <= filters.priceRange[1];
+        // Ensure we're working with properly parsed numbers
+        const regularPrice = typeof product.pret === 'number' ? product.pret : parseFloat(String(product.pret)) || 0;
+        const reducedPrice = product.pretRedus ?
+          (typeof product.pretRedus === 'number' ? product.pretRedus : parseFloat(String(product.pretRedus))) : null;
+
+        // Use reduced price if available, otherwise use regular price
+        const price = reducedPrice !== null ? reducedPrice : regularPrice;
+
+        // Debug information
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Price filter - Product: ${product.nume}, RegularPrice: ${regularPrice}, ReducedPrice: ${reducedPrice}, FinalPrice: ${price}`);
+          console.log(`Price filter - Range: ${filters.priceRange[0]} to ${filters.priceRange[1]}`);
+          console.log(`Price filter - Comparison: ${price >= filters.priceRange[0]} && ${price <= filters.priceRange[1]}`);
+        }
+
+        // Convert strings to numbers if needed and use strict equality checks
+        const minPrice = typeof filters.priceRange[0] === 'string' ? parseFloat(filters.priceRange[0]) : filters.priceRange[0];
+        const maxPrice = typeof filters.priceRange[1] === 'string' ? parseFloat(filters.priceRange[1]) : filters.priceRange[1];
+
+        return (price >= minPrice && price <= maxPrice);
       });
 
       // Filter by brands
@@ -280,15 +308,15 @@ export default function CatalogContent({
     switch (filters.sortOption) {
       case "price-asc":
         results = results.sort((a, b) => {
-          const priceA = a.pretRedus || a.pret;
-          const priceB = b.pretRedus || b.pret;
+          const priceA = a.pretRedus !== null && a.pretRedus !== undefined ? a.pretRedus : (a.pret || 0);
+          const priceB = b.pretRedus !== null && b.pretRedus !== undefined ? b.pretRedus : (b.pret || 0);
           return priceA - priceB;
         });
         break;
       case "price-desc":
         results = results.sort((a, b) => {
-          const priceA = a.pretRedus || a.pret;
-          const priceB = b.pretRedus || b.pret;
+          const priceA = a.pretRedus !== null && a.pretRedus !== undefined ? a.pretRedus : (a.pret || 0);
+          const priceB = b.pretRedus !== null && b.pretRedus !== undefined ? b.pretRedus : (b.pret || 0);
           return priceB - priceA;
         });
         break;
@@ -328,6 +356,12 @@ export default function CatalogContent({
 
     if (serverPagination) {
       // For server pagination, navigate to new URL to trigger data refetch
+
+      // Show loading state before navigation when using random sampling
+      if (randomSampling) {
+        setIsLoading(true);
+      }
+
       router.push(`/catalog?${currentParams.toString()}`);
     } else {
       // For client pagination, update URL without navigation and update displayed products
@@ -436,7 +470,10 @@ export default function CatalogContent({
         <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
             <span>
-              {filteredProducts.length} {t?.("products") || "products"}
+              {randomSampling
+                ? `${t?.("showing") || "Showing"} ${productsPerPage} ${t?.("random_products") || "random products"}`
+                : `${filteredProducts.length} ${t?.("products") || "products"}`
+              }
             </span>
           </div>
         </div>

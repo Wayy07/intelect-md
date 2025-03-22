@@ -36,6 +36,7 @@ export interface CatalogContentProps {
   totalProducts?: number;
   productsPerPage?: number;
   serverPagination?: boolean;
+  randomSampling?: boolean;
 }
 
 export interface CatalogLoadingProps {}

@@ -4,13 +4,14 @@
 import "server-only";
 
 // Product types
-interface Product {
+export interface Product {
   id: string;
   SKU: string;
   titleRO: string;
   titleRU: string;
   titleEN: string;
   price: string;
+  reduced_price?: string;
   min_qty: string;
   on_stock: string;
   img: string;
@@ -133,7 +134,7 @@ async function fetchProductsByCategory(categories: string[]): Promise<Product[]>
 /**
  * Ensures categories are loaded, fetching them if necessary
  */
-async function ensureCategoriesLoaded(categories: string[]): Promise<void> {
+export async function ensureCategoriesLoaded(categories: string[]): Promise<void> {
   if (!categories || categories.length === 0) return;
 
   const cache = global.productCache!;
@@ -247,4 +248,112 @@ export async function searchProducts(query: string): Promise<Product[]> {
 export async function getProductById(id: string): Promise<Product | undefined> {
   const allProducts = await getAllProducts();
   return allProducts.find(product => product.id === id);
+}
+
+/**
+ * Gets a random selection of products from categories
+ * This avoids loading all products first, making it much faster
+ */
+export async function getRandomProductsFromCategories(
+  categories: string[],
+  limit: number = 12
+): Promise<Product[]> {
+  // Make sure all categories are loaded
+  await ensureCategoriesLoaded(categories);
+
+  const cache = global.productCache!;
+  const allProducts: Product[] = [];
+
+  // Collect products from all requested categories
+  categories.forEach(category => {
+    const categoryProducts = cache.categoryProducts.get(category) || [];
+    allProducts.push(...categoryProducts);
+  });
+
+  // Shuffle the array using Fisher-Yates algorithm
+  const shuffled = [...allProducts];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  // Deduplicate in case products appear in multiple categories
+  const uniqueProducts = Array.from(
+    new Map(shuffled.map(product => [product.id, product])).values()
+  );
+
+  // Return only the requested number of products
+  return uniqueProducts.slice(0, limit);
+}
+
+/**
+ * Gets a total count of products across categories
+ * This is an estimate since we don't want to load all products
+ */
+export async function getEstimatedProductCount(categories: string[]): Promise<number> {
+  // Make sure all categories are loaded
+  await ensureCategoriesLoaded(categories);
+
+  const cache = global.productCache!;
+
+  // Just return a fixed value per category to avoid expensive operations
+  // This is just an estimate for UI purposes
+  return categories.length * 50; // Assume ~50 products per category
+}
+
+/**
+ * Gets products from categories filtered by price range
+ * This loads all products from the categories and filters them by price
+ */
+export async function getProductsFromCategoriesWithPriceFilter(
+  categories: string[],
+  priceRange: [number, number],
+  limit: number = 12,
+  offset: number = 0
+): Promise<Product[]> {
+  // Make sure all categories are loaded
+  await ensureCategoriesLoaded(categories);
+
+  const cache = global.productCache!;
+  const allProducts: Product[] = [];
+
+  // Collect products from all requested categories
+  categories.forEach(category => {
+    const categoryProducts = cache.categoryProducts.get(category) || [];
+    allProducts.push(...categoryProducts);
+  });
+
+  // Deduplicate in case products appear in multiple categories
+  const uniqueProducts = Array.from(
+    new Map(allProducts.map(product => [product.id, product])).values()
+  );
+
+  // Filter by price range
+  const filteredProducts = uniqueProducts.filter(product => {
+    // Parse the price (could be string or number)
+    const regularPrice = typeof product.price === 'number' ?
+      product.price : parseFloat(String(product.price)) || 0;
+
+    const reducedPrice = product.reduced_price ?
+      (typeof product.reduced_price === 'number' ?
+        product.reduced_price : parseFloat(String(product.reduced_price))) : null;
+
+    // Use reduced price if available, otherwise use regular price
+    const finalPrice = reducedPrice !== null ? reducedPrice : regularPrice;
+
+    // Check if the price is within the range
+    return finalPrice >= priceRange[0] && finalPrice <= priceRange[1];
+  });
+
+  // Sort by price (ascending by default)
+  const sortedProducts = filteredProducts.sort((a, b) => {
+    const priceA = a.reduced_price ? parseFloat(String(a.reduced_price)) : parseFloat(String(a.price));
+    const priceB = b.reduced_price ? parseFloat(String(b.reduced_price)) : parseFloat(String(b.price));
+    return priceA - priceB;
+  });
+
+  console.log(`Found ${filteredProducts.length} products within price range ${priceRange[0]}-${priceRange[1]}`);
+
+  // Apply pagination
+  return sortedProducts.slice(offset, offset + limit);
 }

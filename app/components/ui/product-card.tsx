@@ -167,7 +167,7 @@ function ProductCard({
           <>
             <Image
               src={product.imagini[0]}
-              alt={product.nume}
+              alt={product.nume || "Product image"}
               fill
               className={cn(
                 "object-contain p-2 transition-transform duration-500",
@@ -214,7 +214,7 @@ function ProductCard({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Package className="h-12 w-12 text-gray-300" />
+            <Package className="h-12 w-12 text-gray-300" aria-hidden="true" />
           </div>
         )}
       </div>
@@ -226,14 +226,16 @@ function ProductCard({
       <div className="flex flex-1 flex-col p-4">
         {/* Category */}
         <div className="text-xs text-gray-500 font-medium mb-1 truncate">
-          {product.subcategorie?.categoriePrincipala?.nume ||
-            product.subcategorie?.nume ||
-            ""}
+          {(product.subcategorie?.categoriePrincipala?.nume && product.subcategorie?.categoriePrincipala?.nume !== "")
+            ? product.subcategorie.categoriePrincipala.nume
+            : (product.subcategorie?.nume && product.subcategorie?.nume !== "")
+              ? product.subcategorie.nume
+              : t?.("category_unknown") || "Unknown category"}
         </div>
 
         {/* Product Title */}
         <h3 className="line-clamp-2 text-lg font-medium text-gray-800 group-hover:text-primary transition-colors duration-300 min-h-[2.5rem]">
-          {product.nume}
+          {product.nume || t?.("product_unknown") || "Unknown product"}
         </h3>
 
         {/* Description Preview */}
@@ -439,7 +441,7 @@ function ProductCardCompact({
         {product.imagini?.[0] ? (
           <Image
             src={product.imagini[0]}
-            alt={product.nume}
+            alt={product.nume || "Product image"}
             fill
             className={cn(
               "object-contain p-2 transition-transform duration-300",
@@ -450,7 +452,7 @@ function ProductCardCompact({
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Package className="h-10 w-10 text-gray-300" />
+            <Package className="h-10 w-10 text-gray-300" aria-hidden="true" />
           </div>
         )}
       </div>
@@ -463,12 +465,14 @@ function ProductCardCompact({
         {/* Category & Title */}
         <div className="mb-1.5">
           <div className="text-[10px] text-gray-500 font-medium mb-0.5 truncate">
-            {product.subcategorie?.categoriePrincipala?.nume ||
-              product.subcategorie?.nume ||
-              ""}
+            {(product.subcategorie?.categoriePrincipala?.nume && product.subcategorie?.categoriePrincipala?.nume !== "")
+              ? product.subcategorie.categoriePrincipala.nume
+              : (product.subcategorie?.nume && product.subcategorie?.nume !== "")
+                ? product.subcategorie.nume
+                : t?.("category_unknown") || "Unknown category"}
           </div>
           <h3 className="line-clamp-2 text-sm font-medium text-gray-800 min-h-[2.5rem]">
-            {product.nume}
+            {product.nume || t?.("product_unknown") || "Unknown product"}
           </h3>
         </div>
 
@@ -578,14 +582,14 @@ function SearchResultCard({
         {product.imagini?.[0] ? (
           <Image
             src={product.imagini[0]}
-            alt={product.nume}
+            alt={product.nume || "Product image"}
             fill
             className="object-contain p-1"
             sizes="56px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <Package className="h-6 w-6 text-muted-foreground/40" />
+            <Package className="h-6 w-6 text-muted-foreground/40" aria-hidden="true" />
           </div>
         )}
       </div>
@@ -599,8 +603,9 @@ function SearchResultCard({
 
         {/* Category */}
         <p className="text-xs text-muted-foreground truncate">
-          {product.subcategorie.categoriePrincipala.nume} /{" "}
-          {product.subcategorie.nume}
+          {(product.subcategorie?.categoriePrincipala?.nume || "") !== ""
+            ? `${product.subcategorie.categoriePrincipala.nume} / ${product.subcategorie.nume || ""}`
+            : product.subcategorie?.nume || t?.("category_unknown") || "Unknown category"}
         </p>
 
         {/* Price */}

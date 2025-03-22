@@ -878,15 +878,14 @@ export default function Header() {
                               ?.subcategories.map((subcategory) => (
                                 <Link
                                   key={subcategory.id}
-                                  href={`/catalog?category=${encodeURIComponent(subcategory.id)}`}
+                                  href={`/catalog?category=${encodeURIComponent(hoveredCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
                                   className="group flex items-center p-2 lg:p-3 rounded-lg border border-transparent bg-accent/40 hover:bg-accent hover:border-accent/50 hover:shadow-sm transition-all duration-200 hover:-translate-y-0.5"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setIsDesktopCatalogOpen(false);
-                                    // Add a small delay to allow the menu to close before navigation
+                                    // Add a small delay for smoother transition
                                     setTimeout(() => {
-                                      // Use subcategory parameter for proper filtering
-                                      router.push(`/catalog?category=${encodeURIComponent(subcategory.id)}`);
+                                      router.push(`/catalog?category=${encodeURIComponent(hoveredCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`);
                                     }, 50);
                                   }}
                                 >
@@ -1122,16 +1121,15 @@ export default function Header() {
                             ?.subcategories.map((subcategory) => (
                               <Link
                                 key={subcategory.id}
-                                href={`/catalog?category=${encodeURIComponent(subcategory.id)}`}
+                                href={`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
                                 className="group relative flex flex-col overflow-hidden rounded-2xl bg-gradient-to-b from-gray-50 to-white border shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 hover:border-primary/20"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setIsMobileMenuOpen(false);
-                                  // Add a small delay for animation to complete
+                                  // Add a small delay for smoother transition
                                   setTimeout(() => {
-                                    // Use proper subcategory parameter
-                                    router.push(`/catalog?category=${encodeURIComponent(subcategory.id)}`);
-                                  }, 200);
+                                    router.push(`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`);
+                                  }, 50);
                                 }}
                               >
                                 <div className="flex items-center justify-between p-4">
@@ -1358,7 +1356,7 @@ export default function Header() {
                         searchResults.map((product) => (
                           <Link
                             key={product.id}
-                            href={`/produs/${product.id}`}
+                            href={`/catalog?category=${encodeURIComponent(product.subcategorie.categoriePrincipala.id)}&subcategory=${encodeURIComponent(product.subcategorie.id)}&product=${encodeURIComponent(product.id)}`}
                             className="group relative flex gap-4 rounded-xl border bg-white p-3 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 hover:border-primary/20"
                             onClick={() => setShowMobileSearch(false)}
                           >
@@ -1367,7 +1365,7 @@ export default function Header() {
                               {product.imagini && product.imagini.length > 0 ? (
                                 <Image
                                   src={product.imagini[0]}
-                                  alt={product.nume || ""}
+                                  alt={product.nume || "Product image"}
                                   fill
                                   className="object-cover transition-transform duration-300 group-hover:scale-110"
                                   priority
@@ -1375,7 +1373,7 @@ export default function Header() {
                                 />
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                  <Package className="h-8 w-8 text-gray-400" />
+                                  <Package className="h-8 w-8 text-gray-400" aria-hidden="true" />
                                 </div>
                               )}
                               {product.pretRedus && product.pret && (

@@ -573,7 +573,7 @@ export default function ProductPage() {
                 >
                   <Image
                     src={img}
-                    alt={`Thumbnail ${idx + 1}`}
+                    alt={`${product.nume} - Image ${idx + 1}`}
                     fill
                     sizes="75px"
                     className="object-contain p-1"
@@ -622,7 +622,7 @@ export default function ProductPage() {
                   >
                     <Image
                       src={product.imagini[selectedImage]}
-                      alt={product.nume}
+                      alt={product.nume || "Product image"}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                       className={`object-contain p-4 transition-transform duration-300`}
@@ -722,7 +722,7 @@ export default function ProductPage() {
                 >
                   <Image
                     src={img}
-                    alt={`Thumbnail ${idx + 1}`}
+                    alt={`${product.nume} - Image ${idx + 1}`}
                     fill
                     sizes="80px"
                     className="object-contain p-1"
@@ -865,7 +865,7 @@ export default function ProductPage() {
                         {product.imagini && product.imagini[0] && (
                           <Image
                             src={product.imagini[0]}
-                            alt={product.nume}
+                            alt={product.nume || "Product image"}
                             width={32}
                             height={32}
                             className="object-contain sm:w-10 sm:h-10"

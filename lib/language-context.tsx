@@ -2512,7 +2512,14 @@ checkout_success: {
     ro: "Adresa de email nu este validă",
     ru: "Неверный формат электронной почты",
     },
-
+  showing: {
+    ro: "Afișând",
+    ru: "Показываем",
+  },
+  random_products: {
+    ro: "produse aleatorii",
+    ru: "случайные товары",
+  },
   adding_to_cart: {
     ro: "Se adaugă în coș...",
     ru: "Добавляется в корзину...",
@@ -2987,6 +2994,14 @@ checkout_success: {
   subcategory_upright_vacuums: {
     ro: "Verticale",
     ru: "Вертикальные",
+  },
+  pagination_previous: {
+    ro: "Precedent",
+    ru: "Предыдущий",
+  },
+  pagination_next: {
+    ro: "Următor",
+    ru: "Следующий",
   },
 };
 

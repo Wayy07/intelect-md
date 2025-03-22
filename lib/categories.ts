@@ -6,6 +6,7 @@
 // Main category ID
 export const HAIR_ACCESSORIES_ID = "accesorii-de-par";
 export const BIROTICA_ID = "birotica";
+export const JUCARII_DE_VARA_ID = "jucarii-de-vara";
 
 // Define category structure with proper typing
 export interface Subcategory {
@@ -81,10 +82,28 @@ export const BIROTICA: MainCategory = {
   ]
 };
 
+export const JUCARII_DE_VARA: MainCategory = {
+  id: JUCARII_DE_VARA_ID,
+  name: {
+    ro: "Jucării de vară",
+    ru: "Игрушки для лета"
+    },
+    subcategories: [
+        {
+            id: "Пистолеты водяные\/насосы 100-200",
+            name: {
+                ro: "Pistoale cu apă",
+                ru: "Пистолеты водяные"
+            }
+        }
+    ]
+};
+
 // Export all categories in a single array for easy mapping
 export const ALL_CATEGORIES: MainCategory[] = [
   HAIR_ACCESSORIES,
-  BIROTICA
+  BIROTICA,
+  JUCARII_DE_VARA
 ];
 
 // Helper function to get subcategory IDs

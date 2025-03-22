@@ -149,7 +149,7 @@ export default function MobileHeader() {
     if (product) {
       const categoryId = product.subcategorie.categoriePrincipala.id || "all";
       const subcategoryId = product.subcategorie.id || "all";
-      router.push(`/catalog/${categoryId}/${subcategoryId}/${productId}`);
+      router.push(`/catalog?category=${encodeURIComponent(categoryId)}&subcategory=${encodeURIComponent(subcategoryId)}&product=${encodeURIComponent(productId)}`);
       setIsSearchFocused(false);
       setSearchTerm("");
     }
