@@ -33,6 +33,9 @@ export interface CatalogContentProps {
   initialFilters: FilterOptions;
   initialPage: number;
   searchQuery: string;
+  totalProducts?: number;
+  productsPerPage?: number;
+  serverPagination?: boolean;
 }
 
 export interface CatalogLoadingProps {}

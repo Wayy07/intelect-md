@@ -195,8 +195,12 @@ export async function getProductsByCategory(category: string): Promise<Product[]
 
 /**
  * Gets products by multiple categories - fetches if needed
+ * Now supports pagination with offset and limit
  */
-export async function getProductsByCategories(categories: string[]): Promise<Product[]> {
+export async function getProductsByCategories(
+  categories: string[],
+  pagination?: { offset: number, limit: number }
+): Promise<Product[]> {
   // Make sure all categories are loaded
   await ensureCategoriesLoaded(categories);
 
@@ -208,7 +212,17 @@ export async function getProductsByCategories(categories: string[]): Promise<Pro
   );
 
   // Deduplicate in case products appear in multiple categories
-  return Array.from(new Map(products.map(product => [product.id, product])).values());
+  const uniqueProducts = Array.from(
+    new Map(products.map(product => [product.id, product])).values()
+  );
+
+  // Apply pagination if provided
+  if (pagination) {
+    const { offset, limit } = pagination;
+    return uniqueProducts.slice(offset, offset + limit);
+  }
+
+  return uniqueProducts;
 }
 
 /**

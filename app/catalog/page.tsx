@@ -11,8 +11,8 @@ import ClientWrapper from "./ClientWrapper";
 export const dynamic = 'auto';
 export const revalidate = 3600; // Revalidate this page at most once per hour
 
-// Maximum number of products to show initially
-const MAX_INITIAL_PRODUCTS = 100;
+// Pagination settings
+const PRODUCTS_PER_PAGE = 12;
 
 // Helper function to safely extract parameters
 function getParameterValue(param: string | string[] | undefined): string {
@@ -43,12 +43,17 @@ export default async function CatalogPage({
   // Parse the initial page
   const initialPage = parseInt(pageParam, 10) || 1;
 
+  // Calculate pagination parameters
+  const offset = (initialPage - 1) * PRODUCTS_PER_PAGE;
+  const limit = PRODUCTS_PER_PAGE;
+
   // Determine which categories to fetch based on filters
   let categoriesToFetch: string[] = [];
   let initialProducts: any[] = [];
+  let totalProducts = 0;
 
   try {
-    console.log("Loading catalog products with on-demand approach...");
+    console.log("Loading catalog products with server-side pagination...");
 
     // Determine which categories to fetch
     if (subcategoryParam) {
@@ -70,21 +75,22 @@ export default async function CatalogPage({
       console.log(`Fetching ${categoriesToFetch.length} sample subcategories`);
     }
 
-    // Fetch products for the selected categories (this will cache them automatically)
+    // First get total count (we need this for client-side pagination)
     if (categoriesToFetch.length > 0) {
-      initialProducts = await getProductsByCategories(categoriesToFetch);
-      console.log(`Found ${initialProducts.length} products from selected categories`);
-    }
+      // Get all products to determine total count
+      const allCategoryProducts = await getProductsByCategories(categoriesToFetch);
+      totalProducts = allCategoryProducts.length;
+      console.log(`Total products in selected categories: ${totalProducts}`);
 
-    // Limit initial products to prevent memory issues
-    if (initialProducts.length > MAX_INITIAL_PRODUCTS) {
-      console.log(`Limiting initial products from ${initialProducts.length} to ${MAX_INITIAL_PRODUCTS}`);
-      initialProducts = initialProducts.slice(0, MAX_INITIAL_PRODUCTS);
+      // Now fetch only the paginated products for this page
+      initialProducts = await getProductsByCategories(categoriesToFetch, { offset, limit });
+      console.log(`Fetched ${initialProducts.length} products for page ${initialPage}`);
     }
 
   } catch (error) {
     console.error("Error loading catalog products:", error);
     initialProducts = [];
+    totalProducts = 0;
   }
 
   // Set initial filters based on URL parameters
@@ -108,6 +114,9 @@ export default async function CatalogPage({
           initialFilters={initialFilters}
           initialPage={initialPage}
           searchQuery={searchQuery}
+          totalProducts={totalProducts}
+          productsPerPage={PRODUCTS_PER_PAGE}
+          serverPagination={true}
         />
       </ClientWrapper>
     </Suspense>

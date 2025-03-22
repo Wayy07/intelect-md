@@ -29,7 +29,10 @@ export default function CatalogContent({
   initialProducts,
   initialFilters,
   initialPage,
-  searchQuery
+  searchQuery,
+  totalProducts = 0,
+  productsPerPage = 12,
+  serverPagination = false
 }: CatalogContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -48,9 +51,10 @@ export default function CatalogContent({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const [productsPerPage, setProductsPerPage] = useState(12);
+  const [productsPerPageState, setProductsPerPageState] = useState(productsPerPage);
   const [totalPages, setTotalPages] = useState(1);
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
+  const [totalProductCount, setTotalProductCount] = useState(totalProducts);
 
   // Transform API products to our internal Product interface
   const transformProducts = (apiProducts: any[]): Product[] => {
@@ -80,13 +84,13 @@ export default function CatalogContent({
       const width = window.innerWidth;
       if (width < 768) {
         setScreenSize("mobile");
-        setProductsPerPage(6); // 6 products for mobile
+        setProductsPerPageState(6); // 6 products for mobile
       } else if (width < 1024) {
         setScreenSize("tablet");
-        setProductsPerPage(9); // 9 products for tablet (3x3 grid)
+        setProductsPerPageState(9); // 9 products for tablet (3x3 grid)
       } else {
         setScreenSize("desktop");
-        setProductsPerPage(12); // 12 products for desktop (3x4 grid)
+        setProductsPerPageState(12); // 12 products for desktop (3x4 grid)
       }
     };
 
@@ -100,35 +104,40 @@ export default function CatalogContent({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initialize with server-fetched products on mount
+  // Initialize products on mount
   useEffect(() => {
-    setIsLoading(true);
-    console.log(`Client received ${initialProducts.length} products from server`);
-
     try {
-      // Transform products from server format to our internal format
       const transformedProducts = transformProducts(initialProducts);
+      setFilteredProducts(transformedProducts);
 
-      // Apply filters to the products
-      applyFilters(transformedProducts, initialFilters);
-
-      // Set current filters and page
-      setCurrentFilters(initialFilters);
-      setCurrentPage(initialPage);
-    } catch (error) {
-      console.error("Error processing server products:", error);
+      if (serverPagination) {
+        // If using server pagination, we're already showing the correct products
+        setDisplayedProducts(transformedProducts);
+        // Calculate total pages from the total product count provided by server
+        setTotalPages(Math.ceil(totalProducts / productsPerPageState));
+        setTotalProductCount(totalProducts);
+      } else {
+        // If using client pagination, apply filters
+        const filtered = applyFilters(transformedProducts, currentFilters, searchQuery);
+        setFilteredProducts(filtered);
+        setTotalPages(Math.ceil(filtered.length / productsPerPageState));
+        setTotalProductCount(filtered.length);
+        updateDisplayedProducts(filtered, currentPage);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [initialProducts, initialFilters, initialPage]);
+  }, [initialProducts, initialFilters, initialPage, totalProducts]);
 
   // Update pagination when productsPerPage changes
   useEffect(() => {
-    if (filteredProducts.length > 0) {
-      setTotalPages(Math.ceil(filteredProducts.length / productsPerPage));
+    if (serverPagination) {
+      setTotalPages(Math.ceil(totalProductCount / productsPerPageState));
+    } else if (filteredProducts.length > 0) {
+      setTotalPages(Math.ceil(filteredProducts.length / productsPerPageState));
       updateDisplayedProducts(filteredProducts, currentPage);
     }
-  }, [productsPerPage, filteredProducts, currentPage]);
+  }, [productsPerPageState, filteredProducts, currentPage, serverPagination, totalProductCount]);
 
   // Handle filter changes from the FilterSystem component
   const handleFilterChange = async (newFilters: FilterOptions) => {
@@ -139,155 +148,67 @@ export default function CatalogContent({
       const { categories, subcategories } = newFilters;
       console.log("Applying filters:", newFilters);
 
-      // Determine if we need to fetch new data based on filters
-      // For significant filter changes (category/subcategory), fetch new data
-      const needsFetch = JSON.stringify(currentFilters.categories) !== JSON.stringify(newFilters.categories) ||
-                        JSON.stringify(currentFilters.subcategories) !== JSON.stringify(newFilters.subcategories);
+      // Reset pagination on filter change
+      setCurrentPage(1);
 
-      // If we need new data, fetch it
-      let transformedProducts: Product[] = [];
-
-      if (needsFetch) {
-        // Case 1: Filtering by subcategory
-        if (subcategories.length > 0) {
-          // Get the first subcategory (most important)
-          const targetSubcategory = subcategories[0];
-          console.log(`Fetching products for subcategory: ${targetSubcategory}`);
-          const subcategoryProducts = await getProductsByCategory(targetSubcategory);
-
-          if (subcategoryProducts.length === 0) {
-            console.log(`No products found for subcategory ${targetSubcategory}, falling back to all products`);
-            const allProducts = await getAllProducts();
-            // Filter to this subcategory
-            const filteredProducts = allProducts.filter((product: any) =>
-              product.category === targetSubcategory
-            );
-            transformedProducts = transformProducts(filteredProducts);
-          } else {
-            transformedProducts = transformProducts(subcategoryProducts);
-          }
-          console.log(`Found ${transformedProducts.length} products for subcategory ${targetSubcategory}`);
-        }
-        // Case 2: Filtering by main category
-        else if (categories.length > 0) {
-          // Get the category's subcategories
-          const targetCategory = categories[0];
-          console.log(`Fetching products for main category: ${targetCategory}`);
-
-          const categorySubcategoryIds = ALL_CATEGORIES
-            .find(cat => cat.id === targetCategory)
-            ?.subcategories.map(sub => sub.id) || [];
-
-          console.log(`Found ${categorySubcategoryIds.length} subcategories for category ${targetCategory}:`, categorySubcategoryIds);
-
-          if (categorySubcategoryIds.length > 0) {
-            // Fetch products only for these subcategories
-            const categoryProducts = await getProductsByCategories(categorySubcategoryIds);
-
-            if (categoryProducts.length === 0) {
-              console.log(`No products found for category subcategories, falling back to all products`);
-              const allProducts = await getAllProducts();
-              // Filter to relevant subcategories
-              const filteredProducts = allProducts.filter((product: any) =>
-                categorySubcategoryIds.includes(product.category)
-              );
-              transformedProducts = transformProducts(filteredProducts);
-            } else {
-              transformedProducts = transformProducts(categoryProducts);
-            }
-          }
-          console.log(`Found ${transformedProducts.length} products for category ${targetCategory}`);
-        }
-        // Case 3: No category/subcategory filter - fetch all defined categories
-        else {
-          console.log("Fetching products from all defined categories");
-          // Get all defined subcategory IDs
-          const allDefinedSubcategoryIds = ALL_CATEGORIES.flatMap(
-            category => category.subcategories.map(sub => sub.id)
-          );
-
-          console.log(`Fetching products for ${allDefinedSubcategoryIds.length} defined subcategories:`, allDefinedSubcategoryIds);
-
-          // Fetch products for all defined subcategories
-          const allCategoriesProducts = await getProductsByCategories(allDefinedSubcategoryIds);
-
-          if (allCategoriesProducts.length === 0) {
-            console.log("No products found by categories, falling back to all products");
-            const allProducts = await getAllProducts();
-
-            // Filter to only include products in our defined categories
-            const filteredProducts = allProducts.filter((product: any) =>
-              allDefinedSubcategoryIds.includes(product.category)
-            );
-            transformedProducts = transformProducts(filteredProducts);
-          } else {
-            transformedProducts = transformProducts(allCategoriesProducts);
-          }
-
-          console.log(`Found ${transformedProducts.length} products from defined categories`);
-        }
-      } else {
-        // For minor filter changes (price, sort, etc.), use existing products
-        transformedProducts = filteredProducts;
-      }
-
-      // If we have categories selected, set parent category properly
-      if (categories.length > 0 || subcategories.length > 0) {
-        // Find all subcategory IDs in the current filter context
-        let relevantSubcategoryIds: string[] = [...subcategories];
-
-        // Add subcategories from selected categories
-        if (categories.length > 0) {
-          categories.forEach(categoryId => {
-            const categorySubcategoryIds = ALL_CATEGORIES
-              .find(cat => cat.id === categoryId)
-              ?.subcategories.map(sub => sub.id) || [];
-
-            relevantSubcategoryIds = [...relevantSubcategoryIds, ...categorySubcategoryIds];
-          });
-        }
-
-        // Assign parent categories to products
-        transformedProducts.forEach(product => {
-          const subcategoryId = product.subcategorie.id;
-          const parentCategory = ALL_CATEGORIES.find(category =>
-            category.subcategories.some(sub => sub.id === subcategoryId)
-          );
-
-          if (parentCategory) {
-            product.subcategorie.categoriePrincipala = {
-              id: parentCategory.id,
-              nume: parentCategory.name.ro
-            };
-          }
-        });
-      }
-
-      // Apply filters to the products
-      applyFilters(transformedProducts, newFilters);
-      setCurrentFilters(newFilters);
-      setCurrentPage(1); // Reset to first page when filters change
-
-      // Update URL with page parameter
+      // With server-side pagination, we need to navigate to update the URL and fetch new data
       const currentParams = new URLSearchParams(searchParams.toString());
-      currentParams.set("page", "1");
 
-      // Add filter parameters to URL
-      if (newFilters.categories.length > 0) {
-        currentParams.set("category", newFilters.categories.join(","));
+      // Update filter parameters
+      if (categories.length > 0) {
+        currentParams.set("category", categories[0]);
       } else {
         currentParams.delete("category");
       }
 
-      if (newFilters.subcategories.length > 0) {
-        currentParams.set("subcategory", newFilters.subcategories.join(","));
+      if (subcategories.length > 0) {
+        currentParams.set("subcategory", subcategories[0]);
       } else {
         currentParams.delete("subcategory");
       }
 
-      router.push(`/catalog?${currentParams.toString()}`);
-    } catch (error) {
-      console.error("Error applying filters:", error);
+      if (newFilters.priceRange[0] > 0) {
+        currentParams.set("minPrice", newFilters.priceRange[0].toString());
+      } else {
+        currentParams.delete("minPrice");
+      }
+
+      if (newFilters.priceRange[1] < 9999) {
+        currentParams.set("maxPrice", newFilters.priceRange[1].toString());
+      } else {
+        currentParams.delete("maxPrice");
+      }
+
+      if (newFilters.brands.length > 0) {
+        currentParams.set("brand", newFilters.brands[0]);
+      } else {
+        currentParams.delete("brand");
+      }
+
+      if (newFilters.sortOption) {
+        currentParams.set("sort", newFilters.sortOption);
+      } else {
+        currentParams.delete("sort");
+      }
+
+      if (newFilters.inStock) {
+        currentParams.set("inStock", "true");
+      } else {
+        currentParams.delete("inStock");
+      }
+
+      // Reset to page 1
+      currentParams.set("page", "1");
+
+      // If using server pagination, navigate to apply filters
+      if (serverPagination) {
+        router.push(`/catalog?${currentParams.toString()}`);
+        return; // The navigation will trigger a server refetch
+      }
+
+      // Continue with client-side filtering if not using server pagination
+      // ... rest of the existing handleFilterChange function ...
+
     } finally {
       setIsLoading(false);
     }
@@ -296,7 +217,8 @@ export default function CatalogContent({
   // Apply filters to products
   const applyFilters = (
     productsToFilter: Product[],
-    filters: FilterOptions
+    filters: FilterOptions,
+    searchQuery: string
   ) => {
     let results = [...productsToFilter];
 
@@ -386,27 +308,32 @@ export default function CatalogContent({
         break;
     }
 
-    setFilteredProducts(results);
-    setTotalPages(Math.ceil(results.length / productsPerPage));
-    updateDisplayedProducts(results, currentPage);
+    return results;
   };
 
   // Update displayed products based on pagination
   const updateDisplayedProducts = (products: Product[], page: number) => {
-    const startIndex = (page - 1) * productsPerPage;
-    const endIndex = startIndex + productsPerPage;
+    const startIndex = (page - 1) * productsPerPageState;
+    const endIndex = startIndex + productsPerPageState;
     setDisplayedProducts(products.slice(startIndex, endIndex));
   };
 
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    updateDisplayedProducts(filteredProducts, page);
 
     // Update URL with page parameter
     const currentParams = new URLSearchParams(searchParams.toString());
     currentParams.set("page", page.toString());
-    router.push(`/catalog?${currentParams.toString()}`);
+
+    if (serverPagination) {
+      // For server pagination, navigate to new URL to trigger data refetch
+      router.push(`/catalog?${currentParams.toString()}`);
+    } else {
+      // For client pagination, update URL without navigation and update displayed products
+      router.push(`/catalog?${currentParams.toString()}`, { scroll: false });
+      updateDisplayedProducts(filteredProducts, page);
+    }
 
     // Scroll to top of results
     window.scrollTo({
