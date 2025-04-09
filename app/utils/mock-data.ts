@@ -554,3 +554,206 @@ export function getRandomProducts(limit: number = 4): Product[] {
     .sort(() => 0.5 - Math.random())
     .slice(0, Math.min(limit, allProducts.length));
 }
+
+// Mock children's toys data
+export const childrenToys: Product[] = [
+  {
+    id: "toy-001",
+    nume: "Set de construcție LEGO City",
+    cod: "TOY-001",
+    descriere: "Set LEGO pentru dezvoltarea creativității copiilor, cu 350 de piese și figurine interactive.",
+    pret: 450,
+    pretRedus: 380,
+    imagini: [
+      "https://i.pinimg.com/474x/47/2a/5d/472a5d61d2f8dc9757c1b499b4716ed5.jpg",
+      "https://i.pinimg.com/474x/58/c0/9a/58c09a55144bb063f8d68060492d54fb.jpg",
+    ],
+    subcategorie: {
+      id: "constructie",
+      nume: "Constructie",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 15,
+    stare: "nou"
+  },
+  {
+    id: "toy-002",
+    nume: "Păpușă interactivă cu sunet",
+    cod: "TOY-002",
+    descriere: "Păpușă care vorbește și cântă, perfectă pentru jocuri de rol și dezvoltarea abilităților sociale.",
+    pret: 320,
+    pretRedus: 279,
+    imagini: [
+      "https://i.pinimg.com/474x/2c/02/b5/2c02b588d40a97ac5604a3cb2865d176.jpg",
+      "https://i.pinimg.com/474x/dc/30/d5/dc30d5984035de3e019dd000b43c3a66.jpg",
+    ],
+    subcategorie: {
+      id: "papusi",
+      nume: "Păpuși",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 22,
+    stare: "nou"
+  },
+  {
+    id: "toy-003",
+    nume: "Mașinuță cu telecomandă 4x4",
+    cod: "TOY-003",
+    descriere: "Mașinuță de teren controlată cu telecomandă, cu suspensii reale și capacități off-road.",
+    pret: 580,
+    pretRedus: 499,
+    imagini: [
+      "https://i.pinimg.com/736x/0b/5a/1a/0b5a1a79a628c53b8d64c51773e6fc4e.jpg",
+      "https://i.pinimg.com/474x/77/00/56/770056c974f42aab0157cc6c39a3b029.jpg",
+    ],
+    subcategorie: {
+      id: "vehicule",
+      nume: "Vehicule",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 9,
+    stare: "nou"
+  },
+  {
+    id: "toy-004",
+    nume: "Puzzle educativ 100 piese",
+    cod: "TOY-004",
+    descriere: "Puzzle mare educativ cu imagini din lumea animalelor, pentru dezvoltarea abilităților de rezolvare a problemelor.",
+    pret: 120,
+    pretRedus: 99,
+    imagini: [
+      "https://i.pinimg.com/474x/86/14/78/861478705ed20454e246ff1290bff940.jpg",
+      "https://i.pinimg.com/474x/d9/02/0c/d9020c1f5493e6c7a2d956749ddaa7a5.jpg",
+    ],
+    subcategorie: {
+      id: "puzzle",
+      nume: "Puzzle",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 30,
+    stare: "nou"
+  },
+  {
+    id: "toy-005",
+    nume: "Set științific experimente",
+    cod: "TOY-005",
+    descriere: "Kit științific pentru copii cu 25 de experimente simple și sigure, pentru descoperirea științei într-un mod distractiv.",
+    pret: 350,
+    pretRedus: 299,
+    imagini: [
+      "https://i.pinimg.com/474x/10/c2/24/10c224dfb99ad33b7e59a8bb6d519f63.jpg",
+      "https://i.pinimg.com/474x/5f/d3/c6/5fd3c691f0f820beb0130aa04845758d.jpg",
+    ],
+    subcategorie: {
+      id: "educativ",
+      nume: "Educativ",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 18,
+    stare: "nou"
+  },
+  {
+    id: "toy-006",
+    nume: "Ursuleț de pluș interactiv",
+    cod: "TOY-006",
+    descriere: "Ursuleț moale care răspunde atingerii cu sunete și cântece de leagăn.",
+    pret: 280,
+    pretRedus: 230,
+    imagini: [
+      "https://i.pinimg.com/474x/98/32/b8/9832b8c38e087f0cc6043fb8b518cab4.jpg",
+      "https://i.pinimg.com/474x/10/2f/bb/102fbbd49499aea704a42459743f33ca.jpg",
+    ],
+    subcategorie: {
+      id: "plus",
+      nume: "Jucării de pluș",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 25,
+    stare: "nou"
+  },
+
+  {
+    id: "toy-008",
+    nume: "Casă de păpuși cu mobilier",
+    cod: "TOY-008",
+    descriere: "Casă de păpuși cu trei etaje, mobilier complet și detalii realiste pentru joc imaginativ.",
+    pret: 750,
+    pretRedus: 650,
+    imagini: [
+      "https://i.pinimg.com/474x/10/f8/aa/10f8aa4577a8fbbcc20a132e0b72b96d.jpg",
+      "https://i.pinimg.com/474x/7b/26/62/7b2662a9b48e36242f5f5ebcce1c8dab.jpg",
+    ],
+    subcategorie: {
+      id: "papusi",
+      nume: "Păpuși",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 6,
+    stare: "nou"
+  },
+  {
+    id: "toy-009",
+    nume: "Tabletă educativă pentru copii",
+    cod: "TOY-009",
+    descriere: "Tabletă rezistentă special creată pentru copii, cu aplicații educative și control parental.",
+    pret: 850,
+    pretRedus: 699,
+    imagini: [
+      "https://i.pinimg.com/474x/f0/b9/bf/f0b9bfdf39846e6aff940518b8d9df5a.jpg",
+      "https://i.pinimg.com/474x/48/da/27/48da27128ead364be386aa72573552ea.jpg",
+    ],
+    subcategorie: {
+      id: "electronice",
+      nume: "Electronice",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 12,
+    stare: "nou"
+  },
+  {
+    id: "toy-010",
+    nume: "Trenuleț electric cu șine",
+    cod: "TOY-010",
+    descriere: "Set complet de trenuleț electric cu șine extensibile și multiple vagoane, pentru ore întregi de distracție.",
+    pret: 620,
+    pretRedus: 530,
+    imagini: [
+      "https://i.pinimg.com/474x/d3/51/f1/d351f16908f0ed4fc690e7316f4bade8.jpg",
+      "https://i.pinimg.com/474x/c0/5f/76/c05f76d44fd33f2f0dc2cca759894293.jpg",
+    ],
+    subcategorie: {
+      id: "vehicule",
+      nume: "Vehicule",
+      categoriePrincipala: {
+        id: "jucarii",
+        nume: "Jucării",
+      },
+    },
+    stoc: 10,
+    stare: "nou"
+  },
+];

@@ -1,11 +1,13 @@
 import HeroGrid from "@/app/components/hero-grid";
-import LatestProducts from "@/app/components/latest-products";
+import MonthlyOffers from "@/app/components/monthly-offers";
 import SpecialOffers from "@/app/components/special-offers";
 import Advantages from "@/app/components/advantages";
 import { Suspense } from "react";
 import PromotionalBanners from "./components/promotional-banners";
+import PopularCategories from "./components/popular-categories";
 import { GridPattern } from "@/components/magicui/grid-pattern";
 import { cn } from "@/lib/utils";
+import ChildrensToys from "./components/childrens-toys";
 
 export default function Home() {
   return (
@@ -41,16 +43,21 @@ export default function Home() {
       {/* Main Content */}
       <div className="relative z-10">
         <HeroGrid />
+        <Suspense fallback={<div>Loading monthly offers...</div>}>
+          <MonthlyOffers />
+        </Suspense>
+
+
         <Suspense fallback={<div>Loading special offers...</div>}>
-          <LatestProducts />
-        </Suspense>
-        <Suspense fallback={<div>Loading promotional banners...</div>}>
-          <PromotionalBanners />
-        </Suspense>
-        <Suspense fallback={<div>Loading latest products...</div>}>
           <SpecialOffers />
         </Suspense>
-        <Advantages />
+        <Suspense fallback={<div>Loading childrens toys...</div>}>
+          <ChildrensToys />
+        </Suspense>
+        <Suspense fallback={<div>Loading popular categories...</div>}>
+          <PopularCategories />
+        </Suspense>
+
       </div>
     </main>
   );

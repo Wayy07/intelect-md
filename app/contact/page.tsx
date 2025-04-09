@@ -69,12 +69,27 @@ export default function ContactPage() {
           </div>
 
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
-              <HyperText className="py-0">{t("contact_page_title")}</HyperText>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-primary bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+              {t("contact_page_title")}
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
               {t("contact_subtitle")}
             </p>
+
+            {/* About our smart store section */}
+            {/* <div className="max-w-2xl mx-auto bg-white/80 backdrop-blur-sm rounded-xl p-6 mb-8 shadow-md border border-primary/10">
+              <h2 className="text-2xl font-semibold mb-4 text-primary"> {t("contact_about_us_title")}
+</h2>
+                <p className="text-muted-foreground mb-4">
+                    {t("contact_about_us")}
+
+              </p>
+            <p className="text-muted-foreground">
+                {t("contact_about_us_1")}
+
+              </p>
+            </div> */}
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <ShimmerButton
                 className="w-full sm:w-auto"
@@ -255,13 +270,11 @@ export default function ContactPage() {
           </div>
         </div>
 
-        {/* Resources section */}
+        {/* Resources section
         <div className="mb-16">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              <HyperText className="py-0">
-                {t("contact_resources_title")}
-              </HyperText>
+              {t("contact_resources_title")}
             </h2>
             <p className="text-muted-foreground max-w-3xl mx-auto">
               {t("contact_resources_description")}
@@ -359,7 +372,7 @@ export default function ContactPage() {
               </CardFooter>
             </Card>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

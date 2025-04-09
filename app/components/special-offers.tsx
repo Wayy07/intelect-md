@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   ProductCard,
   ProductCardCompact,
@@ -11,22 +11,54 @@ import { Tags, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
-import { HyperText } from "@/components/magicui/hyper-text";
 import {
-  Product,
-  specialOffers as mockProductsSource,
-} from "@/app/utils/mock-data";
-import { ShimmerButton } from "@/components/magicui/shimmer-button";
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 
-// Use all products from the expanded special offers list
-const mockProducts = mockProductsSource;
+// Define Product interface locally instead of importing
+interface ProductImage {
+  id: string;
+  name: string;
+  url: string;
+  alt: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  fullName: string;
+  article: string;
+  images: ProductImage[];
+  price: number;
+  originalPrice: number;
+  discount: number;
+  currency: string;
+  inStock: boolean;
+  stockQuantity: number;
+  brand: string;
+  category: string;
+  isNew: boolean;
+  isFeatured: boolean;
+  image: string;
+  barcode?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function SpecialOffers() {
   const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const { toast } = useToast();
   const [isMobile, setIsMobile] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const carouselApiRef = useRef<CarouselApi | null>(null);
 
   // Check if we're on mobile
   useEffect(() => {
@@ -42,17 +74,98 @@ export default function SpecialOffers() {
   useEffect(() => {
     const fetchSpecialOffers = async () => {
       try {
-        // Use the expanded list of products
-        setProducts(mockProducts);
+        setIsLoading(true);
+        setIsError(false);
+
+        // Get API URL from environment or use default
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        console.log('Fetching special offers from:', `${API_URL}/special-offers`);
+
+        // Use the dedicated special-offers endpoint with cache disabled
+        const response = await fetch(`${API_URL}/special-offers?limit=12`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error fetching special offers: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to fetch special offers');
+        }
+
+        console.log(`Fetched ${data.products.length} special offers`);
+
+        // Debug log to check discount values
+        console.log('Special offers discount data:', data.products.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: p.pret,
+          discountedPrice: p.pretRedus,
+          hasValidDiscount: p.pretRedus && p.pretRedus < p.pret
+        })));
+
+        if (data.products.length === 0) {
+          console.log('No special offers found in API');
+          setProducts([]);
+        } else {
+          // Ensure we only treat products as having discounts if pretRedus exists AND is less than pret
+          const validatedProducts = data.products.map((product: any) => ({
+            ...product,
+            // Set pretRedus to null if it's not actually less than pret
+            pretRedus: (product.pretRedus && product.pretRedus < product.pret) ? product.pretRedus : null
+          }));
+          setProducts(validatedProducts);
+        }
       } catch (error) {
-        console.error("Error setting mock products:", error);
+        console.error("Error fetching special offers:", error);
+        setIsError(true);
+
+        toast({
+          title: t("error"),
+          description: t("errorFetchingProducts"),
+          variant: "destructive",
+        });
+
+        // Set empty products array on error
+        setProducts([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Simulate loading delay for mock data
-    setTimeout(fetchSpecialOffers, 500);
+    fetchSpecialOffers();
+  }, [toast, t]);
+
+  // Auto-scroll carousel
+  useEffect(() => {
+    const currentApi = carouselApiRef.current;
+
+    if (!currentApi || isPaused) return;
+
+    const interval = setInterval(() => {
+      if (!isPaused && currentApi) {
+        currentApi.scrollNext();
+      }
+    }, 5000); // Scroll every 5 seconds
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isPaused]);
+
+  // Callback to set carousel API
+  const setCarouselApi = useCallback((api: CarouselApi | null) => {
+    if (carouselApiRef.current !== api) {
+      carouselApiRef.current = api;
+    }
   }, []);
 
   // Add global style to hide main category tags on mobile
@@ -75,7 +188,7 @@ export default function SpecialOffers() {
     };
   }, []);
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: any) => {
     // TODO: Implement cart functionality
     console.log("Add to cart:", product);
     toast({
@@ -84,7 +197,7 @@ export default function SpecialOffers() {
     });
   };
 
-  const handleAddToFavorites = (product: Product) => {
+  const handleAddToFavorites = (product: any) => {
     // TODO: Implement favorites functionality
     console.log("Add to favorites:", product);
     toast({
@@ -93,10 +206,13 @@ export default function SpecialOffers() {
     });
   };
 
+  // Create duplicate products for continuous scrolling effect
+  const extendedProducts = [...products, ...products];
+
   // Loading skeleton
   if (isLoading) {
     return (
-      <section className="container mx-auto py-12 px-4 sm:px-6">
+      <section className="container mx-auto py-12 px-4 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
         <div className="mb-8">
           <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2" />
           <div className="h-6 w-96 bg-gray-100 rounded animate-pulse" />
@@ -120,9 +236,9 @@ export default function SpecialOffers() {
   // No offers available
   if (products.length === 0) {
     return (
-      <section className="container mx-auto py-12 px-4 sm:px-6">
+      <section className="container mx-auto py-12 px-4 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-xl">
             {t("specialOffers")}
           </h2>
           <p className="mt-2 text-muted-foreground">{t("noOffersAvailable")}</p>
@@ -133,12 +249,12 @@ export default function SpecialOffers() {
 
   return (
     <>
-      <section className="container mx-auto py-12 px-2 sm:px-6 3xl:px-16 3xl:max-w-[80%]">
+      <section className="container mx-auto py-12 px-2 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl flex items-center gap-2">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl flex items-center gap-2">
               <Tags className="h-10 w-10 text-primary" />
-              <HyperText>{t("specialOffers")}</HyperText>
+              {t("specialOffers")}
             </h2>
             <p className="mt-2 text-muted-foreground">
               {t("discoverDiscountedProducts")}
@@ -153,27 +269,46 @@ export default function SpecialOffers() {
           </Link>
         </div>
 
-        {/* Product grid - responsive for both mobile and desktop */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-6">
-          {products.slice(0, 12).map((product) => (
-            <div key={product.id} className="h-full">
-              <Link href={`/produs/${product.id}`} className="block h-full">
-                {isMobile ? (
-                  <ProductCardCompact
-                    product={product as any}
-                    onAddToFavorites={handleAddToFavorites}
-                    disableLink={true}
-                  />
-                ) : (
-                  <ProductCard
-                    product={product as any}
-                    onAddToFavorites={handleAddToFavorites}
-                    disableLink={true}
-                  />
-                )}
-              </Link>
-            </div>
-          ))}
+        {/* Carousel for products instead of grid */}
+        <div className="relative max-w-full overflow-hidden">
+          <Carousel
+            className="w-full cursor-grab active:cursor-grabbing"
+            setApi={setCarouselApi}
+            opts={{
+              align: "start",
+              loop: true,
+              dragFree: true,
+            }}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
+            <CarouselContent>
+              {extendedProducts.map((product, index) => (
+                <CarouselItem
+                  key={`${product.id}-${index}`}
+                  className={isMobile ? "basis-1/1 pl-2" : "basis-1/1 md:basis-1/3 lg:basis-1/4 pl-2 md:pl-3 lg:pl-4"}
+                >
+                  <Link href={`/produs/${product.id}`} className="block h-full">
+                    {isMobile ? (
+                      <ProductCardCompact
+                        product={product as any}
+                        onAddToFavorites={handleAddToFavorites}
+                        disableLink={true}
+                        hideDiscount={true}
+                      />
+                    ) : (
+                      <ProductCard
+                        product={product as any}
+                        onAddToFavorites={handleAddToFavorites}
+                        disableLink={true}
+                        hideDiscount={true}
+                      />
+                    )}
+                  </Link>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </div>
 
         <div className="mt-8 text-center md:hidden">
@@ -186,24 +321,7 @@ export default function SpecialOffers() {
           </Link>
         </div>
 
-        {/* "View all products" button visible on all devices */}
-        <div className="mt-12 text-center">
-          <Link href="/catalog" className="inline-block">
-            <ShimmerButton
-              className="px-8 py-3.5 font-medium text-lg rounded-full group relative"
-              shimmerColor="#00BFFF"
-              shimmerSize="0.03em"
-              shimmerDuration="2.5s"
-              borderRadius="9999px"
-              background="rgba(0, 0, 0, 0.9)"
-            >
-              <span className="flex items-center gap-2">
-                {t("viewAllProducts") || "View All Products"}
-                <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </ShimmerButton>
-          </Link>
-        </div>
+
       </section>
       <Toaster />
     </>

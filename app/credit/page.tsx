@@ -97,7 +97,7 @@ export default function CreditPage() {
               {/* Mobile Morphing Text - shorter texts only */}
               <div className="md:hidden">
                 <MorphingText
-                  texts={[t("creditPageTitle"), t("readyToBuyInInstallments")]}
+                  texts={[t("creditPageTitle")]}
                   className="h-12 text-[25pt]"
                 />
               </div>

@@ -37,6 +37,14 @@ export const translations: Translations = {
         ro: "Metoda de plată",
         ru: "Метод оплаты",
     },
+    checkout_payment_description: {
+        ro: "Plată online",
+        ru: "Оплата онлайн",
+    },
+    confirmation_order_summary: {
+        ro: "Sumarul comenzii",
+        ru: "Сводка заказа",
+    },
 
   deliveryHeader: {
     ro: "Livrare",
@@ -756,12 +764,89 @@ checkout_success: {
   productAddedToFavorites: {
     ro: "Produsul a fost adăugat în lista ta de favorite",
     ru: "Товар был добавлен в ваш список избранного",
-  },
+    },
+  clearCart: {
+    ro: "Golire Coș",
+    ru: "Очистка корзины",
+    },
+    browse_catalog: {
+      ro: "Explorează catalogul",
+      ru: "Перейти в каталог",
+    },
 
+  noResults: {
+    ro: "Nu au fost găsite rezultate",
+    ru: "Ничего не найдено",
+    },
+  tryDifferentSearch: {
+    ro: "Încercați o altă căutare",
+    ru: "Попробуйте другой поиск",
+  },
+  contactUs: {
+    ro: "Contactează-ne",
+    ru: "Свяжитесь с нами",
+  },
+  monthlyDeals: {
+    ro: "Oferta lunară",
+    ru: "Месячное предложение",
+    },
+  add_to_cart_mobile: {
+    ro: "În coș",
+    ru: "В корзину",
+    },
+  checkout_financing_term: {
+    ro: "Perioada de finanțare",
+    ru: "Период финансирования",
+  },
+  contact_about_us: {
+    ro: "Intelect MD este liderul din Moldova în domeniul comerțului cu tehnologii, specializat în smartphone-uri,laptopuri și dispozitive smart pentru casă. Combinăm tehnologii de ultimă generație cu un serviciu excepțional pentru clienți pentru a oferi o experiență de cumpărare incomparabilă.",
+    ru: "Intelect MD — лидер в Молдове в сфере торговли технологиями, специализирующийся на смартфонах,ноутбуки и устройства для умного дома. Мы объединяем передовые технологии с сервисом исключительная возможность предоставить клиентам ни с чем не сравнимый опыт покупок.",
+    },
+    contact_about_us_1: {
+        ro: "Echipa noastră de experți este dedicată să vă ajute să găsiți soluțiile tehnologice perfecte pentrunevoile dumneavoastră, cu sfaturi profesionale, livrare rapidă în toată țara și servicii de garanție de încredere. Vizitați-ne astăzi și experimentați inovația direct!",
+        ru: "Наша команда экспертов готова помочь вам найти идеальные технологические решения для ваши потребности, профессиональные консультации, быстрая доставка по всей стране и гарантийное обслуживание надежный. Посетите нас сегодня и испытайте инновации на собственном опыте!",
+  },
+  limitedTimeOffer: {
+    ro: "Oferta limitată",
+    ru: "Ограниченное предложение",
+    },
+  contact_about_us_title: {
+    ro: "Despre Magazinul Nostru",
+    ru: "О нас магазине",
+  },
+  weeklyOffers: {
+    ro: "Oferta săptămânală",
+    ru: "Недельное предложение",
+    },
+  untilEndOfWeek: {
+      ro: "Până la sfârșitul săptămânzii",
+      ru: "До конца недели",
+    },
+  childrenToys: {
+    ro: "Jucării pentru copii",
+    ru: "Игрушки для детей",
+    },
+    discoverChildrenToys: {
+      ro: "Descoperă cele mai populare jucării pentru copii",
+      ru: "Откройте для себя самые популярные игрушки для детей",
+    },
+    seeAllToys: {
+      ro: "Vezi toate jucăriile",
+      ru: "Посмотреть все игрушки",
+    },
+
+  endOfMonth: {
+    ro: "Sfârșitul lunii",
+    ru: "Конец месяца",
+  },
   // Special Offers section
   specialOffers: {
     ro: "Oferte Speciale",
     ru: "Специальные предложения",
+  },
+  specialOffer: {
+      ro: "Oferta specială",
+      ru: "Специальное предложение"
   },
   discoverDiscountedProducts: {
     ro: "Descoperă produsele noastre cu cele mai mari reduceri",
@@ -2051,6 +2136,10 @@ checkout_success: {
   catalog_on_sale: {
     ro: "Produse cu reducere",
     ru: "Товары со скидкой",
+    },
+  catalog_smartphones: {
+    ro: "Смартфоны",
+    ru: "Смартфоны",
   },
   catalog_free_shipping: {
     ro: "Livrare gratuită",
@@ -3002,6 +3091,40 @@ checkout_success: {
   pagination_next: {
     ro: "Următor",
     ru: "Следующий",
+  },
+
+  // Monthly Offers Component
+  offersOfTheMonth: {
+    ro: "OFERTELE LUNII",
+    ru: "ПРЕДЛОЖЕНИЯ МЕСЯЦА",
+  },
+  days: {
+    ro: "zile",
+    ru: "дни",
+  },
+  hours: {
+    ro: "ore",
+    ru: "часы",
+  },
+  minutes: {
+    ro: "minute",
+    ru: "минуты",
+  },
+  seconds: {
+    ro: "secunde",
+    ru: "секунды",
+  },
+  viewAllProductsInCategory: {
+    ro: "Vezi toate produsele",
+    ru: "Посмотреть все товары",
+  },
+  reduction: {
+    ro: "REDUCERE",
+    ru: "СКИДКА",
+  },
+  shopNow: {
+    ro: "Cumpără acum",
+    ru: "Купить сейчас",
   },
 };
 

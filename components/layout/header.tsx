@@ -20,6 +20,24 @@ import {
   Plus,
   Home,
   MapPin,
+  // Icons for categories
+  WashingMachine,
+  Smartphone,
+  Tv,
+  Thermometer,
+  Watch,
+  Gamepad2,
+  Scissors,
+  Shirt,
+  Baby,
+  Sofa,
+  Hammer,
+  Bike,
+  Car,
+  Dog,
+  Printer,
+  Laptop,
+  LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,7 +59,29 @@ import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "lucide-react";
 import { PopoverContent } from "@/components/ui/popover";
 import { useProtectedSession } from "@/lib/hooks/use-protected-session";
-import { ALL_CATEGORIES, MainCategory, Subcategory, getCategoryName } from "@/lib/categories";
+import { useCatalog } from "@/app/components/ui/catalog-provider";
+import { getCategoryName } from "@/lib/categories";
+
+// A map of icon names to their components
+const iconMap: Record<string, LucideIcon> = {
+  WashingMachine,
+  Smartphone,
+  Tv,
+  Thermometer,
+  Watch,
+  Gamepad2,
+  Scissors,
+  Shirt,
+  Baby,
+  Home,
+  Sofa,
+  Hammer,
+  Bike,
+  Car,
+  Dog,
+  Printer,
+  Laptop
+};
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -89,11 +129,18 @@ export default function Header() {
     clearCart,
   } = useCart();
   const { data: session, status } = useProtectedSession();
+  const { categories } = useCatalog(); // Get categories from context
+
   // Desktop states
   const [isDesktopCatalogOpen, setIsDesktopCatalogOpen] = useState(false);
   const [isDesktopUserMenuOpen, setIsDesktopUserMenuOpen] = useState(false);
   const [isDesktopCartOpen, setIsDesktopCartOpen] = useState(false);
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(ALL_CATEGORIES[0]?.id || null);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(categories[0]?.id || null);
+
+  // New state for tablet detection
+  const [isTablet, setIsTablet] = useState(false);
+  // Track if catalog was clicked (for tablet mode)
+  const [catalogOpenedByClick, setCatalogOpenedByClick] = useState(false);
 
   // Mobile states
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -105,9 +152,6 @@ export default function Header() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
-  // Use our imported categories instead of hardcoded ones
-  const [categories] = useState<MainCategory[]>(ALL_CATEGORIES);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -140,6 +184,11 @@ export default function Header() {
   const userMenuRef = React.useRef<HTMLDivElement>(null);
   const cartMenuRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Ref for the entire catalog system (button + dropdown)
+  const catalogContainerRef = React.useRef<HTMLDivElement>(null);
+  // Separate ref for the dropdown menu
+  const catalogMenuRef = React.useRef<HTMLDivElement>(null);
 
   // Debounce search
   useEffect(() => {
@@ -176,6 +225,24 @@ export default function Header() {
     };
   }, [isMobileMenuOpen]);
 
+  // Detect tablet size
+  useEffect(() => {
+    const checkIfTablet = () => {
+      // Check if the window width is in tablet range (between 768px and 1024px)
+      const isTabletSize = window.matchMedia("(min-width: 768px) and (max-width: 1024px)").matches;
+      setIsTablet(isTabletSize);
+    };
+
+    // Initial check
+    checkIfTablet();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", checkIfTablet);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", checkIfTablet);
+  }, []);
+
   // Add useEffect for click outside detection
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -194,20 +261,17 @@ export default function Header() {
         setIsDesktopCartOpen(false);
       }
 
-      // Only close catalog if click is outside both the menu content AND the catalog button
-      if (catalogRef.current) {
-        const catalogButton = catalogRef.current.querySelector("button");
-        const menuContent = document.querySelector(".desktop-catalog-menu");
-        const isClickInsideMenu = menuContent?.contains(event.target as Node);
-        const isClickOnButton = catalogButton?.contains(event.target as Node);
-
-        if (
-          !isClickInsideMenu &&
-          !isClickOnButton &&
-          !catalogRef.current.contains(event.target as Node)
-        ) {
-          setIsDesktopCatalogOpen(false);
-        }
+      // For tablet: Close catalog if click is outside both the button and dropdown
+      if (
+        isTablet &&
+        catalogOpenedByClick &&
+        catalogContainerRef.current &&
+        !catalogContainerRef.current.contains(event.target as Node) &&
+        catalogMenuRef.current &&
+        !catalogMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsDesktopCatalogOpen(false);
+        setCatalogOpenedByClick(false);
       }
     }
 
@@ -218,7 +282,7 @@ export default function Header() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isTablet, catalogOpenedByClick]);
 
   const handleDragEnd = (
     info: PanInfo,
@@ -256,6 +320,95 @@ export default function Header() {
   // Handle sign out
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" });
+  };
+
+  // Add state for controlling the close timer
+  const [catalogCloseTimer, setCatalogCloseTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Handle closing the catalog menu with delay - only for desktop
+  const handleCatalogMouseLeave = () => {
+    // Only use hover behavior if not in tablet mode or if not opened by click
+    if (!isTablet || !catalogOpenedByClick) {
+      if (catalogCloseTimer) clearTimeout(catalogCloseTimer);
+
+      const timer = setTimeout(() => {
+        setIsDesktopCatalogOpen(false);
+      }, 300); // 300ms delay
+
+      setCatalogCloseTimer(timer);
+    }
+  };
+
+  // Handle mouse enter to cancel any pending close
+  const handleCatalogMouseEnter = () => {
+    // Only use hover behavior if not in tablet mode or if not opened by click
+    if (!isTablet || !catalogOpenedByClick) {
+      if (catalogCloseTimer) {
+        clearTimeout(catalogCloseTimer);
+        setCatalogCloseTimer(null);
+      }
+      setIsDesktopCatalogOpen(true);
+      setHoveredCategory(categories[0]?.id || null);
+    }
+  };
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (catalogCloseTimer) clearTimeout(catalogCloseTimer);
+    };
+  }, [catalogCloseTimer]);
+
+  // Toggle catalog menu for tablet
+  const handleCatalogClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event from bubbling
+
+    if (isTablet) {
+      // For tablet: toggle the menu and set the click state
+      const newOpenState = !isDesktopCatalogOpen;
+      setIsDesktopCatalogOpen(newOpenState);
+      setCatalogOpenedByClick(newOpenState);
+
+      if (newOpenState) {
+        setHoveredCategory(categories[0]?.id || null);
+      }
+    } else {
+      // For desktop: normal behavior
+      setIsDesktopCatalogOpen(!isDesktopCatalogOpen);
+      if (!isDesktopCatalogOpen) {
+        setHoveredCategory(categories[0]?.id || null);
+      }
+    }
+  };
+
+  // Handle category button click for tablet
+  const handleCategoryClick = (categoryId: string) => {
+    if (isTablet) {
+      setHoveredCategory(categoryId);
+      // Don't close the menu on tablet
+    } else {
+      setHoveredCategory(categoryId);
+    }
+  };
+
+  // Handle subcategory click
+  const handleSubcategoryClick = (
+    e: React.MouseEvent,
+    categoryId: string,
+    subcategoryId: string
+  ) => {
+    e.preventDefault();
+
+    // Close the catalog menu
+    setIsDesktopCatalogOpen(false);
+    setCatalogOpenedByClick(false);
+
+    // Navigate after a short delay
+    setTimeout(() => {
+      router.push(
+        `/catalog?category=${encodeURIComponent(categoryId)}&subcategory=${encodeURIComponent(subcategoryId)}`
+      );
+    }, 50);
   };
 
   return (
@@ -354,7 +507,11 @@ export default function Header() {
                   </p>
                 </div>
               </Link>
-              <div className="hidden md:flex items-center" ref={catalogRef}>
+              <div
+                className="hidden md:flex items-center"
+                ref={catalogContainerRef}
+                onMouseLeave={isTablet ? undefined : handleCatalogMouseLeave}
+              >
                 <Button
                   variant="ghost"
                   className={cn(
@@ -363,13 +520,8 @@ export default function Header() {
                       ? "bg-accent text-accent-foreground shadow-sm"
                       : "hover:shadow-sm"
                   )}
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent event from bubbling
-                    setIsDesktopCatalogOpen(!isDesktopCatalogOpen);
-                    if (!isDesktopCatalogOpen) {
-                      setHoveredCategory(categories[0]?.id || null);
-                    }
-                  }}
+                  onMouseEnter={isTablet ? undefined : handleCatalogMouseEnter}
+                  onClick={handleCatalogClick}
                 >
                   <LayoutGrid className="h-4 w-4 lg:h-5 lg:w-5" />
                   <span className="font-medium">{t("catalog")}</span>
@@ -573,7 +725,7 @@ export default function Header() {
                                         </div>
                                         {item.product.pretRedus && (
                                           <div className="text-xs text-muted-foreground line-through">
-                                            {(item.product.pret * item.quantity).toLocaleString()} MDL
+                                            {item.product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} MDL
                                           </div>
                                         )}
                                       </div>
@@ -806,39 +958,48 @@ export default function Header() {
           <AnimatePresence>
             {isDesktopCatalogOpen && (
               <motion.div
+                ref={catalogMenuRef}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 5 }}
                 transition={{ duration: 0.2 }}
-                className="absolute inset-x-0 top-full bg-white border-b shadow-lg backdrop-blur-sm bg-white/95 z-50 desktop-catalog-menu"
+                className="absolute inset-x-0 top-full bg-white border-b shadow-lg backdrop-blur-sm z-50 desktop-catalog-menu"
+                onMouseEnter={isTablet ? undefined : handleCatalogMouseEnter}
+                onMouseLeave={isTablet ? undefined : handleCatalogMouseLeave}
               >
                 <div className="container mx-auto py-6 lg:py-8">
-                  <div className="grid grid-cols-[220px,1fr] lg:grid-cols-[280px,1fr] divide-x divide-gray-100">
+                  <div className="grid grid-cols-[330px,1fr] lg:grid-cols-[400px,1fr] divide-x divide-gray-100/70">
                     {/* Categories list */}
-                    <div className="pr-4 lg:pr-8">
-                      <h3 className="text-xs lg:text-sm font-medium uppercase tracking-wide text-muted-foreground mb-3 lg:mb-4 px-3 lg:px-4">
+                    <div className="pr-6 lg:pr-10">
+                      <h3 className="text-xs lg:text-sm font-medium uppercase tracking-wide text-primary mb-4 lg:mb-5 px-3 lg:px-4">
                         {t("catalog")}
                       </h3>
-                      <ul className="space-y-1 lg:space-y-1.5">
+                      <ul className="space-y-0.5 lg:space-y-1.5 pr-2">
                         {categories.map((category) => (
                           <li key={category.id}>
                             <button
                               className={cn(
-                                "flex w-full items-center justify-between rounded-xl px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base font-medium transition-all duration-200",
+                                "flex w-full items-center justify-between rounded-xl px-3 lg:px-4 py-2 lg:py-2.5 text-base font-medium transition-all duration-300",
                                 hoveredCategory === category.id
-                                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 translate-x-1"
-                                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1"
+                                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 translate-x-1"
+                                  : "text-foreground hover:bg-accent hover:text-primary hover:translate-x-1 hover:shadow-sm"
                               )}
-                              onMouseEnter={() =>
-                                setHoveredCategory(category.id)
-                              }
+                              onMouseEnter={isTablet ? undefined : () => setHoveredCategory(category.id)}
+                              onClick={() => handleCategoryClick(category.id)}
                             >
-                              <span>
+                              <span className="flex items-center">
+                                {/* Render the category icon */}
+                                {iconMap[category.icon] && React.createElement(iconMap[category.icon], {
+                                  className: cn(
+                                    "h-3.5 w-3.5 lg:h-4 lg:w-4 mr-2 transition-transform",
+                                    hoveredCategory === category.id ? "text-white" : "text-primary"
+                                  )
+                                })}
                                 {getCategoryName(category, language)}
                               </span>
                               <ChevronRight
                                 className={cn(
-                                  "h-4 w-4 lg:h-5 lg:w-5 transition-transform duration-200",
+                                  "h-3.5 w-3.5 lg:h-4 lg:w-4 transition-transform duration-300",
                                   hoveredCategory === category.id &&
                                     "translate-x-0.5"
                                 )}
@@ -850,19 +1011,18 @@ export default function Header() {
                     </div>
 
                     {/* Subcategories */}
-                    <div className="px-4 lg:px-8">
+                    <div className="px-6 lg:px-8">
                       {hoveredCategory && (
-                        <div className="space-y-4 lg:space-y-6">
+                        <div className="space-y-4 lg:space-y-5">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-xs lg:text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                              {t("subcategories")}
-                            </h3>
+
                             <Link
                               href={`/catalog?category=${hoveredCategory}`}
-                              className="text-xs lg:text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                              className="text-xs font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
                               onClick={(e) => {
                                 e.preventDefault();
                                 setIsDesktopCatalogOpen(false);
+                                setCatalogOpenedByClick(false);
                                 // Add a small delay for smoother transition
                                 setTimeout(() => {
                                   router.push(`/catalog?category=${encodeURIComponent(hoveredCategory)}`);
@@ -870,32 +1030,37 @@ export default function Header() {
                               }}
                             >
                               {t("seeAll")}
+                              <ChevronRight className="h-3 w-3 transform transition-transform group-hover:translate-x-0.5" />
                             </Link>
                           </div>
-                          <div className="grid grid-cols-2 gap-x-4 lg:gap-x-6 gap-y-2">
+
+                          {/* Subcategory Groups */}
+                          <div className="grid grid-cols-1 gap-y-4 lg:gap-y-6">
                             {categories
                               .find((cat) => cat.id === hoveredCategory)
-                              ?.subcategories.map((subcategory) => (
-                                <Link
-                                  key={subcategory.id}
-                                  href={`/catalog?category=${encodeURIComponent(hoveredCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
-                                  className="group flex items-center p-2 lg:p-3 rounded-lg border border-transparent bg-accent/40 hover:bg-accent hover:border-accent/50 hover:shadow-sm transition-all duration-200 hover:-translate-y-0.5"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    setIsDesktopCatalogOpen(false);
-                                    // Add a small delay for smoother transition
-                                    setTimeout(() => {
-                                      router.push(`/catalog?category=${encodeURIComponent(hoveredCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`);
-                                    }, 50);
-                                  }}
-                                >
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm lg:text-base truncate group-hover:text-primary transition-colors">
-                                      {getCategoryName(subcategory, language)}
-                                    </p>
+                              ?.subcategoryGroups.map((group) => (
+                                <div key={group.id} className="space-y-3">
+                                  <h4 className="text-base font-medium text-gray-600 mb-1 px-1">
+                                    {getCategoryName(group, language)}
+                                  </h4>
+                                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 lg:gap-x-5 gap-y-2 lg:gap-y-3">
+                                    {group.subcategories.map((subcategory) => (
+                                      <Link
+                                        key={subcategory.id}
+                                        href={`/catalog?category=${encodeURIComponent(hoveredCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
+                                        className="group flex items-center p-2 lg:p-2.5 rounded-xl border border-gray-100 bg-white hover:bg-accent/20 hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5"
+                                        onClick={(e) => handleSubcategoryClick(e, hoveredCategory, subcategory.id)}
+                                      >
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-medium text-xs lg:text-sm truncate group-hover:text-primary transition-colors">
+                                            {getCategoryName(subcategory, language)}
+                                          </p>
+                                        </div>
+                                        <ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground group-hover:text-primary ml-1.5 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-0.5 duration-200" />
+                                      </Link>
+                                    ))}
                                   </div>
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary ml-2 opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-0.5 duration-200" />
-                                </Link>
+                                </div>
                               ))}
                           </div>
                         </div>
@@ -912,28 +1077,28 @@ export default function Header() {
             <div className="container mx-auto px-2 pb-safe">
               <div className="grid grid-cols-5 gap-1">
                 <button
-                  onClick={() => router.push("/")}
+                  onClick={() => router.push("/contact")}
                   className="group flex flex-col items-center justify-center py-2"
                 >
                   <div
                     className={cn(
                       "flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200",
-                      pathname === "/"
+                      pathname === "/contact"
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     )}
                   >
-                    <Home className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
+                    <MapPin className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
                   </div>
                   <span
                     className={cn(
                       "text-xs font-medium mt-1 transition-colors",
-                      pathname === "/"
+                      pathname === "/contact"
                         ? "text-primary"
                         : "text-muted-foreground group-hover:text-primary"
                     )}
                   >
-                    {t("home")}
+                    {t("contact")}
                   </span>
                 </button>
 
@@ -960,32 +1125,6 @@ export default function Header() {
                     )}
                   >
                     {t("catalog")}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => router.push("/contact")}
-                  className="group flex flex-col items-center justify-center py-2"
-                >
-                  <div
-                    className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200",
-                      pathname === "/contact"
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                    )}
-                  >
-                    <MapPin className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
-                  </div>
-                  <span
-                    className={cn(
-                      "text-xs font-medium mt-1 transition-colors",
-                      pathname === "/contact"
-                        ? "text-primary"
-                        : "text-muted-foreground group-hover:text-primary"
-                    )}
-                  >
-                    {t("contact")}
                   </span>
                 </button>
 
@@ -1017,6 +1156,35 @@ export default function Header() {
                     )}
                   >
                     {t("cart")}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => router.push("/promotii")}
+                  className="group flex flex-col items-center justify-center py-2"
+                >
+                  <div
+                    className={cn(
+                      "flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200",
+                      pathname === "/promotii"
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    )}
+                  >
+                    <div className="relative">
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white">%</span>
+                      <Package className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
+                    </div>
+                  </div>
+                  <span
+                    className={cn(
+                      "text-xs font-medium mt-1 transition-colors",
+                      pathname === "/promotii"
+                        ? "text-primary"
+                        : "text-muted-foreground group-hover:text-primary"
+                    )}
+                  >
+                    {t("promotii") || "Promoții"}
                   </span>
                 </button>
 
@@ -1109,42 +1277,51 @@ export default function Header() {
                               const category = categories.find(
                                 (cat) => cat.id === activeMobileCategory
                               );
-                              return category ? (language === "ru" ? category.name.ru : category.name.ro) : "";
+                              return category ? getCategoryName(category, language) : "";
                             })()}
                           </h3>
                         </div>
 
-                        {/* Subcategories grid */}
-                        <div className="grid grid-cols-2 gap-4 px-4 pb-20">
+                        {/* Subcategory groups */}
+                        <div className="space-y-6 px-3 pb-16">
                           {categories
                             .find((cat) => cat.id === activeMobileCategory)
-                            ?.subcategories.map((subcategory) => (
-                              <Link
-                                key={subcategory.id}
-                                href={`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
-                                className="group relative flex flex-col overflow-hidden rounded-2xl bg-gradient-to-b from-gray-50 to-white border shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 hover:border-primary/20"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setIsMobileMenuOpen(false);
-                                  // Add a small delay for smoother transition
-                                  setTimeout(() => {
-                                    router.push(`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`);
-                                  }, 50);
-                                }}
-                              >
-                                <div className="flex items-center justify-between p-4">
-                                  <div className="min-w-0 flex-1">
-                                    <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                                      {getCategoryName(subcategory, language)}
-                                    </h4>
-                                  </div>
-                                  <div className="ml-4">
-                                    <div className="flex h-7 w-7 lg:h-8 lg:w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
-                                      <ChevronRight className="h-4 w-4" />
-                                    </div>
-                                  </div>
+                            ?.subcategoryGroups.map((group) => (
+                              <div key={group.id} className="space-y-3">
+                                <h4 className="text-sm font-medium text-muted-foreground px-2">
+                                  {getCategoryName(group, language)}
+                                </h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {group.subcategories.map((subcategory) => (
+                                    <Link
+                                      key={subcategory.id}
+                                      href={`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
+                                      className="group relative flex flex-col overflow-hidden rounded-xl bg-gradient-to-b from-gray-50 to-white border shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 hover:border-primary/20"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setIsMobileMenuOpen(false);
+                                        // Add a small delay for smoother transition
+                                        setTimeout(() => {
+                                          router.push(`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`);
+                                        }, 50);
+                                      }}
+                                    >
+                                      <div className="flex items-center justify-between p-2.5">
+                                        <div className="min-w-0 flex-1">
+                                          <h4 className="font-medium text-xs truncate group-hover:text-primary transition-colors">
+                                            {getCategoryName(subcategory, language)}
+                                          </h4>
+                                        </div>
+                                        <div className="ml-2">
+                                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+                                            <ChevronRight className="h-3 w-3" />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </Link>
+                                  ))}
                                 </div>
-                              </Link>
+                              </div>
                             ))}
                         </div>
                       </motion.div>
@@ -1159,25 +1336,30 @@ export default function Header() {
                           {categories.map((category) => (
                             <div key={category.id} className="flex w-full">
                               <div
-                                className="flex-1 flex items-center justify-between px-4 py-4 text-base hover:bg-accent/50 transition-colors cursor-pointer"
+                                className="flex-1 flex items-center justify-between px-3 py-2.5 text-sm hover:bg-accent/50 transition-colors cursor-pointer"
                                 onClick={() =>
                                   setActiveMobileCategory(category.id)
                                 }
                               >
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium">
-                                    {getCategoryName(category, language)}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {category.subcategories.length}{" "}
-                                    {t("subcategories").toLowerCase()}
-                                  </span>
+                                  {/* Display the icon in mobile menu */}
+                                  <div className="flex items-center justify-center w-7 h-7 bg-primary/10 rounded-full text-primary">
+                                    {iconMap[category.icon] && React.createElement(iconMap[category.icon], {
+                                      className: "h-3.5 w-3.5"
+                                    })}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-sm">
+                                      {getCategoryName(category, language)}
+                                    </span>
+
+                                  </div>
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <Link
                                 href={`/catalog?category=${category.id}`}
-                                className="px-4 flex items-center justify-center text-primary hover:bg-accent/50 transition-colors"
+                                className="px-3 flex items-center justify-center text-primary text-xs hover:bg-accent/50 transition-colors"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setIsMobileMenuOpen(false);
@@ -1401,16 +1583,15 @@ export default function Header() {
                                     {product.pretRedus ? (
                                       <>
                                         <span className="block text-xs text-gray-500 line-through">
-                                          {product.pret.toLocaleString()} MDL
+                                          {product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} MDL
                                         </span>
                                         <span className="block font-medium text-sm text-primary">
-                                          {product.pretRedus.toLocaleString()}{" "}
-                                          MDL
+                                          {product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} MDL
                                         </span>
                                       </>
                                     ) : (
                                       <span className="block font-medium text-sm text-primary">
-                                        {product.pret.toLocaleString()} MDL
+                                        {product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} MDL
                                       </span>
                                     )}
                                   </>
@@ -1596,220 +1777,153 @@ export default function Header() {
                       setIsCartOpen(false);
                     }
                   }}
-                  className="fixed inset-x-0 bottom-0 h-[85vh] bg-white shadow-xl z-50 md:hidden flex flex-col overflow-hidden rounded-t-2xl"
+                  className="fixed inset-x-0 bottom-0 h-[80vh] bg-white shadow-xl z-50 md:hidden flex flex-col overflow-hidden rounded-t-2xl"
                 >
-                  {/* Drag handle */}
-                  <div className="w-full pt-3 pb-2 px-4">
-                    <div className="h-1 w-16 mx-auto rounded-full bg-gray-300/80" />
-                  </div>
-
-                  {/* Cart header */}
-                  <div className="flex items-center justify-between h-14 px-4 border-b bg-gray-50/80 backdrop-blur-sm">
+                  {/* Drag handle and header in single row */}
+                  <div className="flex items-center justify-between px-3 pt-2 pb-2 border-b">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 rounded-xl hover:bg-gray-200/70"
+                      className="h-8 w-8 rounded-full"
                       onClick={() => setIsCartOpen(false)}
                     >
-                      <X className="h-5 w-5" />
+                      <X className="h-4 w-4" />
                     </Button>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-semibold flex items-center gap-2">
-                        <ShoppingCart className="h-4 w-4 text-primary" />
-                        {t("cart_title")}
-                      </h2>
+
+                    <div className="h-1 w-10 rounded-full bg-gray-300/80 absolute left-1/2 top-3 -translate-x-1/2" />
+
+                    <div className="font-semibold flex items-center gap-1.5">
+                      <ShoppingCart className="h-4 w-4 text-primary" />
+                      <span className="text-base">{t("cart_title")}</span>
                       {totalItems > 0 && (
-                        <motion.span
-                          initial={{ scale: 0.5 }}
-                          animate={{ scale: 1 }}
-                          className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-white"
-                        >
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
                           {totalItems}
-                        </motion.span>
+                        </span>
                       )}
                     </div>
-                    <div className="w-10" /> {/* Spacer for alignment */}
                   </div>
 
                   {items.length === 0 ? (
-                    // Empty cart state with better animations
-                    <div className="flex-1 flex flex-col items-center justify-center px-6">
-                      <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 15,
+                    <div className="flex-1 flex flex-col items-center justify-center p-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400 mb-4">
+                        <ShoppingCart className="h-8 w-8" />
+                      </div>
+                      <h3 className="text-lg font-medium mb-2">{t("cart_empty")}</h3>
+                      <p className="text-sm text-muted-foreground mb-6 text-center px-4 max-w-[250px]">
+                        {t("cart_empty_description")}
+                      </p>
+                      <Button
+                        onClick={() => {
+                          setIsCartOpen(false);
+                          setIsMobileMenuOpen(true);
                         }}
-                        className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gray-100 text-gray-400 mb-6"
+                        className="h-10 rounded-full"
                       >
-                        <ShoppingCart className="h-12 w-12" />
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="text-center space-y-2 mb-8"
-                      >
-                        <h3 className="text-xl font-semibold">
-                          {t("cart_empty")}
-                        </h3>
-                        <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-                          {t("cart_empty_description")}
-                        </p>
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="w-full max-w-sm"
-                      >
-                        <Button
-                          onClick={() => {
-                            setIsCartOpen(false);
-                            setIsMobileMenuOpen(true);
-                          }}
-                          className="w-full h-12 rounded-xl bg-black hover:bg-black/90 text-white"
-                        >
-                          <LayoutGrid className="h-5 w-5 mr-2" />
-                          {t("cart_explore_catalog")}
-                        </Button>
-                      </motion.div>
+                        <LayoutGrid className="h-4 w-4 mr-2" />
+                        {t("browse_catalog")}
+                      </Button>
                     </div>
                   ) : (
-                    // Cart with items - enhanced with animations
-                    <div className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent hover:scrollbar-thumb-gray-300">
-                      <div className="space-y-4">
-                        {items.map((item, index) => (
-                          <motion.div
-                            key={item.product.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{
-                              delay: index * 0.05,
-                              type: "spring",
-                              stiffness: 300,
-                              damping: 20,
-                            }}
-                            whileTap={{ scale: 0.98 }}
-                            whileHover={{ scale: 1.01 }}
-                            className="flex gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-all group relative bg-white hover:shadow-sm"
-                          >
-                            <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 border border-primary/10 shadow-sm group-hover:shadow-md transition-all">
-                              {item.product.imagini[0] ? (
-                                <Image
-                                  src={item.product.imagini[0]}
-                                  alt={item.product.nume}
-                                  fill
-                                  className="object-contain p-1 transition-transform group-hover:scale-105 duration-300"
-                                  sizes="64px"
-                                />
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <Package className="h-6 w-6 text-gray-400" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
-                                {item.product.nume}
-                              </h4>
-                              <div className="text-xs text-muted-foreground mt-1.5 flex items-center">
-                                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs text-gray-600 mr-1">
-                                  {t("cart_product_code")}
-                                </span>
-                                {item.product.cod}
+                    <>
+                      <div className="flex-1 overflow-auto p-3 scrollbar-thin scrollbar-thumb-gray-200">
+                        <div className="space-y-2">
+                          {items.map((item) => (
+                            <div
+                              key={item.product.id}
+                              className="flex gap-2 p-2 rounded-lg border border-gray-100 bg-white relative"
+                            >
+                              <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-white/90 border border-primary/10">
+                                {item.product.imagini[0] ? (
+                                  <Image
+                                    src={item.product.imagini[0]}
+                                    alt={item.product.nume}
+                                    fill
+                                    className="object-contain p-1"
+                                    sizes="56px"
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <Package className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                )}
                               </div>
-                              <div className="flex items-center justify-between mt-3">
-                                <div className="flex flex-col">
-                                  <div className="text-base font-semibold text-primary">
+                              <div className="flex-1 min-w-0 pr-5">
+                                <h4 className="font-medium text-sm truncate">
+                                  {item.product.nume}
+                                </h4>
+                                <div className="text-[10px] text-muted-foreground mt-1">
+                                  {t("code")}: {item.product.cod}
+                                </div>
+                                <div className="mt-1.5 flex items-center justify-between">
+                                  <div className="text-sm font-semibold text-primary">
                                     {((item.product.pretRedus || item.product.pret) * item.quantity).toLocaleString()} MDL
                                   </div>
-                                  {item.product.pretRedus && (
-                                    <div className="text-xs text-muted-foreground line-through">
-                                      {(item.product.pret * item.quantity).toLocaleString()} MDL
-                                    </div>
-                                  )}
+                                  <div className="flex items-center border rounded-full h-6 bg-gray-50">
+                                    <button
+                                      className="h-6 w-6 flex items-center justify-center"
+                                      onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
+                                    >
+                                      <Minus className="h-3 w-3" />
+                                    </button>
+                                    <span className="w-6 text-center text-xs">{item.quantity}</span>
+                                    <button
+                                      className="h-6 w-6 flex items-center justify-center"
+                                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </button>
+                                  </div>
                                 </div>
-
                               </div>
+                              <button
+                                className="absolute top-1 right-1 h-5 w-5 rounded-full flex items-center justify-center text-gray-400"
+                                onClick={() => removeItem(item.product.id)}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
                             </div>
-                            <motion.button
-                              whileTap={{ scale: 0.9 }}
-                              className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeItem(item.product.id);
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </motion.div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Cart footer */}
-                  <div className="border-t p-4 bg-gray-50/80 backdrop-blur-sm">
-                    <div className="space-y-4 max-w-sm mx-auto">
-                      <div className="flex flex-col gap-2 mb-2">
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>{t("cart_products")}</span>
-                          <span>
-                            {totalItems}{" "}
-                            {totalItems === 1 ? t("item") : t("items")}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>{t("cart_delivery")}</span>
-                          <span className="font-medium text-primary">
-                            {t("cart_free")}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-base pt-2 border-t">
-                          <span className="font-medium">{t("cart_total")}</span>
-                          <motion.span
-                            className="font-semibold text-lg text-primary"
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            transition={{
-                              delay: 0.1,
-                              type: "spring",
-                              stiffness: 300,
-                            }}
-                          >
-                            {totalPrice.toLocaleString()} MDL
-                          </motion.span>
+                      <div className="border-t p-3 bg-gray-50/80">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500">{t("cart_total")}</span>
+                            <span className="font-semibold">{totalPrice.toLocaleString()} MDL</span>
+                          </div>
+
+                          {/* Clear cart button added here */}
+                          {items.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              className="w-full h-8 text-xs text-red-500 border border-gray-200 rounded-full mb-1"
+                              onClick={() => clearCart()}
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              {t("clearCart") || "Clear Cart"}
+                            </Button>
+                          )}
+
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1 h-9 text-xs rounded-full"
+                              onClick={() => (window.location.href = "/cart")}
+                            >
+                              {t("view_cart")}
+                            </Button>
+                            <Button
+                              className="flex-1 h-9 text-xs rounded-full"
+                              onClick={() => (window.location.href = "/checkout")}
+                            >
+                              {t("checkout")}
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        className="w-full h-10 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 border border-gray-200 mb-2"
-                        disabled={items.length === 0}
-                        onClick={() => clearCart()}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        {t("cart_clear") || "Clear Cart"}
-                      </Button>
-                      <Button
-                        className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white"
-                        disabled={items.length === 0}
-                        onClick={() => (window.location.href = "/checkout")}
-                      >
-                        {t("cart_checkout")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full h-10 rounded-xl text-sm border-gray-200 hover:border-primary/30 hover:text-primary"
-                        disabled={items.length === 0}
-                        onClick={() => (window.location.href = "/cart")}
-                      >
-                        {t("cart_title")}
-                      </Button>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </motion.div>
               </>
             )}

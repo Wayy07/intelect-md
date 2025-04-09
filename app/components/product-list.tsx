@@ -98,7 +98,7 @@ export function ProductList({ category }: { category?: string }) {
             </h3>
             <div className="flex items-center justify-between mt-2">
               <span className="font-bold text-xl">
-                {product.price} MDL
+                {product.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} MDL
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {language === "ru" ? "В наличии:" : "În stoc:"} {product.on_stock}

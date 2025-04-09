@@ -33,6 +33,7 @@ import { useBannerStore } from "../lib/banner-data";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import { HyperText } from "@/components/magicui/hyper-text";
 import { useRouter } from "next/navigation";
+import PopularCategories from "./popular-categories";
 
 // Interface for Banner object
 interface Banner {
@@ -79,7 +80,7 @@ const BannerSlideshow = () => {
   // Check if we're on mobile on component mount
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 600);
     };
 
     checkMobile();
@@ -90,7 +91,7 @@ const BannerSlideshow = () => {
   return (
     <div className="py-4 md:py-6 ">
       {/* Container with consistent styling for both mobile and desktop */}
-      <div className="px-4  md:max-w-[900px] xl:max-w-[1400px] 3xl:max-w-[2000px]  mx-auto">
+      <div className="px-4 h-auto md:max-w-[900px] xl:max-w-[1200px] 3xl:max-w-[1400px]  mx-auto">
         {/* Fixed size container with rounded edges and white border for both mobile and desktop */}
         <div className="rounded-2xl border-2 border-white overflow-hidden shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300">
           <Carousel
@@ -153,307 +154,234 @@ const BannerSlideshow = () => {
   );
 };
 
-const BrandLogos = () => {
-  const { t } = useLanguage();
+// const BrandLogos = () => {
+//   const { t } = useLanguage();
 
-  // Animation settings - slower speed for more visible scrolling
-  const baseVelocity = 0.05; // Reduced for much slower motion
-  const baseX = useMotionValue(0);
-  const [hoveredBrandId, setHoveredBrandId] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<HTMLDivElement>(null);
-  const [brands, setBrands] = useState<Brand[]>([]);
+//   // Animation settings - slower speed for more visible scrolling
+//   const baseVelocity = 0.05; // Reduced for much slower motion
+//   const baseX = useMotionValue(0);
+//   const [hoveredBrandId, setHoveredBrandId] = useState<string | null>(null);
+//   const [isDragging, setIsDragging] = useState(false);
+//   const [isMobile, setIsMobile] = useState(false);
+//   const containerRef = useRef<HTMLDivElement>(null);
+//   const dragRef = useRef<HTMLDivElement>(null);
+//   const [brands, setBrands] = useState<Brand[]>([]);
 
-  // Separate drag motion value from auto-animation value
-  const dragX = useMotionValue(0);
-  const combinedX = useMotionValue(0);
+//   // Separate drag motion value from auto-animation value
+//   const dragX = useMotionValue(0);
+//   const combinedX = useMotionValue(0);
 
-  // Check if we're on mobile on component mount and fetch brands
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+//   // Check if we're on mobile on component mount and fetch brands
+//   useEffect(() => {
+//     const checkMobile = () => {
+//       setIsMobile(window.innerWidth < 768);
+//     };
 
-    // Get brands from mock data
-    setBrands(getAllBrands());
+//     // Get brands from mock data
+//     setBrands(getAllBrands());
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+//     checkMobile();
+//     window.addEventListener("resize", checkMobile);
+//     return () => window.removeEventListener("resize", checkMobile);
+//   }, []);
 
-  // Create a very long list of brands to ensure continuous scrolling
-  // Using 4 sets of brands should be enough for a seamless appearance
-  const extendedBrands = [...brands, ...brands, ...brands, ...brands];
+//   // Create a very long list of brands to ensure continuous scrolling
+//   // Using 4 sets of brands should be enough for a seamless appearance
+//   const extendedBrands = [...brands, ...brands, ...brands, ...brands];
 
-  // Base dimensions - smaller card width on mobile
-  const itemWidth = isMobile ? 130 : 170;
+//   // Base dimensions - smaller card width on mobile
+//   const itemWidth = isMobile ? 130 : 170;
 
-  // Calculate combined position by adding base animation and manual drag
-  useEffect(() => {
-    const updateCombinedX = () => {
-      combinedX.set(baseX.get() + dragX.get());
-    };
+//   // Calculate combined position by adding base animation and manual drag
+//   useEffect(() => {
+//     const updateCombinedX = () => {
+//       combinedX.set(baseX.get() + dragX.get());
+//     };
 
-    const unsubscribeBase = baseX.onChange(updateCombinedX);
-    const unsubscribeDrag = dragX.onChange(updateCombinedX);
+//     const unsubscribeBase = baseX.onChange(updateCombinedX);
+//     const unsubscribeDrag = dragX.onChange(updateCombinedX);
 
-    return () => {
-      unsubscribeBase();
-      unsubscribeDrag();
-    };
-  }, [baseX, dragX, combinedX]);
+//     return () => {
+//       unsubscribeBase();
+//       unsubscribeDrag();
+//     };
+//   }, [baseX, dragX, combinedX]);
 
-  // Animation using continuous scrolling with time-based movement
-  useAnimationFrame((time) => {
-    if (isDragging) return;
+//   // Animation using continuous scrolling with time-based movement
+//   useAnimationFrame((time) => {
+//     if (isDragging) return;
 
-    // Get the width of one complete set of brands
-    const brandSetWidth = brands.length * itemWidth;
+//     // Get the width of one complete set of brands
+//     const brandSetWidth = brands.length * itemWidth;
 
-    // Create a continuous motion with natural looping using modulo
-    // Use a smoother animation that preserves position after dragging
-    const xPos = (-time * baseVelocity) % brandSetWidth;
+//     // Create a continuous motion with natural looping using modulo
+//     // Use a smoother animation that preserves position after dragging
+//     const xPos = (-time * baseVelocity) % brandSetWidth;
 
-    // Gradually transition current position to the calculated position
-    const currentX = baseX.get();
-    const targetX = xPos;
+//     // Gradually transition current position to the calculated position
+//     const currentX = baseX.get();
+//     const targetX = xPos;
 
-    // Smooth linear interpolation between current and target
-    const newX = currentX + (targetX - currentX) * 0.005;
-    baseX.set(newX);
-  });
+//     // Smooth linear interpolation between current and target
+//     const newX = currentX + (targetX - currentX) * 0.005;
+//     baseX.set(newX);
+//   });
 
-  // Transform the x position for left-to-right scrolling
-  const x = useTransform(combinedX, (value) => `${value}px`);
+//   // Transform the x position for left-to-right scrolling
+//   const x = useTransform(combinedX, (value) => `${value}px`);
 
-  // Drag constraints
-  const containerWidth =
-    typeof window !== "undefined" ? window.innerWidth : 1200;
-  const brandSetWidth = brands.length * itemWidth;
+//   // Drag constraints
+//   const containerWidth =
+//     typeof window !== "undefined" ? window.innerWidth : 1200;
+//   const brandSetWidth = brands.length * itemWidth;
 
-  // Set up improved drag handlers
-  const handleDragStart = () => {
-    setIsDragging(true);
-    // Stop auto-animation immediately
-    dragX.set(0);
-  };
+//   // Set up improved drag handlers
+//   const handleDragStart = () => {
+//     setIsDragging(true);
+//     // Stop auto-animation immediately
+//     dragX.set(0);
+//   };
 
-  const handleDrag = (_: any, info: any) => {
-    // Update drag position directly during drag for immediate feedback
-    dragX.set(info.offset.x);
-  };
+//   const handleDrag = (_: any, info: any) => {
+//     // Update drag position directly during drag for immediate feedback
+//     dragX.set(info.offset.x);
+//   };
 
-  const handleDragEnd = (event: any, info: any) => {
-    // Only update if the user actually dragged
-    if (Math.abs(info.offset.x) > 5) {
-      // Update the base position to include the drag
-      // This is the key change - we update baseX with the dragged position
-      baseX.set(baseX.get() + info.offset.x);
-      // Reset drag position
-      dragX.set(0);
+//   const handleDragEnd = (event: any, info: any) => {
+//     // Only update if the user actually dragged
+//     if (Math.abs(info.offset.x) > 5) {
+//       // Update the base position to include the drag
+//       // This is the key change - we update baseX with the dragged position
+//       baseX.set(baseX.get() + info.offset.x);
+//       // Reset drag position
+//       dragX.set(0);
 
-      // Keep auto-animation paused for a longer period after user interaction
-      // This gives a clear sense that the logos stay where they were dragged
-      setTimeout(() => {
-        setIsDragging(false);
-      }, 1500); // Increased from 50ms to 1500ms (1.5 seconds)
-    } else {
-      setIsDragging(false);
-      dragX.set(0);
-    }
-  };
+//       // Keep auto-animation paused for a longer period after user interaction
+//       // This gives a clear sense that the logos stay where they were dragged
+//       setTimeout(() => {
+//         setIsDragging(false);
+//       }, 1500); // Increased from 50ms to 1500ms (1.5 seconds)
+//     } else {
+//       setIsDragging(false);
+//       dragX.set(0);
+//     }
+//   };
 
-  return (
-    <div className="w-full py-10 px-4  ">
-      <div
-        className="relative max-w-7xl mx-auto overflow-hidden"
-        ref={containerRef}
-      >
+//   return (
+//     <div className="w-full py-10 px-4  ">
+//       <div
+//         className="relative max-w-7xl mx-auto overflow-hidden"
+//         ref={containerRef}
+//       >
 
 
-        <div className="overflow-hidden cursor-grab active:cursor-grabbing">
-          <motion.div
-            ref={dragRef}
-            className="flex py-2"
-            style={{ x }}
-            drag="x"
-            dragConstraints={{
-              left: -brandSetWidth,
-              right: containerWidth,
-            }}
-            onDragStart={handleDragStart}
-            onDrag={handleDrag}
-            onDragEnd={handleDragEnd}
-            dragElastic={0.2}
-            whileTap={{ cursor: "grabbing" }}
-            dragMomentum={false}
-          >
-            {extendedBrands.map((brand, index) => (
-              <motion.div
-                key={`${brand.id}-${index}`}
-                className="flex-shrink-0"
-                style={{ width: itemWidth }}
-                whileHover={{ y: -5 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                onHoverStart={() => setHoveredBrandId(brand.id)}
-                onHoverEnd={() => setHoveredBrandId(null)}
-              >
-                <Link
-                  href={`/catalog?brand=${brand.id}`}
-                  className={`flex flex-col items-center justify-center group mx-2 rounded-xl p-3
-                           hover:shadow-lg transition-all duration-300 relative overflow-hidden
-                           ${isMobile ? "h-[70px]" : "h-[90px]"}`}
-                  onClick={(e) => {
-                    // Prevent navigation when dragging on mobile
-                    if (isDragging) {
-                      e.preventDefault();
-                    }
-                  }}
-                  draggable="false"
-                  style={{
-                    borderColor: `${brand.color}30`,
-                    background: brand.background,
-                    boxShadow:
-                      hoveredBrandId === brand.id
-                        ? `0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px ${brand.color}30`
-                        : "none",
-                  }}
-                >
-                  <motion.div
-                    className={`relative ${
-                      isMobile ? "h-10 w-24" : "h-12 w-32"
-                    }`}
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    style={{
-                      filter:
-                        hoveredBrandId === brand.id
-                          ? "none"
-                          : "grayscale(0.2) opacity(0.9)",
-                    }}
-                  >
-                    <Image
-                      src={brand.logo}
-                      alt={brand.nameKey ? t(brand.nameKey) : brand.name}
-                      fill
-                      sizes={isMobile ? "96px" : "128px"}
-                      className="object-contain transition-all duration-300 pointer-events-none"
-                      loading="eager"
-                      unoptimized
-                      draggable="false"
-                    />
-                  </motion.div>
+//         <div className="overflow-hidden cursor-grab active:cursor-grabbing">
+//           <motion.div
+//             ref={dragRef}
+//             className="flex py-2"
+//             style={{ x }}
+//             drag="x"
+//             dragConstraints={{
+//               left: -brandSetWidth,
+//               right: containerWidth,
+//             }}
+//             onDragStart={handleDragStart}
+//             onDrag={handleDrag}
+//             onDragEnd={handleDragEnd}
+//             dragElastic={0.2}
+//             whileTap={{ cursor: "grabbing" }}
+//             dragMomentum={false}
+//           >
+//             {extendedBrands.map((brand, index) => (
+//               <motion.div
+//                 key={`${brand.id}-${index}`}
+//                 className="flex-shrink-0"
+//                 style={{ width: itemWidth }}
+//                 whileHover={{ y: -5 }}
+//                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
+//                 onHoverStart={() => setHoveredBrandId(brand.id)}
+//                 onHoverEnd={() => setHoveredBrandId(null)}
+//               >
+//                 <Link
+//                   href={`/catalog?brand=${brand.id}`}
+//                   className={`flex flex-col items-center justify-center group mx-2 rounded-xl p-3
+//                            hover:shadow-lg transition-all duration-300 relative overflow-hidden
+//                            ${isMobile ? "h-[70px]" : "h-[90px]"}`}
+//                   onClick={(e) => {
+//                     // Prevent navigation when dragging on mobile
+//                     if (isDragging) {
+//                       e.preventDefault();
+//                     }
+//                   }}
+//                   draggable="false"
+//                   style={{
+//                     borderColor: `${brand.color}30`,
+//                     background: brand.background,
+//                     boxShadow:
+//                       hoveredBrandId === brand.id
+//                         ? `0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px ${brand.color}30`
+//                         : "none",
+//                   }}
+//                 >
+//                   <motion.div
+//                     className={`relative ${
+//                       isMobile ? "h-10 w-24" : "h-12 w-32"
+//                     }`}
+//                     whileHover={{ scale: 1.1 }}
+//                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
+//                     style={{
+//                       filter:
+//                         hoveredBrandId === brand.id
+//                           ? "none"
+//                           : "grayscale(0.2) opacity(0.9)",
+//                     }}
+//                   >
+//                     <Image
+//                       src={brand.logo}
+//                       alt={brand.nameKey ? t(brand.nameKey) : brand.name}
+//                       fill
+//                       sizes={isMobile ? "96px" : "128px"}
+//                       className="object-contain transition-all duration-300 pointer-events-none"
+//                       loading="eager"
+//                       unoptimized
+//                       draggable="false"
+//                     />
+//                   </motion.div>
 
-                  {/* Hover effect underline */}
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100"
-                    initial={{ scaleX: 0 }}
-                    whileHover={{ scaleX: 1 }}
-                    transition={{ duration: 0.3 }}
-                    style={{
-                      background: brand.color,
-                      transformOrigin: "left",
-                    }}
-                  />
+//                   {/* Hover effect underline */}
+//                   <motion.div
+//                     className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100"
+//                     initial={{ scaleX: 0 }}
+//                     whileHover={{ scaleX: 1 }}
+//                     transition={{ duration: 0.3 }}
+//                     style={{
+//                       background: brand.color,
+//                       transformOrigin: "left",
+//                     }}
+//                   />
 
-                  {/* Radial hover effect */}
-                  <div
-                    className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"
-                    style={{
-                      background: `radial-gradient(circle, ${brand.color} 0%, transparent 70%)`,
-                    }}
-                  />
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SubcategoryTags = () => {
-  const { t } = useLanguage();
-  const [allTags, setAllTags] = useState<SubcategoryWithCategory[]>([]);
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchSubcategories = async () => {
-      try {
-        // Get 15 random subcategories from our centralized mock data
-        const randomSubcategories = getRandomSubcategories(16);
-
-        // Before setting the state, apply translations to the names
-        const translatedSubcategories = randomSubcategories.map((subcat) => ({
-          ...subcat,
-          nume: t(subcat.numeKey || subcat.id),
-          categoriePrincipala: {
-            ...subcat.categoriePrincipala,
-            nume: t(
-              subcat.categoriePrincipala.numeKey ||
-                subcat.categoriePrincipala.id
-            ),
-          },
-        }));
-
-        setAllTags(translatedSubcategories);
-      } catch (error) {
-        console.error("Error fetching subcategories:", error);
-      }
-    };
-
-    fetchSubcategories();
-  }, [t]);
-
-  const handleTagClick = (categoryId: string, subcategoryId: string) => {
-    router.push(`/catalog?category=${categoryId}&subcategory=${subcategoryId}`);
-  };
-
-  return (
-    <div className="w-full py-8 md:py-14 px-4 md:px-8 ">
-      <div className="text-center mb-6 md:mb-10">
-        <HyperText
-          className="text-2xl md:text-4xl font-extrabold text-black inline-block"
-        >
-          {t("popular_categories")}
-        </HyperText>
-      </div>
-      <div className="flex flex-wrap justify-center gap-3 md:gap-3 max-w-6xl mx-auto">
-        {allTags.map((subcategory) => (
-          <ShimmerButton
-            key={subcategory.id}
-            onClick={() =>
-              handleTagClick(subcategory.categoriePrincipala.id, subcategory.id)
-            }
-            background="rgba(0, 0, 0, 0.9)"
-            shimmerColor="#00BFFF"
-            shimmerSize="0.08em"
-            shimmerDuration="3s"
-            borderRadius="50px"
-            className="px-3 py-1.5 md:px-5 md:py-2.5
-                     text-sm md:text-base font-medium
-                     hover:scale-105 hover:z-10 transition-transform"
-          >
-            <span className="whitespace-nowrap text-white">
-              {subcategory.nume}
-            </span>
-          </ShimmerButton>
-        ))}
-      </div>
-    </div>
-  );
-};
+//                   {/* Radial hover effect */}
+//                   <div
+//                     className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+//                     style={{
+//                       background: `radial-gradient(circle, ${brand.color} 0%, transparent 70%)`,
+//                     }}
+//                   />
+//                 </Link>
+//               </motion.div>
+//             ))}
+//           </motion.div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 export default function HeroSection() {
   return (
     <>
       <BannerSlideshow />
-      <BrandLogos />
-      <SubcategoryTags />
+      {/* <BrandLogos /> */}
     </>
   );
 }

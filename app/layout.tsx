@@ -9,7 +9,8 @@ import { LanguageProvider } from "@/lib/language-context";
 import { CartProvider } from "@/app/contexts/cart-context";
 import { Providers } from "./providers";
 import { FavoritesProvider } from "@/app/contexts/favorites-context";
-import { ServerInitializer } from "./components/server-initializer";
+import { CatalogProvider } from '@/app/components/ui/catalog-provider';
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -151,17 +152,18 @@ export default async function RootLayout({
           "min-h-screen bg-background flex flex-col"
         )}
       >
-        {/* Server Initializer - runs during build time */}
-        <ServerInitializer />
+
 
         <Providers>
           <FavoritesProvider>
             <LanguageProvider>
               <CartProvider>
-                <HeaderWrapper />
-                <main className="flex-grow">{children}</main>
-                <FooterWrapper />
-                <CookieConsent />
+                <CatalogProvider>
+                  <HeaderWrapper />
+                  <main className="flex-grow">{children}</main>
+                  <FooterWrapper />
+                  <CookieConsent />
+                </CatalogProvider>
               </CartProvider>
             </LanguageProvider>
           </FavoritesProvider>

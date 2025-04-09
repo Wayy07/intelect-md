@@ -70,6 +70,20 @@ interface Product extends MockProduct {
     months: number;
     monthlyPayment: number;
   };
+  source?: string; // Add source property to identify product origin (rost-api or ultra-api)
+}
+
+// Define a simpler API product interface
+interface ApiProduct {
+  id: string;
+  [key: string]: any; // Use an index signature to allow for different property formats
+}
+
+// Helper function to trim "MD" suffix from product names
+function trimMDSuffix(name: string | undefined): string {
+  if (!name) return '';
+  // Check if the name ends with " MD" and remove it
+  return name.replace(/\s+MD$/, '');
 }
 
 export default function ProductPage() {
@@ -127,39 +141,207 @@ export default function ProductPage() {
   // Fetch product data
   useEffect(() => {
     async function fetchProduct() {
-      setLoading(true);
       try {
-        // First try to get the product from the API
-        const response = await fetch(`/api/products/${id}`);
+        // Use the correct API endpoint for products
+        console.log(`Fetching product with ID: ${id}`);
+
+        // Get API URL from environment or use default
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+        // Add cache-busting query parameter to avoid browser caching
+        const timestamp = new Date().getTime();
+
+        // First, try the regular products API
+        let response = await fetch(`${API_URL}/products/${id}?_=${timestamp}`, {
+          // Disable all caching to ensure we get fresh data
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0"
+          }
+        });
+
+        // If not found in regular products, try ROST products API
+        if (!response.ok) {
+          console.log(`Product not found in regular API, trying ROST API for ID: ${id}`);
+          response = await fetch(`${API_URL}/rost-products/${id}?_=${timestamp}`, {
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0"
+            }
+          });
+        }
 
         if (response.ok) {
           const data = await response.json();
-          setProduct(data);
-          setSelectedImage(0);
-          fetchRelatedProducts(data.subcategorie.id);
-        } else {
-          // If API fails, fallback to mock data using the utility function
-          const mockProduct = getProductById(id) as Product;
+          console.log('Raw API response:', data);
 
-          if (mockProduct) {
-            // Add required properties for this component
-            const productWithStare = {
-              ...mockProduct,
-              stare: "nou",
+          if (data.success && data.product) {
+            // Simplify the product mapping to focus on key properties
+            console.log('API product data:', data.product);
+
+            // Extract specific properties with safer fallbacks
+            const apiProduct = data.product as ApiProduct;
+
+            // Check if this is a ROST product
+            const isRostProduct = apiProduct.source === 'rost-api';
+            console.log('Is ROST product:', isRostProduct);
+
+            // Verify the response contains the Romanian property names
+            console.log('API PROPERTY CHECK:', {
+              has_pret: 'pret' in apiProduct,
+              has_price: 'price' in apiProduct,
+              pret_value: apiProduct.pret,
+              price_value: apiProduct.price,
+              source: apiProduct.source
+            });
+
+            // Extract the pret (price) value from the API response
+            // IMPORTANT: Prioritize 'pret' over 'price' since our updated API returns 'pret'
+            const pret = typeof apiProduct.pret === 'number' ? apiProduct.pret :
+                         (typeof apiProduct.price === 'number' ? apiProduct.price : 0);
+
+            console.log('Price from API:', pret);
+
+            // Extract images with proper fallbacks
+            let images: string[] = [];
+
+            // Handle imagini (Romanian) property
+            if (apiProduct.imagini) {
+              if (Array.isArray(apiProduct.imagini)) {
+                // Use for-of instead of forEach to avoid typing issues
+                for (const img of apiProduct.imagini) {
+                  if (typeof img === 'string') images.push(img);
+                }
+              } else if (typeof apiProduct.imagini === 'string') {
+                images.push(apiProduct.imagini);
+              }
+            }
+
+            // Handle images property
+            if (images.length === 0 && apiProduct.images) {
+              if (Array.isArray(apiProduct.images)) {
+                // Use for-of instead of forEach to avoid typing issues
+                for (const img of apiProduct.images) {
+                  if (typeof img === 'string') {
+                    images.push(img);
+                  } else if (img && typeof img === 'object') {
+                    // Handle object with url property
+                    const imgObj = img as {url?: string};
+                    if (typeof imgObj.url === 'string') {
+                      images.push(imgObj.url);
+                    }
+                  }
+                }
+              }
+            }
+
+            // Handle image property (used by ROST products)
+            if (images.length === 0 && apiProduct.image && typeof apiProduct.image === 'string') {
+              images.push(apiProduct.image);
+            }
+
+            // Additional specific handling for ROST product images
+            if (images.length === 0 && apiProduct.img && typeof apiProduct.img === 'string') {
+              let rostImageUrl = apiProduct.img;
+              if (!rostImageUrl.startsWith('http')) {
+                rostImageUrl = `https://www.rostimport.md${rostImageUrl.startsWith('/') ? '' : '/'}${rostImageUrl}`;
+              }
+              images.push(rostImageUrl);
+            }
+
+            // Fallback image
+            if (images.length === 0) {
+              images.push('https://placehold.co/600x400/png?text=No+Image');
+            }
+
+            // Create a safe product object with all required fields
+            const convertedProduct: Product = {
+              id: apiProduct.id,
+              nume: trimMDSuffix(typeof apiProduct.nume === 'string' ? apiProduct.nume :
+                   (typeof apiProduct.name === 'string' ? apiProduct.name :
+                   (typeof apiProduct.titleRO === 'string' ? apiProduct.titleRO :
+                   (typeof apiProduct.titleEN === 'string' ? apiProduct.titleEN : 'Product')))),
+              cod: typeof apiProduct.cod === 'string' ? apiProduct.cod :
+                  (typeof apiProduct.code === 'string' ? apiProduct.code :
+                   (typeof apiProduct.SKU === 'string' ? apiProduct.SKU : '')),
+              pret: pret, // Price from pricelist.json with "Online" type
+              pretRedus: null, // No discount used
+              stoc: typeof apiProduct.stoc === 'number' ? apiProduct.stoc :
+                   (typeof apiProduct.stockQuantity === 'number' ? apiProduct.stockQuantity :
+                    (typeof apiProduct.on_stock === 'string' ? parseInt(apiProduct.on_stock, 10) : 0)),
+              imagini: images,
+              descriere: typeof apiProduct.descriere === 'string' ? apiProduct.descriere :
+                        (typeof apiProduct.description === 'string' ? apiProduct.description : ''),
+              specificatii: {
+                brand: typeof apiProduct.brand === 'string' ? apiProduct.brand :
+                      (apiProduct.specificatii && typeof apiProduct.specificatii.brand === 'string' ?
+                      apiProduct.specificatii.brand : 'Unknown'),
+                model: trimMDSuffix(apiProduct.specificatii && typeof apiProduct.specificatii.model === 'string' ?
+                      apiProduct.specificatii.model : '')
+              },
+              subcategorie: apiProduct.subcategorie || {
+                id: '1',
+                nume: apiProduct.category || 'General',
+                categoriePrincipala: {
+                  id: '1',
+                  nume: apiProduct.category || 'General'
+                }
+              },
+              source: isRostProduct ? 'rost-api' : 'ultra-api'
             };
 
-            setProduct(productWithStare);
+            // Log the price we're using
+            console.log('Using price:', convertedProduct.pret);
+
+            setProduct(convertedProduct);
             setSelectedImage(0);
-            fetchRelatedProductsFromMock(mockProduct.subcategorie.id);
+
+            // Try to fetch related products by brand
+            fetchRelatedProducts(apiProduct.brand);
           } else {
-            setError("Produsul nu a fost găsit");
+            // Fallback to mock data if the API response doesn't contain a product
+            console.log('No product data found in API response, falling back to mock data');
+            fallbackToMockData();
           }
+        } else {
+          // If API fails, fallback to mock data
+          console.log('API request failed, falling back to mock data');
+          fallbackToMockData();
         }
       } catch (error) {
-        setError("A apărut o eroare la încărcarea produsului");
         console.error("Error fetching product:", error);
+        fallbackToMockData();
       } finally {
         setLoading(false);
+      }
+    }
+
+    function fallbackToMockData() {
+      try {
+        // Fallback to mock data using the utility function
+        const mockProduct = getProductById(id) as Product;
+
+        if (mockProduct) {
+          // Add required properties for this component and clean name
+          const productWithStare = {
+            ...mockProduct,
+            nume: trimMDSuffix(mockProduct.nume), // Remove MD suffix from name
+            stare: "nou",
+          };
+
+          setProduct(productWithStare);
+          setSelectedImage(0);
+          fetchRelatedProductsFromMock(mockProduct.subcategorie.id);
+        } else {
+          setError("Produsul nu a fost găsit");
+        }
+      } catch (mockError) {
+        setError("A apărut o eroare la încărcarea produsului");
+        console.error("Error with mock data:", mockError);
       }
     }
 
@@ -181,29 +363,111 @@ export default function ProductPage() {
   // Calculate monthly payment
   const calculateMonthlyPayment = (months: number) => {
     if (!product) return 0;
-    const price = product.pretRedus || product.pret;
+    // Use pret directly since pretRedus is null by default
+    const price = product.pret;
     return Math.round(price / months);
   };
 
   // Ref for the image gallery container
   const galleryRef = useRef<HTMLDivElement>(null);
 
-  // Fetch related products
-  async function fetchRelatedProducts(subcategoryId: string) {
+  // Fetch related products - update to use brand instead of subcategory
+  async function fetchRelatedProducts(brand: string) {
     try {
+      console.log(`Fetching related products for brand: ${brand}`);
+
+      // Get API URL from environment or use default
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+      // First try to fetch related products from the standard API
       const response = await fetch(
-        `/api/products?subcategory=${subcategoryId}&limit=4`
+        `${API_URL}/products?brand=${encodeURIComponent(
+          brand
+        )}&limit=6&inStock=true`
       );
+
       if (response.ok) {
         const data = await response.json();
-        // Filter out the current product
-        setRelatedProducts(data.products.filter((p: Product) => p.id !== id));
+
+        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+          // Remove the current product from the related list
+          const filteredProducts = data.products.filter(
+            (p: any) => p.id !== id
+          );
+
+          // If we have enough products after filtering, use them
+          if (filteredProducts.length >= 4) {
+            console.log(`Found ${filteredProducts.length} related products`);
+            setRelatedProducts(filteredProducts);
+            return;
+          }
+        }
+      }
+
+      // If we don't have enough products, try the ROST API
+      console.log('Not enough related products from regular API, trying ROST API');
+      const rostResponse = await fetch(
+        `${API_URL}/rost-products?brand=${encodeURIComponent(
+          brand
+        )}&limit=8&inStock=true`
+      );
+
+      if (rostResponse.ok) {
+        const rostData = await rostResponse.json();
+
+        if (rostData.success && Array.isArray(rostData.products) && rostData.products.length > 0) {
+          // Remove the current product from the related list
+          const filteredRostProducts = rostData.products.filter(
+            (p: any) => p.id !== id
+          );
+
+          if (filteredRostProducts.length > 0) {
+            console.log(`Found ${filteredRostProducts.length} related ROST products`);
+            setRelatedProducts(filteredRostProducts);
+            return;
+          }
+        }
+      }
+
+      // If we still don't have enough products, fall back to any in-stock ROST products
+      console.log('No brand matches found, getting any in-stock ROST products');
+      const anyRostResponse = await fetch(
+        `${API_URL}/rost-products?limit=8&inStock=true`
+      );
+
+      if (anyRostResponse.ok) {
+        const anyRostData = await anyRostResponse.json();
+
+        if (anyRostData.success && Array.isArray(anyRostData.products) && anyRostData.products.length > 0) {
+          // Remove the current product from the related list
+          const filteredAnyProducts = anyRostData.products.filter(
+            (p: any) => p.id !== id
+          );
+
+          if (filteredAnyProducts.length > 0) {
+            console.log(`Found ${filteredAnyProducts.length} in-stock ROST products`);
+            setRelatedProducts(filteredAnyProducts);
+            return;
+          }
+        }
+      }
+
+      // If all API attempts fail, fall back to mock data
+      console.log('Falling back to mock related products');
+      if (product && product.subcategorie && product.subcategorie.id) {
+        fetchRelatedProductsFromMock(product.subcategorie.id);
       } else {
-        fetchRelatedProductsFromMock(subcategoryId);
+        console.log('No subcategory found, cannot fetch mock related products');
+        setRelatedProducts([]);
       }
     } catch (error) {
       console.error("Error fetching related products:", error);
-      fetchRelatedProductsFromMock(subcategoryId);
+      // Fall back to mock data
+      if (product && product.subcategorie && product.subcategorie.id) {
+        fetchRelatedProductsFromMock(product.subcategorie.id);
+      } else {
+        setRelatedProducts([]);
+      }
     }
   }
 
@@ -216,9 +480,10 @@ export default function ProductPage() {
       4
     ) as Product[];
 
-    // Add the stare property required by this component
+    // Add the stare property required by this component and clean names
     const relatedWithStare = related.map((p) => ({
       ...p,
+      nume: trimMDSuffix(p.nume), // Trim MD from name
       stare: "nou",
     }));
 
@@ -749,24 +1014,20 @@ export default function ProductPage() {
             </p>
           </div>
 
-          {/* Price and credit info */}
-          <div className="bg-white/70 backdrop-blur-md p-4 rounded-xl border border-white/20 shadow-sm space-y-2">
-            {/* Regular price */}
+          {/* Pricing section */}
+          <div className="flex flex-col justify-start items-start mt-5 w-full">
             {product.pretRedus ? (
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl font-bold text-primary">
-                  {product.pretRedus.toLocaleString("ro-RO")} lei
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-primary-500">
+                  {product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Lei
                 </span>
-                <span className="text-sm text-muted-foreground line-through">
-                  {product.pret.toLocaleString("ro-RO")} lei
+                <span className="text-lg line-through text-gray-400">
+                  {product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Lei
                 </span>
-                <Badge variant="destructive" className="ml-2">
-                  -{getDiscountPercentage(product.pret, product.pretRedus)}%
-                </Badge>
               </div>
             ) : (
-              <span className="text-2xl font-bold text-primary">
-                {product.pret.toLocaleString("ro-RO")} lei
+              <span className="text-3xl font-bold text-primary-500">
+                {product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Lei
               </span>
             )}
           </div>
@@ -819,10 +1080,10 @@ export default function ProductPage() {
               onClick={handleAddToCart}
               disabled={product.stoc <= 0}
               className="h-10 sm:h-11 flex-1 min-w-0 text-sm sm:text-base flex items-center justify-center"
-              shimmerColor={product.stoc > 0 ? "#00BFFF" : "#ccc"}
+              shimmerColor={product.stoc > 0 ? "#2DD4FF" : "#ccc"}
               shimmerSize="0.05em"
               shimmerDuration="2s"
-              background="rgba(0, 114, 245, 0.9)"
+              background="#00A3FF"
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
               {t("product_add_to_cart")}
@@ -843,7 +1104,7 @@ export default function ProductPage() {
               <DialogContent className="sm:max-w-lg p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header with decorative badge and background */}
                 <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 p-4 sm:p-6 pb-6 sm:pb-8">
-                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs font-bold py-1 px-3 rounded-full">
+                  <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs font-bold py-1 px-3 rounded-full">
                     {t("product_zero_interest")}
                   </div>
                   <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-primary/5 rounded-full -mr-6 -mt-6 sm:-mr-10 sm:-mt-10"></div>
@@ -886,19 +1147,10 @@ export default function ProductPage() {
                         {t("product_total_price")}
                       </p>
                       <p className="font-bold text-base sm:text-lg text-primary">
-                        {(product.pretRedus || product.pret).toLocaleString(
-                          "ro-RO"
-                        )}{" "}
-                        lei
+                        {product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} lei
                       </p>
                     </div>
                   </div>
-
-                  {/* Credit options in a better layout */}
-                  <h4 className="font-medium text-sm sm:text-base mb-3 sm:mb-4 flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-primary" />
-                    {t("product_available_payment_periods")}
-                  </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
                     {creditDurations.map((months) => {
@@ -943,7 +1195,7 @@ export default function ProductPage() {
                                   isRecommended ? "text-primary" : ""
                                 }`}
                               >
-                                {payment.toLocaleString("ro-RO")} lei
+                                {payment.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Lei
                               </p>
                             </div>
                           </div>
@@ -968,44 +1220,6 @@ export default function ProductPage() {
                       );
                     })}
                   </div>
-
-                  {/* Additional info with better styling */}
-                  <div className="bg-blue-50 p-3 sm:p-4 rounded-lg text-xs sm:text-sm border border-blue-100">
-                    <div className="flex gap-2 sm:gap-3">
-                      <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-blue-700 mb-1">
-                          {t("product_important_info")}
-                        </p>
-                        <ul className="text-blue-700 space-y-0.5 sm:space-y-1">
-                          <li>• {t("product_financing_minimum")}</li>
-                          <li>• {t("product_quick_approval")}</li>
-                          <li>• {t("product_early_payment")}</li>
-                        </ul>
-                        <Link
-                          href="/credit"
-                          className="text-primary font-medium mt-2 inline-block hover:underline"
-                          onClick={() => setCreditDialogOpen(false)}
-                        >
-                          {t("product_see_all_details")} →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer with action button */}
-                <div className="p-3 sm:p-4 bg-gray-50 border-t flex justify-end items-center mt-2">
-                  <ShimmerButton
-                    onClick={() => setCreditDialogOpen(false)}
-                    className="px-4 py-2 text-sm bg-transparent border border-gray-200 rounded-md"
-                    shimmerColor="rgba(0, 0, 0, 0.05)"
-                    shimmerSize="0.1em"
-                    shimmerDuration="1.5s"
-                    background="transparent"
-                  >
-                    {t("product_close")}
-                  </ShimmerButton>
                 </div>
               </DialogContent>
             </Dialog>

@@ -57,26 +57,34 @@ export default function CatalogContent({
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [totalProductCount, setTotalProductCount] = useState(totalProducts);
 
-  // Transform API products to our internal Product interface
+  // Transform API products to UI format
   const transformProducts = (apiProducts: any[]): Product[] => {
-    return apiProducts.map(product => ({
-      id: product.id,
-      nume: product.name || product.titleRO || product.titleRU || "",
-      cod: product.SKU || "",
-      pret: parseFloat(product.price) || 0,
-      pretRedus: product.reduced_price ? parseFloat(product.reduced_price) : null,
-      imagini: product.img ? [product.img] : [],
-      stoc: parseInt(product.on_stock || "0"),
-      subcategorie: {
-        id: product.subcategory_id || "unknown",
-        nume: product.subcategory_name || product.subcategory || "",
-        categoriePrincipala: {
-          id: product.category_id || "unknown",
-          nume: product.category_name || product.category || ""
-        }
-      },
-      stare: product.condition || ""
-    }));
+    return apiProducts.map(product => {
+      // Check if product is already in the expected format
+      if (product.nume && product.cod) {
+        return product;
+      }
+
+      // Transform product from the API format to the UI format
+      return {
+        id: product.id,
+        nume: product.titleRO || `Product ${product.SKU}`,
+        cod: product.SKU || `SKU-${product.id}`,
+        pret: parseFloat(product.price) || 0,
+        pretRedus: product.reduced_price ? parseFloat(product.reduced_price) : null,
+        imagini: [product.img].filter(Boolean),
+        stoc: product.on_stock ? parseInt(product.on_stock) : 0,
+        subcategorie: {
+          id: product.category || "unknown-category",
+          nume: product.category || "Unknown Category",
+          categoriePrincipala: {
+            id: "main",
+            nume: "Main Category"
+          }
+        },
+        stare: "nou"
+      };
+    });
   };
 
   // Detect screen size on mount and resize
@@ -143,82 +151,54 @@ export default function CatalogContent({
 
   // Handle filter changes from the FilterSystem component
   const handleFilterChange = async (newFilters: FilterOptions) => {
+    console.log("Applying new filters:", newFilters);
+    setCurrentFilters(newFilters);
+
     try {
       setIsLoading(true);
 
-      // Check which filters are being applied
-      const { categories, subcategories } = newFilters;
-      console.log("Applying filters:", newFilters);
+      // Since we're using specific products, we don't need to fetch by category
+      // Instead we'll just filter the existing products client-side
 
-      // Reset pagination on filter change
-      setCurrentPage(1);
+      // Fetch all specific products (they're already cached server-side)
+      const response = await fetch('/api/products/specific');
 
-      // With server-side pagination, we need to navigate to update the URL and fetch new data
-      const currentParams = new URLSearchParams(searchParams.toString());
-
-      // Update filter parameters
-      if (categories.length > 0) {
-        currentParams.set("category", categories.join(','));
-      } else {
-        currentParams.delete("category");
+      if (!response.ok) {
+        console.error("Failed to fetch specific products:", response.status);
+        // Fallback to using initialProducts
+        const filtered = applyFilters(
+          transformProducts(initialProducts),
+          newFilters,
+          searchQuery || ""
+        );
+        setFilteredProducts(filtered);
+        setTotalProductCount(filtered.length);
+        updateURL(newFilters, 1);
+        return;
       }
 
-      if (subcategories.length > 0) {
-        currentParams.set("subcategory", subcategories.join(','));
-      } else {
-        currentParams.delete("subcategory");
-      }
+      const data = await response.json();
+      const allProducts = transformProducts(data.products || []);
 
-      if (newFilters.priceRange[0] > 0) {
-        currentParams.set("minPrice", newFilters.priceRange[0].toString());
-      } else {
-        currentParams.delete("minPrice");
-      }
+      // Apply filters client-side
+      const filtered = applyFilters(allProducts, newFilters, searchQuery || "");
 
-      if (newFilters.priceRange[1] < 9999) {
-        currentParams.set("maxPrice", newFilters.priceRange[1].toString());
-      } else {
-        currentParams.delete("maxPrice");
-      }
-
-      if (newFilters.brands.length > 0) {
-        currentParams.set("brand", newFilters.brands.join(','));
-      } else {
-        currentParams.delete("brand");
-      }
-
-      if (newFilters.sortOption) {
-        currentParams.set("sort", newFilters.sortOption);
-      } else {
-        currentParams.delete("sort");
-      }
-
-      if (newFilters.inStock) {
-        currentParams.set("inStock", "true");
-      } else {
-        currentParams.delete("inStock");
-      }
-
-      // Reset to page 1
-      currentParams.set("page", "1");
-
-      // If using server pagination, navigate to apply filters
-      if (serverPagination) {
-        router.push(`/catalog?${currentParams.toString()}`);
-        return; // The navigation will trigger a server refetch
-      }
-
-      // For client-side filtering, apply filters directly
-      setCurrentFilters(newFilters);
-      const filtered = applyFilters(transformProducts(initialProducts), newFilters, searchQuery);
+      // Update state
       setFilteredProducts(filtered);
-      setTotalPages(Math.ceil(filtered.length / productsPerPageState));
       setTotalProductCount(filtered.length);
-      updateDisplayedProducts(filtered, 1); // Reset to first page
 
-      // Update URL without full page navigation
-      router.replace(`/catalog?${currentParams.toString()}`, { scroll: false });
-
+      // Update URL to reflect new filters
+      updateURL(newFilters, 1);
+    } catch (error) {
+      console.error("Error applying filters:", error);
+      // Fallback to filtering the initial products
+      const filtered = applyFilters(
+        transformProducts(initialProducts),
+        newFilters,
+        searchQuery || ""
+      );
+      setFilteredProducts(filtered);
+      setTotalProductCount(filtered.length);
     } finally {
       setIsLoading(false);
     }
@@ -461,6 +441,64 @@ export default function CatalogContent({
     }
 
     return pages;
+  };
+
+  // Helper function to update the URL with current filters and page
+  const updateURL = (filters: FilterOptions, page: number) => {
+    // Reset pagination on filter change
+    setCurrentPage(page);
+
+    // Build URL parameters
+    const currentParams = new URLSearchParams(searchParams.toString());
+
+    // Update filter parameters
+    if (filters.categories.length > 0) {
+      currentParams.set("category", filters.categories.join(','));
+    } else {
+      currentParams.delete("category");
+    }
+
+    if (filters.subcategories.length > 0) {
+      currentParams.set("subcategory", filters.subcategories.join(','));
+    } else {
+      currentParams.delete("subcategory");
+    }
+
+    if (filters.priceRange[0] > 0) {
+      currentParams.set("minPrice", filters.priceRange[0].toString());
+    } else {
+      currentParams.delete("minPrice");
+    }
+
+    if (filters.priceRange[1] < 9999) {
+      currentParams.set("maxPrice", filters.priceRange[1].toString());
+    } else {
+      currentParams.delete("maxPrice");
+    }
+
+    if (filters.brands.length > 0) {
+      currentParams.set("brand", filters.brands.join(','));
+    } else {
+      currentParams.delete("brand");
+    }
+
+    if (filters.sortOption) {
+      currentParams.set("sort", filters.sortOption);
+    } else {
+      currentParams.delete("sort");
+    }
+
+    if (filters.inStock) {
+      currentParams.set("inStock", "true");
+    } else {
+      currentParams.delete("inStock");
+    }
+
+    // Set page
+    currentParams.set("page", page.toString());
+
+    // Update URL without full page navigation
+    router.replace(`/catalog?${currentParams.toString()}`, { scroll: false });
   };
 
   return (

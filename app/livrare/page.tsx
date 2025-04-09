@@ -160,7 +160,6 @@ export default function ShippingPage() {
                   texts={[
                     t("livrare_breadcrumb_delivery"),
                     t("livrare_free"),
-                    t("livrare_delivery_options"),
                   ]}
                   className="h-12 text-[30pt]"
                 />

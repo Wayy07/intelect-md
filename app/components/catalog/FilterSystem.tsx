@@ -90,11 +90,18 @@ interface Subcategorie {
   numeKey?: string;
 }
 
-interface CategoryWithSubcategories {
+interface SubcategoryGroup {
   id: string;
   nume: string;
   numeKey?: string;
   subcategorii: Subcategorie[];
+}
+
+interface CategoryWithSubcategories {
+  id: string;
+  nume: string;
+  numeKey?: string;
+  subcategoryGroups: SubcategoryGroup[];
 }
 
 interface FilterSystemProps {
@@ -116,8 +123,7 @@ const sortOptions = [
   { value: "featured", label: "featured" },
   { value: "price-asc", label: "price_low_to_high" },
   { value: "price-desc", label: "price_high_to_low" },
-  { value: "newest", label: "newest" },
-  { value: "popularity", label: "popularity" },
+
 ];
 
 // Add this custom SliderWrapper component
@@ -594,7 +600,7 @@ const MemoizedFilterContent = memo(function MemoizedFilterContent({
             id="inStock"
             checked={filters.inStock}
             onCheckedChange={handleInStockChange}
-            className="border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4"
+            className="border-2 border-primary/40 bg-gray-100 shadow-sm data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4 rounded-sm transition-colors"
           />
           <Label
             htmlFor="inStock"
@@ -642,7 +648,7 @@ const MemoizedFilterContent = memo(function MemoizedFilterContent({
                       setTimeout(() => handleCategoryChange(category.id), 0);
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4"
+                    className="border-2 border-primary/40 bg-gray-100 shadow-sm data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4 rounded-sm transition-colors"
                   />
                   <Label
                     htmlFor={`category-${category.id}`}
@@ -652,62 +658,65 @@ const MemoizedFilterContent = memo(function MemoizedFilterContent({
                     {category.numeKey ? t(category.numeKey) : category.nume}
                   </Label>
                 </div>
-                {category.subcategorii.length > 0 && (
-                  <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:text-primary ${
-                      isCategoryExpanded(category.id) ? 'rotate-180' : ''
-                    }`}
-                  />
-                )}
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:text-primary ${
+                    isCategoryExpanded(category.id) ? 'rotate-180' : ''
+                  }`}
+                />
               </div>
 
-              {/* Subcategories with animation */}
-              {category.subcategorii.length > 0 && (
-                <motion.div
-                  initial={false}
-                  variants={subcategoryContainerVariants}
-                  animate={isCategoryExpanded(category.id) ? "open" : "closed"}
-                  className="overflow-hidden"
-                >
-                  <div className="pl-6 space-y-1.5 mt-1 py-1">
-                    {category.subcategorii.map((subcategory: Subcategorie, index) => (
-                      <motion.div
-                        key={subcategory.id}
-                        className="flex items-center space-x-2 group py-0.5 rounded-md hover:bg-accent/30 transition-colors"
-                        variants={subcategoryItemVariants}
-                        initial="closed"
-                        animate={isCategoryExpanded(category.id) ? "open" : "closed"}
-                        custom={index}
-                      >
-                        <div className="relative">
-                          <Checkbox
-                            id={`subcategory-${subcategory.id}`}
-                            checked={filters.subcategories.includes(subcategory.id)}
-                            onCheckedChange={() =>
-                              handleSubcategoryChange(subcategory.id, category.id)
-                            }
-                            className="border-2 border-primary/30 data-[state=checked]:bg-primary/80 h-3.5 w-3.5 relative z-10"
-                          />
-                          <motion.div
-                            className="absolute inset-0 rounded-sm bg-primary/0 z-0"
-                            variants={checkboxAnimationVariants}
-                            animate={filters.subcategories.includes(subcategory.id) ? "checked" : "unchecked"}
-                            transition={{ duration: 0.2 }}
-                          />
-                        </div>
-                        <Label
-                          htmlFor={`subcategory-${subcategory.id}`}
-                          className="cursor-pointer text-sm group-hover:text-primary transition-colors"
+              {/* SubcategoryGroups with animation */}
+              <motion.div
+                initial={false}
+                variants={subcategoryContainerVariants}
+                animate={isCategoryExpanded(category.id) ? "open" : "closed"}
+                className="overflow-hidden"
+              >
+                {category.subcategoryGroups.map((group, groupIndex) => (
+                  <div key={group.id} className="mb-3">
+                    <h4 className="text-sm font-medium text-gray-600 ml-6 mt-2 mb-1">
+                      {group.numeKey ? t(group.numeKey) : group.nume}
+                    </h4>
+                    <div className="pl-6 space-y-1.5 py-1">
+                      {group.subcategorii.map((subcategory: Subcategorie, index) => (
+                        <motion.div
+                          key={subcategory.id}
+                          className="flex items-center space-x-2 group py-0.5 rounded-md hover:bg-accent/30 transition-colors"
+                          variants={subcategoryItemVariants}
+                          initial="closed"
+                          animate={isCategoryExpanded(category.id) ? "open" : "closed"}
+                          custom={index + (groupIndex * 10)} // Offset index for staggered animation
                         >
-                          {subcategory.numeKey
-                            ? t(subcategory.numeKey)
-                            : subcategory.nume}
-                        </Label>
-                      </motion.div>
-                    ))}
+                          <div className="relative">
+                            <Checkbox
+                              id={`subcategory-${subcategory.id}`}
+                              checked={filters.subcategories.includes(subcategory.id)}
+                              onCheckedChange={() =>
+                                handleSubcategoryChange(subcategory.id, category.id)
+                              }
+                              className="border-2 border-primary/40 bg-gray-100 shadow-sm data-[state=checked]:bg-primary/80 data-[state=checked]:text-primary-foreground h-3.5 w-3.5 rounded-sm relative z-10 transition-colors"
+                            />
+                            <motion.div
+                              className="absolute inset-0 rounded-sm bg-primary/0 z-0"
+                              variants={checkboxAnimationVariants}
+                              animate={filters.subcategories.includes(subcategory.id) ? "checked" : "unchecked"}
+                              transition={{ duration: 0.2 }}
+                            />
+                          </div>
+                          <Label
+                            htmlFor={`subcategory-${subcategory.id}`}
+                            className="cursor-pointer text-sm group-hover:text-primary transition-colors"
+                          >
+                            {subcategory.numeKey
+                              ? t(subcategory.numeKey)
+                              : subcategory.nume}
+                          </Label>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                </motion.div>
-              )}
+                ))}
+              </motion.div>
             </div>
           ))}
         </div>
@@ -729,7 +738,7 @@ const MemoizedFilterContent = memo(function MemoizedFilterContent({
                   id={`brand-${brand.id}`}
                   checked={filters.brands.includes(brand.id)}
                   onCheckedChange={() => handleBrandChange(brand.id)}
-                  className="border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4 relative z-10"
+                  className="border-2 border-primary/40 bg-gray-100 shadow-sm data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4 rounded-sm relative z-10 transition-colors"
                 />
                 <motion.div
                   className="absolute inset-0 rounded-sm bg-primary/0 z-0"
@@ -855,14 +864,16 @@ function TabletFilterWrapper({
       newCategories = newCategories.filter((id) => id !== categoryId);
 
       // Remove all subcategories of this category
-      const categorySubcategories =
-        categories
-          .find((cat) => cat.id === categoryId)
-          ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
+      const category = categories.find(cat => cat.id === categoryId);
+      if (category) {
+        const categorySubcategoryIds = category.subcategoryGroups.flatMap(group =>
+          group.subcategorii.map(sub => sub.id)
+        );
 
-      newSubcategories = newSubcategories.filter(
-        (id) => !categorySubcategories.includes(id)
-      );
+        newSubcategories = newSubcategories.filter(
+          (id) => !categorySubcategoryIds.includes(id)
+        );
+      }
     } else {
       // Add category
       newCategories.push(categoryId);
@@ -948,22 +959,24 @@ function TabletFilterWrapper({
     if (type === "category" && id) {
       // Remove category
       newFilters.categories = draftFilters.categories.filter(
-        (catId: string) => catId !== id
+        (catId) => catId !== id
       );
 
       // Also remove any subcategories belonging to this category
-      const categorySubcategories =
-        categories
-          .find((cat: CategoryWithSubcategories) => cat.id === id)
-          ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
+      const category = categories.find((cat) => cat.id === id);
+      if (category) {
+        const subcategoryIds = category.subcategoryGroups.flatMap(group =>
+          group.subcategorii.map(sub => sub.id)
+        );
 
-      newFilters.subcategories = draftFilters.subcategories.filter(
-        (subId: string) => !categorySubcategories.includes(subId)
-      );
+        newFilters.subcategories = draftFilters.subcategories.filter(
+          (subId) => !subcategoryIds.includes(subId)
+        );
+      }
     } else if (type === "brand" && id) {
       // Remove brand
       newFilters.brands = draftFilters.brands.filter(
-        (brandId: string) => brandId !== id
+        (brandId) => brandId !== id
       );
     } else if (type === "price") {
       // Reset price range
@@ -1157,14 +1170,16 @@ function MobileFilterWrapper({
       newCategories = newCategories.filter((id) => id !== categoryId);
 
       // Remove all subcategories of this category
-      const categorySubcategories =
-        categories
-          .find((cat) => cat.id === categoryId)
-          ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
+      const category = categories.find(cat => cat.id === categoryId);
+      if (category) {
+        const categorySubcategoryIds = category.subcategoryGroups.flatMap(group =>
+          group.subcategorii.map(sub => sub.id)
+        );
 
-      newSubcategories = newSubcategories.filter(
-        (id) => !categorySubcategories.includes(id)
-      );
+        newSubcategories = newSubcategories.filter(
+          (id) => !categorySubcategoryIds.includes(id)
+        );
+      }
     } else {
       // Add category
       newCategories.push(categoryId);
@@ -1250,22 +1265,24 @@ function MobileFilterWrapper({
     if (type === "category" && id) {
       // Remove category
       newFilters.categories = draftFilters.categories.filter(
-        (catId: string) => catId !== id
+        (catId) => catId !== id
       );
 
       // Also remove any subcategories belonging to this category
-      const categorySubcategories =
-        categories
-          .find((cat: CategoryWithSubcategories) => cat.id === id)
-          ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
+      const category = categories.find((cat) => cat.id === id);
+      if (category) {
+        const subcategoryIds = category.subcategoryGroups.flatMap(group =>
+          group.subcategorii.map(sub => sub.id)
+        );
 
-      newFilters.subcategories = draftFilters.subcategories.filter(
-        (subId: string) => !categorySubcategories.includes(subId)
-      );
+        newFilters.subcategories = draftFilters.subcategories.filter(
+          (subId) => !subcategoryIds.includes(subId)
+        );
+      }
     } else if (type === "brand" && id) {
       // Remove brand
       newFilters.brands = draftFilters.brands.filter(
-        (brandId: string) => brandId !== id
+        (brandId) => brandId !== id
       );
     } else if (type === "price") {
       // Reset price range
@@ -1437,9 +1454,13 @@ export default function FilterSystem({
       const categoryData = ALL_CATEGORIES.map(category => ({
         id: category.id,
         nume: language === "ru" ? category.name.ru : category.name.ro,
-        subcategorii: category.subcategories.map(sub => ({
-          id: sub.id,
-          nume: language === "ru" ? sub.name.ru : sub.name.ro
+        subcategoryGroups: category.subcategoryGroups.map(group => ({
+          id: group.id,
+          nume: language === "ru" ? group.name.ru : group.name.ro,
+          subcategorii: group.subcategories.map(sub => ({
+            id: sub.id,
+            nume: language === "ru" ? sub.name.ru : sub.name.ro
+          }))
         }))
       }));
 
@@ -1674,14 +1695,16 @@ export default function FilterSystem({
       newCategories = newCategories.filter((id) => id !== categoryId);
 
       // Remove all subcategories of this category
-      const categorySubcategories =
-        categories
-          .find((cat) => cat.id === categoryId)
-          ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
+      const category = categories.find(cat => cat.id === categoryId);
+      if (category) {
+        const categorySubcategoryIds = category.subcategoryGroups.flatMap(group =>
+          group.subcategorii.map(sub => sub.id)
+        );
 
-      newSubcategories = newSubcategories.filter(
-        (id) => !categorySubcategories.includes(id)
-      );
+        newSubcategories = newSubcategories.filter(
+          (id) => !categorySubcategoryIds.includes(id)
+        );
+      }
     } else {
       // Add category
       newCategories.push(categoryId);
@@ -1794,14 +1817,16 @@ export default function FilterSystem({
       );
 
       // Also remove any subcategories belonging to this category
-      const categorySubcategories =
-        categories
-          .find((cat) => cat.id === id)
-          ?.subcategorii.map((sub: Subcategorie) => sub.id) || [];
+      const category = categories.find((cat) => cat.id === id);
+      if (category) {
+        const subcategoryIds = category.subcategoryGroups.flatMap(group =>
+          group.subcategorii.map(sub => sub.id)
+        );
 
-      newFilters.subcategories = filters.subcategories.filter(
-        (subId) => !categorySubcategories.includes(subId)
-      );
+        newFilters.subcategories = filters.subcategories.filter(
+          (subId) => !subcategoryIds.includes(subId)
+        );
+      }
     } else if (type === "brand" && id) {
       // Remove brand
       newFilters.brands = filters.brands.filter((brandId) => brandId !== id);

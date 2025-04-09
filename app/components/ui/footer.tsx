@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Instagram,
   Phone,
@@ -10,26 +9,20 @@ import {
   MapPin,
   ArrowRight,
   ChevronUp,
-  Facebook,
-  Linkedin,
   Send,
   Clock,
   Heart,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
-import { HyperText } from "@/components/magicui/hyper-text";
 
 // Support links
 const getSupportLinks = (t: (key: string) => string) => [
   { name: t("deliveryHeader") || "Delivery", href: "/livrare" },
   { name: t("installmentPurchase") || "Installment Purchase", href: "/credit" },
-  { name: t("warranty") || "Warranty", href: "/garantie" },
-  { name: t("return") || "Returns", href: "/returnare" },
   { name: t("contact") || "Contact", href: "/contact" },
 ];
 
@@ -49,38 +42,15 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-white ">
+    <footer className="bg-white">
       {/* Main footer content */}
-      <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
+      <div className="container mx-auto py-12 px-2 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Logo and company info - 4 columns on large screens */}
+          {/* Contact information - 4 columns on large screens */}
           <div className="lg:col-span-4">
-            <div className="flex items-center gap-3 mb-5">
-              <Link href="/" className="inline-block">
-                <div className="relative h-12 w-12 overflow-hidden">
-                  <Image
-                    src="/logo.jpg"
-                    alt="Intelect MD"
-                    fill
-                    className="object-cover rounded-full border-2 border-gray-100 shadow-sm"
-                    priority
-                  />
-                </div>
-              </Link>
-              <div>
-                <h3 className="font-semibold text-xl text-gray-900">
-                  Intelect MD
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("techStoreHeader") || "Technology Store"}
-                </p>
-              </div>
-            </div>
-
-            <p className="text-gray-600 text-sm mb-5 max-w-md">
-              {t("storeDescription") ||
-                "Your trusted source for quality technology products. We offer the best selection of computers, smartphones, and electronics at competitive prices."}
-            </p>
+            <h4 className="font-semibold text-gray-900 mb-4 text-base">
+              {t("contactUs") || "Contact Us"}
+            </h4>
 
             <div className="space-y-3 mb-6">
               <div className="flex items-center gap-2">
@@ -118,13 +88,8 @@ export default function Footer() {
 
           {/* Middle column with support links - 3 columns on large screens */}
           <div className="lg:col-span-3 lg:col-start-6">
-            <h4 className="font-semibold text-gray-900 mb-4">
-              <HyperText
-
-                className="text-base font-semibold"
-              >
-                {t("support") || "Support"}
-              </HyperText>
+            <h4 className="font-semibold text-gray-900 mb-4 text-base">
+              {t("support") || "Support"}
             </h4>
             <ul className="space-y-2">
               {supportLinks.map((link) => (
@@ -143,12 +108,8 @@ export default function Footer() {
 
           {/* Newsletter section - 5 columns on large screens */}
           <div className="lg:col-span-4 lg:col-start-9">
-            <h4 className="font-semibold text-gray-900 mb-4">
-              <HyperText
-                className="text-base font-semibold"
-              >
-                {t("subscribeToNewsletter") || "Newsletter"}
-              </HyperText>
+            <h4 className="font-semibold text-gray-900 mb-4 text-base">
+              {t("subscribeToNewsletter") || "Newsletter"}
             </h4>
             <p className="text-gray-600 mb-4 text-sm">
               {t("receiveOffersAndNews") ||
@@ -181,21 +142,15 @@ export default function Footer() {
                 shimmerDuration="2s"
                 background="rgba(0, 191, 255, 0.9)"
               >
-                <HyperText
-                  className="text-md font-medium"
-                >
+                <span className="text-md font-medium">
                   {t("subscribe") || "Subscribe"}
-                </HyperText>
+                </span>
               </ShimmerButton>
             </form>
 
             <div className="mt-6">
-              <h4 className="font-semibold text-gray-900 mb-3 text-sm">
-                <HyperText
-                  className="text-base font-semibold"
-                >
-                  {t("followUs") || "Follow Us"}
-                </HyperText>
+              <h4 className="font-semibold text-gray-900 mb-3 text-base">
+                {t("followUs") || "Follow Us"}
               </h4>
               <div className="flex gap-4">
                 <a
@@ -215,10 +170,9 @@ export default function Footer() {
 
       {/* Copyright bar */}
       <div className="border-t border-gray-100 py-6">
-        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between">
+        <div className="container mx-auto  px-2 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%] flex flex-col sm:flex-row items-center justify-between">
           <p className="text-sm text-gray-500 mb-4 sm:mb-0">
-            © {currentYear} Intelect MD.{" "}
-            {t("allRightsReserved") || "All rights reserved"}
+            © {currentYear} {t("allRightsReserved") || "All rights reserved"}
           </p>
           <div className="flex items-center space-x-2">
             <ShimmerButton
@@ -233,12 +187,6 @@ export default function Footer() {
               <ChevronUp className="h-3 w-3 mr-1" />
               {t("backToTop") || "Back to top"}
             </ShimmerButton>
-            <Link href="/" className="flex items-center">
-              <div className="text-xs text-gray-500 flex items-center gap-1 hover:text-primary transition-colors">
-                <Heart className="h-3 w-3" />
-                <span>Intelect MD</span>
-              </div>
-            </Link>
           </div>
         </div>
       </div>

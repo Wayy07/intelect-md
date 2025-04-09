@@ -46,6 +46,7 @@ interface ProductCardProps {
   disableLink?: boolean;
   isFavorite?: boolean;
   onFavoriteToggle?: () => void;
+  hideDiscount?: boolean;
 }
 
 // Modern Desktop Product Card
@@ -55,6 +56,7 @@ function ProductCard({
   disableLink = false,
   isFavorite: propIsFavorite,
   onFavoriteToggle,
+  hideDiscount = false,
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -67,9 +69,16 @@ function ProductCard({
   const isProductFavorite =
     propIsFavorite !== undefined ? propIsFavorite : isFavorite(product.id);
 
-  const discount = product.pretRedus
-    ? Math.round(((product.pret - product.pretRedus) / product.pret) * 100)
-    : 0;
+  // Calculate discount only if pretRedus exists AND is less than pret
+  const discount = hideDiscount ? 0 : (
+    product.pretRedus !== undefined &&
+    product.pretRedus !== null &&
+    product.pret !== undefined &&
+    product.pret !== null &&
+    product.pretRedus < product.pret
+      ? Math.round(((product.pret - product.pretRedus) / product.pret) * 100)
+      : 0
+  );
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -124,20 +133,23 @@ function ProductCard({
     >
       {/* Top Badges */}
       <div className="absolute left-0 top-0 z-10 flex flex-col items-start gap-1.5">
-        {discount > 0 && (
+        {!hideDiscount && discount > 0 && (
           <div className="transform-gpu rounded-r-md bg-gradient-to-r from-red-600 to-red-500 pl-2 pr-3 py-1 text-xs font-semibold text-white shadow-md flex items-center gap-1.5 translate-y-4 group-hover:translate-y-5 transition-transform">
             <span>-{discount}%</span>
           </div>
         )}
-        <div
-          className="transform-gpu rounded-r-md bg-gradient-to-r from-primary to-primary/80 pl-1 pr-3 py-1 text-xs font-semibold text-white shadow-md flex items-center gap-1.5 translate-y-4 group-hover:translate-y-5 transition-transform duration-300"
-          style={{ transitionDelay: "50ms" }}
-        >
-          <span className="inline-flex items-center justify-center bg-white text-primary rounded-full h-5 w-5 text-[10px] font-bold">
-            0%
-          </span>
-          <span>8 {t?.("months") || "months"}</span>
-        </div>
+        {/* Only show credit badge for products with price above 1000 lei */}
+        {(product.pret !== undefined && product.pret !== null && product.pret >= 1000) && (
+          <div
+            className="transform-gpu rounded-r-md bg-gradient-to-r from-primary to-primary/80 pl-1 pr-3 py-1 text-xs font-semibold text-white shadow-md flex items-center gap-1.5 translate-y-4 group-hover:translate-y-5 transition-transform duration-300"
+            style={{ transitionDelay: "50ms" }}
+          >
+            <span className="inline-flex items-center justify-center bg-white text-primary rounded-full h-5 w-5 text-[10px] font-bold">
+              0%
+            </span>
+            <span>8 {t?.("months") || "months"}</span>
+          </div>
+        )}
       </div>
 
       {/* Image Container */}
@@ -247,19 +259,20 @@ function ProductCard({
 
         {/* Price section */}
         <div className="flex items-center gap-2 mt-auto">
-          {product.pretRedus ? (
+          {!hideDiscount && (product.pretRedus !== undefined && product.pretRedus !== null) && product.pretRedus < product.pret ? (
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary">
-                  {product.pretRedus} MDL
-                </span>
-                <span className="text-sm text-gray-500">
-                  ({Math.round(product.pretRedus / 8)} MDL/{t?.("month")})
+                  {(product.pretRedus !== undefined && product.pretRedus !== null)
+                    ? product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                    : "Price unavailable"}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm text-gray-400 line-through">
-                  {product.pret} MDL
+                  {(product.pret !== undefined && product.pret !== null)
+                    ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                    : ""}
                 </span>
                 <span className="text-xs font-medium text-red-500">
                   -{discount}%
@@ -269,10 +282,9 @@ function ProductCard({
           ) : (
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-primary">
-                {product.pret} MDL
-              </span>
-              <span className="text-sm text-gray-500">
-                ({Math.round(product.pret / 8)} MDL/{t?.("month")})
+                {(product.pret !== undefined && product.pret !== null)
+                  ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                  : "Price unavailable"}
               </span>
             </div>
           )}
@@ -328,6 +340,7 @@ function ProductCardCompact({
   disableLink = false,
   isFavorite: propIsFavorite,
   onFavoriteToggle,
+  hideDiscount = false,
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -340,9 +353,16 @@ function ProductCardCompact({
   const isProductFavorite =
     propIsFavorite !== undefined ? propIsFavorite : isFavorite(product.id);
 
-  const discount = product.pretRedus
-    ? Math.round(((product.pret - product.pretRedus) / product.pret) * 100)
-    : 0;
+  // Calculate discount only if pretRedus exists AND is less than pret
+  const discount = hideDiscount ? 0 : (
+    product.pretRedus !== undefined &&
+    product.pretRedus !== null &&
+    product.pret !== undefined &&
+    product.pret !== null &&
+    product.pretRedus < product.pret
+      ? Math.round(((product.pret - product.pretRedus) / product.pret) * 100)
+      : 0
+  );
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -395,24 +415,23 @@ function ProductCardCompact({
 
   // Content specifically optimized for mobile
   const content = (
-    <div
-      className="relative flex flex-col overflow-hidden rounded-xl bg-white/90 backdrop-blur-sm border border-gray-100 shadow-sm active:shadow-md active:scale-[0.98] hover:border-primary/20 transition-all duration-150 h-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <div className="group relative flex flex-col h-full rounded-xl overflow-hidden border border-gray-100 bg-white/90 backdrop-blur-sm hover:shadow-sm hover:border-primary/10 transition-all">
       {/* Top ribbon - moved both discount and credit badges */}
       <div className="absolute left-0 top-3 z-10 flex flex-col gap-1">
-        {discount > 0 && (
+        {!hideDiscount && discount > 0 && (
           <div className="transform-gpu rounded-r-md bg-gradient-to-r from-red-600 to-red-500 pl-2 pr-2.5 py-0.5 text-[11px] font-semibold text-white shadow-md inline-flex items-center justify-center">
             <span>-{discount}%</span>
           </div>
         )}
-        <div className="transform-gpu rounded-r-md bg-gradient-to-r from-primary to-primary/80 pl-1 pr-2.5 py-0.5 text-[11px] font-semibold text-white shadow-md flex items-center gap-1">
-          <span className="inline-flex items-center justify-center bg-white text-primary rounded-full h-4 w-4 text-[8px] font-bold">
-            0%
-          </span>
-          <span>8 {t?.("months") || "months"}</span>
-        </div>
+        {/* Only show credit badge for products with price above 1000 lei */}
+        {(product.pret !== undefined && product.pret !== null && product.pret >= 1000) && (
+          <div className="transform-gpu rounded-r-md bg-gradient-to-r from-primary to-primary/80 pl-1 pr-2.5 py-0.5 text-[11px] font-semibold text-white shadow-md flex items-center gap-1">
+            <span className="inline-flex items-center justify-center bg-white text-primary rounded-full h-4 w-4 text-[8px] font-bold">
+              0%
+            </span>
+            <span>8 {t?.("months") || "months"}</span>
+          </div>
+        )}
       </div>
 
       {/* Favorite button - moved to top-right with larger touch area */}
@@ -476,35 +495,34 @@ function ProductCardCompact({
           </h3>
         </div>
 
-        {/* Price Row - Simplified for mobile */}
-        <div className="mt-auto flex items-end justify-between">
+        {/* Price display format update */}
+        <div className="px-2 pb-2 pt-1">
           <div className="flex flex-col">
-            {product.pretRedus ? (
+            {!hideDiscount && (product.pretRedus !== undefined && product.pretRedus !== null) && product.pretRedus < product.pret ? (
               <>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base font-bold text-primary">
-                    {product.pretRedus} MDL
+                <span className="text-sm font-semibold text-primary">
+                  {(product.pretRedus !== undefined && product.pretRedus !== null)
+                    ? product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                    : "Price unavailable"}
+                </span>
+                <span className="text-xs text-muted-foreground line-through">
+                  {(product.pret !== undefined && product.pret !== null)
+                    ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                    : ""}
+                </span>
+                {discount > 0 && (
+                  <span className="absolute right-2 top-2 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                    -{discount}%
                   </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-400 line-through">
-                    {product.pret} MDL
-                  </span>
-                </div>
+                )}
               </>
             ) : (
-              <div className="flex items-center">
-                <span className="text-base font-bold text-primary">
-                  {product.pret} MDL
-                </span>
-              </div>
+              <span className="text-sm font-semibold text-primary">
+                {(product.pret !== undefined && product.pret !== null)
+                  ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                  : "Price unavailable"}
+              </span>
             )}
-          </div>
-
-          {/* Monthly payment tag */}
-          <div className="bg-primary/5 px-1.5 py-0.5 rounded-full text-[10px] text-primary font-medium">
-            {Math.round((product.pretRedus || product.pret) / 8)} MDL/
-            {t?.("month")}
           </div>
         </div>
 
@@ -529,7 +547,7 @@ function ProductCardCompact({
               product.stoc === 0 ? "rgba(0, 0, 0, 0.5)" : "rgba(0, 0, 0, 0.9)"
             }
           >
-            <span className="whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white flex items-center justify-center gap-1.5">
+            <span className="whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white flex items-center justify-center gap-3">
               <ShoppingCart className="h-3.5 w-3.5" />
               {isAddingToCart
                 ? t?.("adding_to_cart") || "Adding..."
@@ -561,16 +579,24 @@ function ProductCardCompact({
 function SearchResultCard({
   product,
   onClick,
+  hideDiscount = false,
 }: {
   product: Product;
   onClick?: () => void;
+  hideDiscount?: boolean;
 }) {
   const { t } = useLanguage();
 
-  // Calculate discount if applicable
-  const discount = product.pretRedus
-    ? Math.round(((product.pret - product.pretRedus) / product.pret) * 100)
-    : 0;
+  // Calculate discount only if pretRedus exists AND is less than pret
+  const discount = hideDiscount ? 0 : (
+    product.pretRedus !== undefined &&
+    product.pretRedus !== null &&
+    product.pret !== undefined &&
+    product.pret !== null &&
+    product.pretRedus < product.pret
+      ? Math.round(((product.pret - product.pretRedus) / product.pret) * 100)
+      : 0
+  );
 
   return (
     <div
@@ -610,13 +636,17 @@ function SearchResultCard({
 
         {/* Price */}
         <div className="flex items-center gap-1.5">
-          {product.pretRedus ? (
+          {!hideDiscount && (product.pretRedus !== undefined && product.pretRedus !== null) && product.pretRedus < product.pret ? (
             <>
               <span className="text-sm font-semibold text-primary">
-                {product.pretRedus} MDL
+                {(product.pretRedus !== undefined && product.pretRedus !== null)
+                  ? product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                  : "Price unavailable"}
               </span>
               <span className="text-xs text-muted-foreground line-through">
-                {product.pret} MDL
+                {(product.pret !== undefined && product.pret !== null)
+                  ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                  : ""}
               </span>
               {discount > 0 && (
                 <span className="text-xs font-medium text-red-500">
@@ -626,7 +656,9 @@ function SearchResultCard({
             </>
           ) : (
             <span className="text-sm font-semibold text-primary">
-              {product.pret} MDL
+              {(product.pret !== undefined && product.pret !== null)
+                ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                : "Price unavailable"}
             </span>
           )}
         </div>

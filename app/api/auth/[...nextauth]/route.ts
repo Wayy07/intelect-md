@@ -1,13 +1,12 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import { prisma } from "@/lib/prisma";
 
 // Define authOptions but don't export it directly from this file
 const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // No adapter - use JWT strategy only
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -58,15 +57,15 @@ const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        token.id = user.id || "mock-user-id";
+        token.role = user.role || "USER";
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as string || "USER";
       }
       return session;
     },

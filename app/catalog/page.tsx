@@ -1,12 +1,11 @@
 import { Suspense } from "react";
 import {
-  getRandomProductsFromCategories,
-  getEstimatedProductCount,
-  getProductsFromCategoriesWithPriceFilter
+  getSpecificProducts,
+  getSpecificProductIds,
+  getProductsByNomenclatureType,
+  getSmartphoneProducts
 } from "@/lib/product-api";
 import { Product } from "@/lib/product-api";
-import { ensureCategoriesLoaded } from "@/lib/product-api";
-import { ALL_CATEGORIES, ALL_SUBCATEGORY_IDS } from "@/lib/categories";
 import CatalogContent from "./CatalogContent";
 import CatalogLoading from "./CatalogLoading";
 import { FilterOptions } from "./_types";
@@ -26,49 +25,10 @@ function getParameterValue(param: string | string[] | undefined): string {
   return typeof param === 'string' ? param : param[0] || '';
 }
 
-// Add a new function to get the total product count with price filter
-/**
- * Get the total count of products that match the price filter
- * This is more accurate than the estimate for pagination
- */
-async function getFilteredProductCount(categories: string[], priceRange: [number, number]): Promise<number> {
-  try {
-    // Make sure all categories are loaded first
-    await ensureCategoriesLoaded(categories);
-
-    const cache = global.productCache!;
-    const allProducts: Product[] = [];
-
-    // Collect products from all requested categories
-    categories.forEach(category => {
-      const categoryProducts = cache.categoryProducts.get(category) || [];
-      allProducts.push(...categoryProducts);
-    });
-
-    // Deduplicate products
-    const uniqueProducts = Array.from(
-      new Map(allProducts.map(product => [product.id, product])).values()
-    );
-
-    // Apply price filter to get actual count
-    const filteredCount = uniqueProducts.filter(product => {
-      const regularPrice = typeof product.price === 'number' ?
-        product.price : parseFloat(String(product.price)) || 0;
-
-      const reducedPrice = product.reduced_price ?
-        (typeof product.reduced_price === 'number' ?
-          product.reduced_price : parseFloat(String(product.reduced_price))) : null;
-
-      const finalPrice = reducedPrice !== null ? reducedPrice : regularPrice;
-      return finalPrice >= priceRange[0] && finalPrice <= priceRange[1];
-    }).length;
-
-    return filteredCount;
-  } catch (error) {
-    console.error("Error counting filtered products:", error);
-    return 0;
-  }
-}
+// Nomenclature type constants
+const NOMENCLATURE_TYPES = {
+  SMARTPHONE: "d66ca3b3-4e6d-11ea-b816-00155d1de702"
+};
 
 // This is the server component
 export default async function CatalogPage({
@@ -83,6 +43,7 @@ export default async function CatalogPage({
   const categoryParam = getParameterValue(params.category);
   const subcategoryParam = getParameterValue(params.subcategory);
   const brandParam = getParameterValue(params.brand);
+  const nomenclatureTypeParam = getParameterValue(params.nomenclatureType);
 
   // Parse comma-separated values for multiple categories/subcategories/brands
   const categories = categoryParam ? categoryParam.split(',') : [];
@@ -107,89 +68,60 @@ export default async function CatalogPage({
   // Set price range for filtering
   const priceRange: [number, number] = [minPrice, maxPrice];
 
-  // Determine which categories to fetch based on filters
-  let categoriesToFetch: string[] = [];
-  let initialProducts: any[] = [];
+  // Fetch specific products instead of category-based products
+  let initialProducts: Product[] = [];
   let estimatedTotal = 0;
 
   try {
-    // Determine which categories to fetch
-    if (subcategories.length > 0) {
-      // Case 1: Specific subcategory(ies) requested
-      categoriesToFetch = subcategories;
-      console.log(`Using ${subcategories.length} subcategories: ${subcategories.join(', ')}`);
+    console.log("Fetching products for catalog with filters");
+
+    // Check if we need to filter by nomenclatureType (for smartphones)
+    if (nomenclatureTypeParam === NOMENCLATURE_TYPES.SMARTPHONE) {
+      console.log("Fetching smartphone products");
+      initialProducts = await getSmartphoneProducts();
     }
-    else if (categories.length > 0) {
-      // Case 2: Specific main category(ies) requested
-      const allSubcategories: string[] = [];
-
-      // Collect all subcategories for each requested category
-      categories.forEach(categoryId => {
-        const categorySubcategories = ALL_CATEGORIES
-          .find(cat => cat.id === categoryId)
-          ?.subcategories.map(sub => sub.id) || [];
-
-        allSubcategories.push(...categorySubcategories);
-      });
-
-      categoriesToFetch = allSubcategories;
-      console.log(`Using ${categoriesToFetch.length} subcategories for ${categories.length} categories`);
+    // If specific nomenclatureType is provided but not a known constant
+    else if (nomenclatureTypeParam) {
+      console.log(`Fetching products with nomenclatureType: ${nomenclatureTypeParam}`);
+      initialProducts = await getProductsByNomenclatureType(nomenclatureTypeParam);
     }
+    // Default to specific products if no nomenclatureType filter
     else {
-      // Case 3: No specific category - use all subcategories
-      categoriesToFetch = ALL_SUBCATEGORY_IDS;
-      console.log(`Using all ${categoriesToFetch.length} subcategories`);
+      initialProducts = await getSpecificProducts();
     }
 
-    // Calculate pagination offset
-    const offset = (initialPage - 1) * PRODUCTS_PER_PAGE;
+    console.log(`Fetched ${initialProducts.length} products`);
 
-    // Get estimated product count for pagination UI
-    estimatedTotal = await getEstimatedProductCount(categoriesToFetch);
-    console.log(`Estimated total products: ~${estimatedTotal}`);
+    // Set the estimated total to the actual count
+    estimatedTotal = initialProducts.length;
 
-    // Check if the user has applied a price filter
+    // Apply price filtering if needed
     if (hasPriceFilter) {
       console.log(`Using price filter: ${minPrice} - ${maxPrice} MDL`);
 
-      // Get the actual total count of products matching the price filter
-      const actualFilteredCount = await getFilteredProductCount(categoriesToFetch, priceRange);
-      console.log(`Found ${actualFilteredCount} total products matching price filter ${priceRange[0]}-${priceRange[1]}`);
+      initialProducts = initialProducts.filter(product => {
+        const regularPrice = typeof product.price === 'number' ?
+          product.price : parseFloat(String(product.price)) || 0;
 
-      // Update estimated total with the accurate count
-      estimatedTotal = actualFilteredCount;
+        const reducedPrice = product.reduced_price ?
+          (typeof product.reduced_price === 'number' ?
+            product.reduced_price : parseFloat(String(product.reduced_price))) : null;
 
-      // Calculate the total number of pages
-      const totalPages = Math.ceil(actualFilteredCount / PRODUCTS_PER_PAGE);
+        const finalPrice = reducedPrice !== null ? reducedPrice : regularPrice;
+        return finalPrice >= priceRange[0] && finalPrice <= priceRange[1];
+      });
 
-      // Make sure we're not requesting a page that doesn't exist
-      const safeInitialPage = Math.min(initialPage, Math.max(1, totalPages));
-
-      // Use price-filtered product fetching
-      const startTime = Date.now();
-      initialProducts = await getProductsFromCategoriesWithPriceFilter(
-        categoriesToFetch,
-        priceRange,
-        PRODUCTS_PER_PAGE,
-        (safeInitialPage - 1) * PRODUCTS_PER_PAGE
-      );
-      const duration = Date.now() - startTime;
-      console.log(`Fetched ${initialProducts.length} price-filtered products in ${duration}ms`);
-    } else {
-      // No price filter, use regular random product selection
-      console.log("Fast loading catalog with random product sampling...");
-
-      // Get random selection of products for this page
-      if (categoriesToFetch.length > 0) {
-        const startTime = Date.now();
-        initialProducts = await getRandomProductsFromCategories(categoriesToFetch, PRODUCTS_PER_PAGE);
-        const duration = Date.now() - startTime;
-        console.log(`Fetched ${initialProducts.length} random products in ${duration}ms`);
-      }
+      // Update estimated total after filtering
+      estimatedTotal = initialProducts.length;
     }
 
+    // Apply pagination
+    const startIndex = (initialPage - 1) * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+    initialProducts = initialProducts.slice(startIndex, endIndex);
+
   } catch (error) {
-    console.error("Error loading catalog products:", error);
+    console.error("Error loading products for catalog:", error);
     initialProducts = [];
     estimatedTotal = 0;
   }
@@ -202,6 +134,7 @@ export default async function CatalogPage({
     brands: brands,
     sortOption: sortParam || "price-asc",
     inStock: inStockParam === "true" ? true : false,
+    nomenclatureType: nomenclatureTypeParam || "",
   };
 
   return (
@@ -215,7 +148,7 @@ export default async function CatalogPage({
           totalProducts={estimatedTotal}
           productsPerPage={PRODUCTS_PER_PAGE}
           serverPagination={true}
-          randomSampling={!hasPriceFilter} /* Only use random sampling when not filtering by price */
+          randomSampling={false} // Don't use random sampling with specific products
         />
       </ClientWrapper>
     </Suspense>

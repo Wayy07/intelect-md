@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { getAuthOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
+
+// In-memory storage for favorites
+interface FavoriteItem {
+  id: string;
+  userId: string;
+  productId: string;
+  createdAt: Date;
+}
+
+// Global store for favorites
+const favoriteStore: Map<string, FavoriteItem[]> = new Map();
+
+// Generate a unique ID
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
 
 // GET /api/favorites - Get user's favorite products
 export async function GET(req: NextRequest) {
@@ -16,25 +31,18 @@ export async function GET(req: NextRequest) {
     console.log("Fetching favorites for user:", session.user.id);
 
     try {
-      const favorites = await prisma.favoriteProduct.findMany({
-        where: {
-          userId: session.user.id,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-
-      console.log("Favorites found:", favorites.length);
+      // Get favorites from in-memory store
+      const userFavorites = favoriteStore.get(session.user.id) || [];
+      console.log("Favorites found:", userFavorites.length);
 
       // Return just the list of product IDs
       return NextResponse.json({
-        favorites: favorites.map((fav) => fav.productId),
+        favorites: userFavorites.map((fav) => fav.productId),
       });
-    } catch (dbError: any) {
-      console.error("Database error fetching favorites:", dbError);
+    } catch (error: any) {
+      console.error("Error fetching favorites:", error);
       return NextResponse.json(
-        { error: "Database error fetching favorites", details: dbError?.message || String(dbError) },
+        { error: "Error fetching favorites", details: error?.message || String(error) },
         { status: 500 }
       );
     }
@@ -69,13 +77,11 @@ export async function POST(req: NextRequest) {
 
       console.log("Adding favorite for user:", session.user.id, "productId:", productId);
 
+      // Get user's favorites
+      const userFavorites = favoriteStore.get(session.user.id) || [];
+
       // Check if already exists
-      const existingFavorite = await prisma.favoriteProduct.findFirst({
-        where: {
-          userId: session.user.id,
-          productId,
-        },
-      });
+      const existingFavorite = userFavorites.find(fav => fav.productId === productId);
 
       if (existingFavorite) {
         return NextResponse.json(
@@ -84,21 +90,25 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Create new favorite
+      const newFavorite: FavoriteItem = {
+        id: generateId(),
+        userId: session.user.id,
+        productId,
+        createdAt: new Date()
+      };
+
       // Add to favorites
-      const favorite = await prisma.favoriteProduct.create({
-        data: {
-          userId: session.user.id,
-          productId,
-        },
-      });
+      userFavorites.push(newFavorite);
+      favoriteStore.set(session.user.id, userFavorites);
 
-      console.log("Favorite added successfully:", favorite.id);
+      console.log("Favorite added successfully:", newFavorite.id);
 
-      return NextResponse.json({ favorite }, { status: 201 });
-    } catch (dbError: any) {
-      console.error("Database error adding to favorites:", dbError);
+      return NextResponse.json({ favorite: newFavorite }, { status: 201 });
+    } catch (error: any) {
+      console.error("Error adding to favorites:", error);
       return NextResponse.json(
-        { error: "Database error adding to favorites", details: dbError?.message || String(dbError) },
+        { error: "Error adding to favorites", details: error?.message || String(error) },
         { status: 500 }
       );
     }
@@ -134,23 +144,28 @@ export async function DELETE(req: NextRequest) {
     console.log("Removing favorite for user:", session.user.id, "productId:", productId);
 
     try {
-      const result = await prisma.favoriteProduct.deleteMany({
-        where: {
-          userId: session.user.id,
-          productId,
-        },
-      });
+      // Get user's favorites
+      const userFavorites = favoriteStore.get(session.user.id) || [];
 
-      console.log("Deletion result:", result);
+      // Filter out the product to remove
+      const updatedFavorites = userFavorites.filter(fav => fav.productId !== productId);
+
+      // Calculate how many were removed
+      const removedCount = userFavorites.length - updatedFavorites.length;
+
+      // Update the store
+      favoriteStore.set(session.user.id, updatedFavorites);
+
+      console.log("Removed favorites:", removedCount);
 
       return NextResponse.json(
-        { message: "Product removed from favorites", count: result.count },
+        { message: "Product removed from favorites", count: removedCount },
         { status: 200 }
       );
-    } catch (dbError: any) {
-      console.error("Database error removing from favorites:", dbError);
+    } catch (error: any) {
+      console.error("Error removing from favorites:", error);
       return NextResponse.json(
-        { error: "Database error removing from favorites", details: dbError?.message || String(dbError) },
+        { error: "Error removing from favorites", details: error?.message || String(error) },
         { status: 500 }
       );
     }

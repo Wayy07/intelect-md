@@ -274,16 +274,16 @@ export default function CheckoutPage() {
         {/* Main content */}
         <div className="relative z-10 container max-w-7xl py-10 md:py-16">
           {/* Breadcrumbs */}
-          <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-8 md:mb-12">
-            <Link href="/" className="hover:text-primary transition-colors">
+          <nav className="flex items-center gap-1 text-muted-foreground text-[10px] mb-8 md:mb-12">
+            <Link href="/" className="hover:text-primary transition-colors ">
               {t("home")}
             </Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link href="/cart" className="hover:text-primary transition-colors">
+            <ChevronRight className="h-3 w-3" />
+            <Link href="/cart" className="hover:text-primary transition-colors ">
               {t("cart_title")}
             </Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-foreground font-medium ">
               {t("checkout_title")}
             </span>
           </nav>
@@ -307,7 +307,7 @@ export default function CheckoutPage() {
               <div className="hidden md:block">
                 <MorphingText
                   texts={[t("checkout_title"), t("cart_empty")]}
-                  className="h-16 text-[40pt] lg:text-[50pt]"
+                  className="h-16 text-[30pt] lg:text-[40pt]"
                 />
               </div>
             </div>
@@ -388,8 +388,8 @@ export default function CheckoutPage() {
 
   // Format currency for display
   const formatCurrency = (amount: number | undefined) => {
-    if (amount === undefined) return '0 MDL';
-    return amount.toLocaleString() + ' MDL';
+    if (amount === undefined) return '0 Lei';
+    return amount.toLocaleString() + ' Lei';
   }
 
   // Handle order submission
@@ -557,15 +557,15 @@ export default function CheckoutPage() {
         {/* Main content */}
         <div className="relative z-10 container max-w-3xl px-4 py-10 md:py-16">
           {/* Breadcrumbs */}
-          <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-8 md:mb-12">
+          <nav className="flex items-center gap-1 text-[10px] text-muted-foreground mb-8 md:mb-12">
             <Link href="/" className="hover:text-primary transition-colors">
               {t("home")}
             </Link>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3 w-3" />
             <Link href="/cart" className="hover:text-primary transition-colors">
               {t("cart_title")}
             </Link>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3 w-3" />
             <span className="text-foreground font-medium">
               {t("checkout_success")}
             </span>
@@ -941,7 +941,7 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">{t('cart_total')}:</span>
-                        <span className="font-medium">{totalPrice.toLocaleString()} MDL</span>
+                        <span className="font-medium">{totalPrice.toLocaleString()} Lei</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">{t('confirmation_payment_method')}:</span>
@@ -1087,15 +1087,15 @@ export default function CheckoutPage() {
       {/* Main content */}
       <div className="relative z-10 container py-10 md:py-12">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-8">
+        <nav className="flex items-center gap-1 text-[10px] text-muted-foreground mb-8">
           <Link href="/" className="hover:text-primary transition-colors">
             {t("home")}
           </Link>
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3 w-3" />
           <Link href="/cart" className="hover:text-primary transition-colors">
             {t("cart_title")}
           </Link>
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3 w-3" />
           <span className="text-foreground font-medium">
             {t("checkout_title")}
           </span>
@@ -1103,18 +1103,14 @@ export default function CheckoutPage() {
 
         {/* Page title */}
         <div className="mb-8 md:mb-10">
-          <Badge className="mb-3 bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-            {items.length === 1
-              ? t("product_count_singular")
-              : t("product_count").replace("{count}", items.length.toString())}
-          </Badge>
+
 
           <div className="mb-4">
             {/* Mobile title */}
             <div className="md:hidden">
               <MorphingText
                 texts={[t("checkout_title")]}
-                className="h-12 text-[30pt]"
+                className="h-12 text-[22pt]"
               />
             </div>
 
@@ -1138,7 +1134,7 @@ export default function CheckoutPage() {
             <form onSubmit={handleSubmitOrder} className="space-y-8">
               <Card className="bg-white/80 backdrop-blur-sm border-primary/10 shadow-md">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-[14pt] md:text-[14pt]">
                     <User className="h-5 w-5 text-primary" />
                     {t("checkout_personal_info")}
                   </CardTitle>
@@ -1206,8 +1202,8 @@ export default function CheckoutPage() {
 
               <Card className="bg-white/80 backdrop-blur-sm border-primary/10 shadow-md">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 text-[14pt] md:text-[14pt]">
+                    <CreditCard className="h-5 w-5 text-primary " />
                     {t("checkout_payment")}
                   </CardTitle>
                   <CardDescription>
@@ -1337,23 +1333,11 @@ export default function CheckoutPage() {
                     {paymentMethod === 'credit' && (
                       <div className="p-4 border border-primary/20 rounded-lg bg-primary/5 mt-4 space-y-4 animate-in fade-in-50 duration-300">
                         <div>
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center justify-between mb-2 text-[10pt] md:text-[14pt]">
                             <Label htmlFor="financingTerm">{t("checkout_financing_term")}</Label>
                             <span className="text-sm font-medium text-primary">{financingTerm} {t("checkout_months")}</span>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-xs text-muted-foreground">12</span>
-                            <Slider
-                              id="financingTerm"
-                              defaultValue={[financingTerm]}
-                              min={12}
-                              max={36}
-                              step={6}
-                              className="flex-1"
-                              onValueChange={(value) => setFinancingTerm(value[0])}
-                            />
-                            <span className="text-xs text-muted-foreground">36</span>
-                          </div>
+
                         </div>
 
                         <div className="p-3 bg-white rounded-lg border border-primary/10 flex flex-wrap gap-3">
@@ -1407,7 +1391,7 @@ export default function CheckoutPage() {
 
               <Card className="bg-white/80 backdrop-blur-sm border-primary/10 shadow-md">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-[14pt] md:text-[14pt]">
                     <NotebookPen className="h-5 w-5 text-primary" />
                     {t("checkout_additional_notes")}
                   </CardTitle>
@@ -1458,7 +1442,7 @@ export default function CheckoutPage() {
             <div className="lg:sticky lg:top-6">
               <Card className="bg-white/80 backdrop-blur-sm border-primary/10 shadow-md">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-[14pt] md:text-[14pt]">
                     <ShoppingCart className="h-5 w-5 text-primary" />
                     {t("checkout_order_summary")}
                   </CardTitle>

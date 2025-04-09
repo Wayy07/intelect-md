@@ -4,22 +4,22 @@
 
 This is a Next.js application with React, Shadcn UI, and Tailwind CSS. The database connections and API routes have been removed to allow integration with a custom API.
 
-## Product API Integration
+## Product Data Integration
 
-The application now integrates with the ROST products API. Products are fetched at build time and stored in memory for efficient access.
+The application now uses mock product data instead of fetching from an external API. Products are loaded at build time and stored in memory for efficient access.
 
 ### Features
 
-- Server-side fetching and caching at build time
+- Server-side mock data loaded at build time
 - Filtering by product categories
 - Multi-language product data (Romanian/Russian)
-- Revalidation endpoint to refresh the cache
+- In-memory caching for performance
 
 ### Configuration
 
-- Set `ROST_API_KEY` in `.env` to your API endpoint
 - Configure product categories in `lib/server-init.ts`
 - Set `REVALIDATION_SECRET` for the cache refresh API
+- Mock product data is defined in `app/utils/mock-data.ts`
 
 ## Changes Made
 
@@ -103,3 +103,14 @@ The admin interface is currently set up with placeholder components. You'll need
 3. Original routes for orders management were at `/admin/comenzi`
 
 All of these routes now contain placeholder UI waiting for API integration.
+
+
+
+
+
+
+
+
+
+##  Local JSON Data:
+Since you only need specific products, we're now using mock data instead of making external API calls.

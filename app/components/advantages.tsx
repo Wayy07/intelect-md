@@ -2,26 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Truck, ShieldCheck, RefreshCw } from "lucide-react";
+import { Truck, ShieldCheck, RefreshCw, CheckCircle, Zap } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
-import { HyperText } from "@/components/magicui/hyper-text";
 
 interface Advantage {
   id: number;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
   titleKey: string;
   descriptionKey: string;
+  icon: React.ReactNode;
   color: string;
   gradient: string;
   shadowColor: string;
+  bgGradient: string;
 }
 
 export default function Advantages() {
   const { t } = useLanguage();
 
-  // More dynamic animation variants
+  // Enhanced animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -34,14 +32,14 @@ export default function Advantages() {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
         type: "spring",
-        stiffness: 100,
-        damping: 12,
+        stiffness: 80,
+        damping: 15,
       },
     },
   };
@@ -50,36 +48,33 @@ export default function Advantages() {
   const advantages: Advantage[] = [
     {
       id: 1,
-      title: t("fastDelivery"),
-      description: t("fastDeliveryDescription"),
       titleKey: "fastDelivery",
       descriptionKey: "fastDeliveryDescription",
       icon: <Truck className="h-7 w-7 md:h-9 md:w-9" strokeWidth={1.5} />,
-      color: "text-blue-600",
+      color: "#4361ee",
       gradient: "from-blue-500/20 to-indigo-500/10",
-      shadowColor: "shadow-blue-500/10",
+      shadowColor: "shadow-blue-500/20",
+      bgGradient: "bg-gradient-to-br from-blue-50 to-indigo-50",
     },
     {
       id: 2,
-      title: t("qualityGuarantee"),
-      description: t("qualityGuaranteeDescription"),
       titleKey: "qualityGuarantee",
       descriptionKey: "qualityGuaranteeDescription",
       icon: <ShieldCheck className="h-7 w-7 md:h-9 md:w-9" strokeWidth={1.5} />,
-      color: "text-emerald-600",
-      gradient: "from-emerald-500/20 to-green-500/10",
-      shadowColor: "shadow-emerald-500/10",
+      color: "#2ec4b6",
+      gradient: "from-emerald-500/20 to-teal-500/10",
+      shadowColor: "shadow-emerald-500/20",
+      bgGradient: "bg-gradient-to-br from-emerald-50 to-teal-50",
     },
     {
       id: 3,
-      title: t("easyReturn"),
-      description: t("easyReturnDescription"),
       titleKey: "easyReturn",
       descriptionKey: "easyReturnDescription",
       icon: <RefreshCw className="h-7 w-7 md:h-9 md:w-9" strokeWidth={1.5} />,
-      color: "text-amber-600",
-      gradient: "from-amber-500/20 to-yellow-500/10",
-      shadowColor: "shadow-amber-500/10",
+      color: "#ff9f1c",
+      gradient: "from-amber-500/20 to-orange-500/10",
+      shadowColor: "shadow-amber-500/20",
+      bgGradient: "bg-gradient-to-br from-amber-50 to-orange-50",
     },
   ];
 
@@ -91,9 +86,8 @@ export default function Advantages() {
       const element = document.getElementById("avantaje-section");
       if (element) {
         const position = element.getBoundingClientRect();
-
-        // If element is in viewport
-        if (position.top < window.innerHeight && position.bottom >= 0) {
+        // If element is in viewport (with some buffer)
+        if (position.top < window.innerHeight * 0.85) {
           setIsVisible(true);
         }
       }
@@ -110,22 +104,22 @@ export default function Advantages() {
   }, []);
 
   return (
-    <section id="avantaje-section" className="py-20 relative">
-      <div className="container mx-auto px-4 sm:px-6 3xl:px-16 3xl:max-w-[80%]">
+    <section id="avantaje-section" className="py-20 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute top-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
+
+      <div className="container mx-auto py-12 px-2 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
         <div className="text-center mb-16">
-          <motion.div
+          <motion.h2
             className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <HyperText
-              className="text-3xl font-bold sm:text-4xl"
+            {t("ourAdvantages")}
+          </motion.h2>
 
-            >
-              {t("ourAdvantages")}
-            </HyperText>
-          </motion.div>
           <motion.div
             className="h-1.5 w-24 rounded-full bg-gradient-to-r from-primary to-primary/50 mx-auto mb-6"
             initial={{ opacity: 0, width: 0 }}
@@ -133,19 +127,15 @@ export default function Advantages() {
               isVisible ? { opacity: 1, width: 96 } : { opacity: 0, width: 0 }
             }
             transition={{ duration: 0.8, delay: 0.4 }}
-          ></motion.div>
+          />
+
           <motion.p
             className="max-w-3xl mx-auto text-lg text-gray-600"
             initial={{ opacity: 0 }}
             animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <span
-              className="text-lg text-gray-600"
-
-            >
-              {t("whyChooseUs")}
-            </span>
+            {t("whyChooseUs")}
           </motion.p>
         </div>
 
@@ -160,41 +150,71 @@ export default function Advantages() {
             {advantages.map((advantage) => (
               <motion.div
                 key={advantage.id}
-                className={`bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg ${advantage.shadowColor} border border-gray-100 hover:shadow-xl hover:border-primary/20 transition-all duration-500 group overflow-hidden`}
+                className={`bg-white/90 backdrop-blur-sm rounded-2xl ${advantage.shadowColor} border border-gray-100 overflow-hidden group relative`}
                 variants={itemVariants}
                 whileHover={{
                   y: -8,
-                  transition: { type: "spring", stiffness: 400, damping: 10 },
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+                  transition: { type: "spring", stiffness: 300, damping: 10 },
+                }}
+                style={{
+                  boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.1)"
                 }}
               >
-                <div className="p-8 md:p-10 flex flex-col items-center text-center h-full relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                {/* Gradient background that grows on hover */}
+                <div
+                  className={`absolute inset-0 ${advantage.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
+                />
 
-                  <div className="mb-6 relative z-10">
+                {/* Foreground content */}
+                <div className="p-8 md:p-10 flex flex-col items-center text-center relative z-10 h-full">
+                  <div className="mb-6 relative">
+                    {/* Animated background glow */}
+                    <motion.div
+                      className={`absolute inset-0 bg-gradient-to-br ${advantage.gradient} rounded-full scale-150 blur-xl opacity-0 group-hover:opacity-100`}
+                      initial={{ scale: 0.8 }}
+                      whileHover={{ scale: 1.5, opacity: 0.8 }}
+                      transition={{ duration: 0.8 }}
+                    />
+
+                    {/* Icon container */}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${advantage.gradient} rounded-full scale-150 blur-md opacity-0 group-hover:opacity-100 transition-all duration-500`}
-                    ></div>
-                    <div
-                      className={`relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${advantage.gradient} p-5 group-hover:translate-y-[-5px] transition-all duration-500`}
+                      className={`relative flex items-center justify-center w-20 h-20 rounded-2xl group-hover:rounded-3xl p-5 transition-all duration-500 bg-gradient-to-br ${advantage.gradient}`}
+                      style={{ boxShadow: `0 10px 20px -5px ${advantage.color}40` }}
                     >
-                      <div className={`${advantage.color}`}>
+                      <div style={{ color: advantage.color }}>
                         {advantage.icon}
                       </div>
+
+                      {/* Decorative circles that appear on hover */}
+                      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                   </div>
-                  <h3
-                    className={`text-xl font-bold mb-4 group-hover:${advantage.color} transition-colors duration-300 relative z-10`}
-                  >
-                    <span
-                      className={`text-xl font-bold transition-colors duration-300`}
 
-                    >
-                      {advantage.title}
+                  {/* Title with color transition effect */}
+                  <h3
+                    className="text-xl font-bold mb-4 transition-colors duration-300 relative"
+                    style={{ color: "rgb(17, 24, 39)" }}
+                  >
+                    <span className="relative inline-block">
+                      {t(advantage.titleKey)}
+                      <motion.div
+                        className="absolute -bottom-1 left-0 h-0.5 w-0 group-hover:w-full"
+                        style={{ background: advantage.color, originX: 0 }}
+                        initial={{ width: "0%" }}
+                        whileHover={{ width: "100%" }}
+                        transition={{ duration: 0.3 }}
+                      />
                     </span>
                   </h3>
-                  <p className="text-gray-600 leading-relaxed relative z-10">
-                    {advantage.description}
+
+                  {/* Description with subtle animation */}
+                  <p className="text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                    {t(advantage.descriptionKey)}
                   </p>
+
+
                 </div>
               </motion.div>
             ))}
@@ -212,33 +232,41 @@ export default function Advantages() {
             {advantages.map((advantage) => (
               <motion.div
                 key={advantage.id}
-                className={`bg-white/90 backdrop-blur-sm rounded-xl shadow-md ${advantage.shadowColor} border border-gray-100 overflow-hidden active:scale-[0.98] transition-all duration-150`}
+                className={`bg-white/90 backdrop-blur-sm rounded-xl ${advantage.shadowColor} border border-gray-100 overflow-hidden active:scale-[0.98] transition-all duration-150`}
                 variants={itemVariants}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="p-4 flex items-center relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  {/* Subtle background gradient */}
+                  <div className={`absolute inset-0 ${advantage.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
+                  {/* Icon container with enhanced design */}
                   <div
-                    className={`flex-shrink-0 mr-4 w-14 h-14 rounded-full bg-gradient-to-br ${advantage.gradient} flex items-center justify-center relative z-10`}
+                    className={`flex-shrink-0 mr-4 w-14 h-14 rounded-xl flex items-center justify-center relative z-10 bg-gradient-to-br ${advantage.gradient}`}
+                    style={{ boxShadow: `0 6px 15px -3px ${advantage.color}30` }}
                   >
-                    <div className={`${advantage.color}`}>{advantage.icon}</div>
+                    <div style={{ color: advantage.color }}>{advantage.icon}</div>
+
+                    {/* Decorative element */}
+                    <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-white/40" />
                   </div>
+
+                  {/* Content with enhanced styling */}
                   <div className="flex-1 relative z-10">
                     <h3
-                      className={`text-base font-bold mb-1 ${advantage.color}`}
+                      className="text-base font-bold mb-1"
+                      style={{ color: advantage.color }}
                     >
-                      <span
-                        className={`text-base font-bold ${advantage.color}`}
-
-
-                      >
-                        {advantage.title}
-                      </span>
+                      {t(advantage.titleKey)}
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      {advantage.description}
+                      {t(advantage.descriptionKey)}
                     </p>
+                  </div>
+
+                  {/* Right arrow indicator */}
+                  <div className="flex-shrink-0 ml-2">
+                    <Zap className="h-4 w-4 opacity-60" style={{ color: advantage.color }} />
                   </div>
                 </div>
               </motion.div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ChevronRight, X, Package, Loader2 } from "lucide-react";
+import { Search, ChevronRight, X, Loader2, ArrowLeft } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { SearchResultCard } from "@/app/components/ui/product-card";
 import { allProducts } from "@/app/utils/mock-data";
 import { useOnClickOutside } from "@/lib/hooks";
 import { RefObject } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Define a Product interface
 interface Product {
@@ -40,11 +41,12 @@ export default function MobileHeader() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Search dropdown state
+  // Search state
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Close dropdown when clicking outside
   useOnClickOutside(searchRef as RefObject<HTMLElement>, () =>
@@ -155,6 +157,24 @@ export default function MobileHeader() {
     }
   };
 
+  const closeSearch = () => {
+    setIsSearchFocused(false);
+    setSearchTerm("");
+  };
+
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+  };
+
+  // Focus the search input when search overlay appears
+  useEffect(() => {
+    if (isSearchFocused && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [isSearchFocused]);
+
   return (
     <>
       <style jsx global>{`
@@ -175,193 +195,170 @@ export default function MobileHeader() {
           isVisible ? "transform-none" : "-translate-y-full"
         }`}
       >
-        <div className="container px-4 py-4">
-          <div className="flex flex-col gap-3">
-            {/* Logo and top elements */}
-            <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center">
-                <div className="relative h-12 w-12 overflow-hidden">
-                  <Image
-                    src="/logo.jpg"
-                    alt="Intelect MD"
-                    fill
-                    className="object-contain rounded-full border border-gray-100 shadow-sm"
-                    priority
-                  />
-                </div>
-                <div className="ml-3">
-                  <h1 className="font-bold text-xl">Intelect MD</h1>
-                  <p className="text-xs text-muted-foreground">
-                    {t?.("techStore") || "Your Tech Store"}
-                  </p>
-                </div>
-              </Link>
-
-              <div className="flex items-center gap-3">
-                {/* Phone number */}
-                <a
-                  href="tel:+37360175111"
-                  className="flex items-center text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <span>+373 60 175 111</span>
-                </a>
-
-                {/* Language switcher */}
-                <div className="flex items-center gap-2 border-l pl-3">
-                  <button
-                    className={cn(
-                      "transition-all duration-200 w-7 h-7 overflow-hidden rounded-full relative",
-                      language === "ro"
-                        ? "ring-2 ring-primary ring-offset-1"
-                        : "opacity-70 hover:opacity-100"
-                    )}
-                    onClick={() => {
-                      setLanguage("ro");
-                      window.location.reload();
-                    }}
-                    aria-label="Romanian Language"
-                    title="Romanian Language"
-                  >
-                    <Image
-                      src="https://cdn.countryflags.com/thumbs/moldova/flag-round-250.png"
-                      alt="Moldova Flag"
-                      width={28}
-                      height={28}
-                      className="object-cover"
-                    />
-                  </button>
-                  <button
-                    className={cn(
-                      "transition-all duration-200 w-7 h-7 overflow-hidden rounded-full relative",
-                      language === "ru"
-                        ? "ring-2 ring-primary ring-offset-1"
-                        : "opacity-70 hover:opacity-100"
-                    )}
-                    onClick={() => {
-                      setLanguage("ru");
-                      window.location.reload();
-                    }}
-                    aria-label="Russian Language"
-                    title="Russian Language"
-                  >
-                    <svg className="w-full h-full" viewBox="0 0 512 512">
-                      <circle
-                        style={{ fill: "#F0F0F0" }}
-                        cx="256"
-                        cy="256"
-                        r="256"
-                      />
-                      <path
-                        style={{ fill: "#0052B4" }}
-                        d="M496.077,345.043C506.368,317.31,512,287.314,512,256s-5.632-61.31-15.923-89.043H15.923
-                        C5.633,194.69,0,224.686,0,256s5.633,61.31,15.923,89.043L256,367.304L496.077,345.043z"
-                      />
-                      <path
-                        style={{ fill: "#D80027" }}
-                        d="M256,512c110.071,0,203.906-69.472,240.077-166.957H15.923C52.094,442.528,145.929,512,256,512z"
-                      />
-                    </svg>
-                  </button>
-                </div>
+        <div className="container px-4 py-3">
+          <div className="flex items-center gap-3">
+            {/* Logo */}
+            <Link href="/" className="flex-shrink-0">
+              <div className="relative h-8 w-8 overflow-hidden">
+                <Image
+                  src="/logo.jpg"
+                  alt="Logo"
+                  fill
+                  className="object-contain rounded-full border border-gray-100 shadow-sm"
+                  priority
+                />
               </div>
+            </Link>
+
+            {/* Search Bar Trigger */}
+            <div className="flex-1 relative" ref={searchRef}>
+              <button
+                onClick={handleSearchFocus}
+                className="w-full h-9 pl-8 pr-8 text-xs rounded-full border bg-accent/40 text-left shadow-sm flex items-center"
+              >
+                <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <span className="text-muted-foreground/70">
+                  {t?.("searchPlaceholder") || "Search products..."}
+                </span>
+              </button>
             </div>
 
-            {/* Search Bar with Dropdown */}
-            <div className="flex-1 w-full" ref={searchRef}>
-              <div className="relative">
-                <form className="relative" onSubmit={handleSearch}>
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                    <Search className="h-4 w-4" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder={
-                      t?.("searchPlaceholder") || "Search products..."
-                    }
-                    className={cn(
-                      "w-full h-11 pl-11 pr-11 text-sm rounded-full border",
-                      "bg-accent/40 transition-all duration-200 focus:outline-none",
-                      "focus:bg-background focus:border-primary/30 focus:ring-2 focus:ring-primary/20",
-                      "placeholder:text-muted-foreground/70 shadow-sm",
-                      isSearchFocused &&
-                        "border-primary/40 ring-2 ring-primary/20 bg-background"
-                    )}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                  />
-
-                  {/* Clear or Search button */}
-                  <button
-                    type={searchTerm ? "button" : "submit"}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 transition-all text-primary"
-                    aria-label={searchTerm ? "Clear" : "Search"}
-                    onClick={searchTerm ? handleClearSearch : undefined}
-                  >
-                    {searchTerm ? (
-                      <X className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </button>
-                </form>
-
-                {/* Background overlay when search is active */}
-                {isSearchFocused && (
-                  <div
-                    className="fixed inset-0 bg-black/20 z-[990]"
-                    onClick={() => setIsSearchFocused(false)}
-                  />
-                )}
-
-                {/* Search Results Dropdown */}
-                {isSearchFocused && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden z-[9999] max-h-[70vh] overflow-y-auto">
-                    {isSearching ? (
-                      <div className="py-4 px-3 flex items-center justify-center text-muted-foreground">
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        <span>{t?.("searching") || "Searching..."}</span>
-                      </div>
-                    ) : searchTerm.length < 2 ? (
-                      <div className="py-4 px-3 text-center text-muted-foreground">
-                        {t?.("typeTwoChars") ||
-                          "Type at least 2 characters to search"}
-                      </div>
-                    ) : searchResults.length === 0 ? (
-                      <div className="py-4 px-3 text-center text-muted-foreground">
-                        {t?.("noResults") || "No products found"}
-                      </div>
-                    ) : (
-                      <>
-                        <div className="p-2">
-                          {searchResults.map((product) => (
-                            <SearchResultCard
-                              key={product.id}
-                              product={product}
-                              onClick={() => handleProductSelect(product.id)}
-                            />
-                          ))}
-                        </div>
-
-                        {/* View all results button */}
-                        <div className="border-t p-2">
-                          <button
-                            onClick={handleSearch}
-                            className="w-full py-2 px-3 text-sm text-center font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-md transition-colors"
-                          >
-                            {t?.("viewAllResults") ||
-                              `View all results (${searchResults.length})`}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Simple Language Switcher */}
+            <button
+              className="flex-shrink-0 h-7 w-8 flex items-center justify-center rounded bg-primary/10 hover:bg-primary/20 transition-colors text-primary font-medium text-xs"
+              onClick={() => {
+                // Toggle between RO and RU
+                const newLang = language === "ro" ? "ru" : "ro";
+                setLanguage(newLang);
+                window.location.reload();
+              }}
+              aria-label={language === "ro" ? "Switch to Russian" : "Switch to Romanian"}
+              title={language === "ro" ? "Switch to Russian" : "Switch to Romanian"}
+            >
+              {language.toUpperCase()}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Full Screen Search Overlay */}
+      <AnimatePresence>
+        {isSearchFocused && (
+          <motion.div
+            className="fixed inset-0 bg-white z-50 flex flex-col"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Search Header */}
+            <div className="border-b border-gray-100 shadow-sm">
+              <div className="container px-4 py-3">
+                <div className="flex items-center gap-3">
+                  {/* Back Button */}
+                  <button
+                    onClick={closeSearch}
+                    className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+                  >
+                    <ArrowLeft className="h-4 w-4 text-gray-600" />
+                  </button>
+
+                  {/* Search Input */}
+                  <form className="flex-1 relative" onSubmit={handleSearch}>
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                      <Search className="h-4 w-4" />
+                    </div>
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder={t?.("searchPlaceholder") || "Search products..."}
+                      className="w-full h-10 pl-10 pr-10 text-sm rounded-full border bg-accent/30 transition-all duration-200 focus:outline-none focus:bg-background focus:border-primary/30 focus:ring-1 focus:ring-primary/20 placeholder:text-muted-foreground/70 shadow-sm"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      autoFocus
+                    />
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
+                        aria-label="Clear"
+                        onClick={handleClearSearch}
+                      >
+                        <X className="h-3.5 w-3.5 text-gray-600" />
+                      </button>
+                    )}
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Results Area */}
+            <div className="flex-1 overflow-y-auto pb-safe">
+              <div className="container px-4 py-3">
+                {isSearching ? (
+                  <div className="py-8 flex flex-col items-center justify-center text-muted-foreground">
+                    <Loader2 className="h-6 w-6 mb-2 animate-spin" />
+                    <p>{t?.("searching") || "Searching..."}</p>
+                  </div>
+                ) : searchTerm.length < 2 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <p className="mb-1 text-gray-400">
+                      {t?.("typeTwoChars") || "Type at least 2 characters to search"}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {t?.("searchPrompt") || "Search by product name, category, or code"}
+                    </p>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <p className="mb-1 font-medium">
+                      {t?.("noResults") || "No products found"}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {t?.("tryDifferentSearch") || "Try a different search term"}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="py-2">
+                      <p className="text-sm text-gray-500 mb-3">
+                        {t?.("searchResultsCount")?.replace("{count}", searchResults.length.toString()) ||
+                        `Found ${searchResults.length} products`}
+                      </p>
+                      <div className="space-y-3">
+                        {searchResults.map((product) => (
+                          <SearchResultCard
+                            key={product.id}
+                            product={product}
+                            onClick={() => {
+                              handleProductSelect(product.id);
+                              closeSearch();
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* View all results button */}
+                    <div className="mt-4 mb-8">
+                      <button
+                        onClick={() => {
+                          handleSearch({ preventDefault: () => {} } as React.FormEvent);
+                          closeSearch();
+                        }}
+                        className="w-full py-3 text-sm text-center font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
+                      >
+                        {t?.("viewAllResults") ||
+                          `View all results (${searchResults.length})`}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
