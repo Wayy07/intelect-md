@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   ProductCard,
   ProductCardCompact,
@@ -79,6 +79,8 @@ export default function SimilarProducts({
   const [isMobile, setIsMobile] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const { favorites, toggleFavorite } = useFavorites();
+  // Track products with failed images
+  const [failedProductIds, setFailedProductIds] = useState<Set<string>>(new Set());
 
   // Show debug info only in development
   const isDev = process.env.NODE_ENV === 'development';
@@ -95,6 +97,16 @@ export default function SimilarProducts({
   const currentProduct = relatedProducts?.find(p => p.id === currentProductId);
   const currentBrand = currentProduct?.specificatii?.brand || '';
 
+  // Handle image error
+  const handleImageError = useCallback((productId: string) => {
+    console.log(`Product ${productId} has a broken image, removing from display`);
+    setFailedProductIds(prev => {
+      const updated = new Set(prev);
+      updated.add(productId);
+      return updated;
+    });
+  }, []);
+
   // Fetch products from the API when component mounts
   useEffect(() => {
     const fetchSimilarProducts = async () => {
@@ -103,7 +115,7 @@ export default function SimilarProducts({
       setLoading(true);
       try {
         // Try to fetch similar products from the similar-products API
-        const response = await fetch(`/api/similar-products?productId=${currentProductId}&limit=12`);
+        const response = await fetch(`/api/similar-products?productId=${currentProductId}&limit=20`);
 
         if (!response.ok) {
           console.warn('Similar products API returned an error:', response.status, response.statusText);
@@ -119,7 +131,7 @@ export default function SimilarProducts({
                 ? currentBrand
                 : (currentBrand ? String(currentBrand) : ''));
 
-              const rostResponse = await fetch(`/api/rost-products?brand=${brandParam}&limit=12&inStock=true`);
+              const rostResponse = await fetch(`/api/rost-products?brand=${brandParam}&limit=20&inStock=true`);
               if (rostResponse.ok) {
                 const rostData = await rostResponse.json();
                 if (rostData.success && rostData.products && rostData.products.length > 0) {
@@ -132,7 +144,7 @@ export default function SimilarProducts({
             }
 
             // If brand filtering didn't work, just get any in-stock products
-            const fallbackResponse = await fetch(`/api/rost-products?limit=12&inStock=true`);
+            const fallbackResponse = await fetch(`/api/rost-products?limit=20&inStock=true`);
             if (fallbackResponse.ok) {
               const fallbackData = await fallbackResponse.json();
               if (fallbackData.success && fallbackData.products && fallbackData.products.length > 0) {
@@ -175,9 +187,9 @@ export default function SimilarProducts({
     ? apiProducts as (ApiProduct | Product)[]
     : (relatedProducts || []) as (ApiProduct | Product)[];
 
-  // 2. Filter out current product
+  // 2. Filter out current product and products with failed images
   const otherProducts = productsToUse.filter(
-    product => product.id !== currentProductId
+    product => product.id !== currentProductId && !failedProductIds.has(product.id)
   );
 
   // 3. Helper to check stock status across different product structures
@@ -440,12 +452,14 @@ export default function SimilarProducts({
                           product={product as any}
                           onAddToFavorites={() => toggleFavorite(product.id)}
                           disableLink={true}
+                          onImageError={handleImageError}
                         />
                       ) : (
                         <ProductCard
                           product={product as any}
                           onAddToFavorites={() => toggleFavorite(product.id)}
                           disableLink={true}
+                          onImageError={handleImageError}
                         />
                       )}
                     </div>

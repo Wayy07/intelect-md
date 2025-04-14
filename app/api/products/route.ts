@@ -16,6 +16,13 @@ export async function GET(request: NextRequest) {
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const inStock = searchParams.get("inStock");
+  const nomenclatureType = searchParams.get("nomenclatureType");
+
+  // Smartphone specific filters
+  const operatingSystem = searchParams.get("os");
+  const storage = searchParams.get("storage");
+  const ram = searchParams.get("ram");
+  const source = searchParams.get("source");
 
   // Build query string for the API
   const queryParams = new URLSearchParams();
@@ -28,6 +35,13 @@ export async function GET(request: NextRequest) {
   if (minPrice) queryParams.append("minPrice", minPrice);
   if (maxPrice) queryParams.append("maxPrice", maxPrice);
   if (inStock) queryParams.append("inStock", inStock);
+  if (nomenclatureType) queryParams.append("nomenclatureType", nomenclatureType);
+
+  // Add smartphone specific filters to the query parameters
+  if (operatingSystem) queryParams.append("os", operatingSystem);
+  if (storage) queryParams.append("storage", storage);
+  if (ram) queryParams.append("ram", ram);
+  if (source) queryParams.append("source", source);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -60,6 +74,63 @@ export async function GET(request: NextRequest) {
       filteredProducts = filteredProducts.filter(
         (p) => p.subcategorie?.id === subcategory
       );
+    }
+
+    // Add filter for nomenclatureType (for smartphones)
+    if (nomenclatureType) {
+      const isSmartphone = nomenclatureType === "d66ca3b3-4e6d-11ea-b816-00155d1de702";
+
+      // For mock data, we need to identify smartphones by keywords in the name/category
+      filteredProducts = filteredProducts.filter(p => {
+        if (isSmartphone) {
+          return (
+            p.nume.toLowerCase().includes("smartphone") ||
+            p.nume.toLowerCase().includes("iphone") ||
+            p.nume.toLowerCase().includes("samsung galaxy") ||
+            p.subcategorie?.nume.toLowerCase().includes("smartphone") ||
+            p.subcategorie?.categoriePrincipala?.nume.toLowerCase().includes("telefon")
+          );
+        }
+        return true; // For other nomenclature types, no filtering in mock data
+      });
+
+      // Apply smartphone-specific filters
+      if (isSmartphone) {
+        // Filter by operating system if provided
+        if (operatingSystem) {
+          const osList = operatingSystem.split(',');
+          filteredProducts = filteredProducts.filter(p => {
+            return osList.some(os =>
+              p.nume.toLowerCase().includes(os.toLowerCase()) ||
+              (p.specificatii?.os && p.specificatii.os.toLowerCase().includes(os.toLowerCase()))
+            );
+          });
+        }
+
+        // Filter by storage if provided
+        if (storage) {
+          const storageList = storage.split(',');
+          filteredProducts = filteredProducts.filter(p => {
+            return storageList.some(s =>
+              p.nume.toLowerCase().includes(`${s}gb`) ||
+              p.nume.toLowerCase().includes(`${s} gb`) ||
+              (p.specificatii?.storage && p.specificatii.storage.toLowerCase().includes(`${s}gb`))
+            );
+          });
+        }
+
+        // Filter by RAM if provided
+        if (ram) {
+          const ramList = ram.split(',');
+          filteredProducts = filteredProducts.filter(p => {
+            return ramList.some(r =>
+              p.nume.toLowerCase().includes(`${r}gb ram`) ||
+              p.nume.toLowerCase().includes(`${r} gb ram`) ||
+              (p.specificatii?.ram && p.specificatii.ram.toLowerCase().includes(`${r}gb`))
+            );
+          });
+        }
+      }
     }
 
     if (brand) {

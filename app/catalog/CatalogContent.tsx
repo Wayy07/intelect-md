@@ -59,7 +59,18 @@ export default function CatalogContent({
 
   // Transform API products to UI format
   const transformProducts = (apiProducts: any[]): Product[] => {
-    return apiProducts.map(product => {
+    return apiProducts.filter(product => {
+      // For smartphone listings, verify each product is properly formed
+      const nomenclatureType = product.nomenclatureType;
+      if (nomenclatureType === "d66ca3b3-4e6d-11ea-b816-00155d1de702") {
+        // Verify this has the minimum fields required
+        return product &&
+               product.id &&
+               (product.name || product.titleRO || product.nume) &&
+               (product.isSmartphone !== false); // Skip products explicitly marked as non-smartphones
+      }
+      return true; // Keep all non-smartphone products
+    }).map(product => {
       // Check if product is already in the expected format
       if (product.nume && product.cod) {
         return product;
@@ -68,21 +79,37 @@ export default function CatalogContent({
       // Transform product from the API format to the UI format
       return {
         id: product.id,
-        nume: product.titleRO || `Product ${product.SKU}`,
-        cod: product.SKU || `SKU-${product.id}`,
-        pret: parseFloat(product.price) || 0,
-        pretRedus: product.reduced_price ? parseFloat(product.reduced_price) : null,
-        imagini: [product.img].filter(Boolean),
-        stoc: product.on_stock ? parseInt(product.on_stock) : 0,
+        nume: product.name || product.titleRO || `Product ${product.SKU}`,
+        cod: product.SKU || product.article || `SKU-${product.id}`,
+        pret: typeof product.price === 'number'
+          ? product.price
+          : parseFloat(product.price) || 0,
+        pretRedus: product.reduced_price
+          ? parseFloat(product.reduced_price)
+          : (product.discount && product.discount > 0
+              ? product.price * (1 - product.discount/100)
+              : null),
+        imagini: product.images
+          ? product.images.map((img: any) => img.url || img.pathGlobal || img)
+          : [product.image || product.img].filter(Boolean),
+        stoc: product.inStock === false
+          ? 0
+          : (product.stockQuantity || product.on_stock
+              ? parseInt(product.stockQuantity || product.on_stock, 10)
+              : 10),
         subcategorie: {
-          id: product.category || "unknown-category",
-          nume: product.category || "Unknown Category",
+          id: product.subcategory?.id || product.category || "unknown-category",
+          nume: product.subcategory?.name || product.category || "Unknown Category",
           categoriePrincipala: {
-            id: "main",
-            nume: "Main Category"
+            id: product.category || "main",
+            nume: product.categoryName || "Main Category"
           }
         },
-        stare: "nou"
+        stare: "nou",
+        // Preserve original smartphone data for filtering
+        nomenclatureType: product.nomenclatureType,
+        characteristics: product.characteristics,
+        source: product.source
       };
     });
   };
@@ -244,6 +271,104 @@ export default function CatalogContent({
         results = results.filter((product) =>
           filters.subcategories.includes(product.subcategorie.id)
         );
+      }
+
+      // Filter by nomenclature type
+      if (filters.nomenclatureType) {
+        results = results.filter((product: any) =>
+          product.nomenclatureType === filters.nomenclatureType
+        );
+      }
+
+      // Apply smartphone-specific filters if the nomenclature type is for smartphones
+      if (filters.nomenclatureType === "d66ca3b3-4e6d-11ea-b816-00155d1de702") {
+        // Filter by API source
+        if (filters.source) {
+          results = results.filter((product: any) =>
+            product.source === filters.source
+          );
+        }
+
+        // Filter by operating system
+        if (filters.operatingSystem && filters.operatingSystem.length > 0) {
+          results = results.filter((product: any) => {
+            if (!product.characteristics) return false;
+
+            // Try to find OS in product characteristics
+            const osCharacteristic = product.characteristics.find((c: any) =>
+              (c.name && (
+                c.name.toLowerCase().includes("operating system") ||
+                c.name.toLowerCase().includes("os")
+              )) || (c.code && c.code.toLowerCase().includes("os"))
+            );
+
+            if (!osCharacteristic || !osCharacteristic.propertyList || !osCharacteristic.propertyList.propertyValue) {
+              // If no characteristic found, try the product name
+              return filters.operatingSystem.some(os =>
+                product.nume && product.nume.toLowerCase().includes(os.toLowerCase())
+              );
+            }
+
+            const osValue = osCharacteristic.propertyList.propertyValue[0]?.simpleValue;
+            return osValue && filters.operatingSystem.some(os =>
+              osValue.toLowerCase().includes(os.toLowerCase())
+            );
+          });
+        }
+
+        // Filter by storage
+        if (filters.storage && filters.storage.length > 0) {
+          results = results.filter((product: any) => {
+            if (!product.characteristics) return false;
+
+            // Try to find storage in product characteristics
+            const storageCharacteristic = product.characteristics.find((c: any) =>
+              (c.name && (
+                c.name.toLowerCase().includes("storage") ||
+                c.name.toLowerCase().includes("memory")
+              )) || (c.code && c.code.toLowerCase().includes("storage"))
+            );
+
+            if (!storageCharacteristic || !storageCharacteristic.propertyList || !storageCharacteristic.propertyList.propertyValue) {
+              // If no characteristic found, try the product name
+              return filters.storage.some(storage =>
+                product.nume && product.nume.toLowerCase().includes(`${storage}gb`)
+              );
+            }
+
+            const storageValue = storageCharacteristic.propertyList.propertyValue[0]?.simpleValue;
+            return storageValue && filters.storage.some(storage =>
+              storageValue.toLowerCase().includes(`${storage}gb`) ||
+              storageValue.toLowerCase().includes(`${storage} gb`)
+            );
+          });
+        }
+
+        // Filter by RAM
+        if (filters.ram && filters.ram.length > 0) {
+          results = results.filter((product: any) => {
+            if (!product.characteristics) return false;
+
+            // Try to find RAM in product characteristics
+            const ramCharacteristic = product.characteristics.find((c: any) =>
+              (c.name && c.name.toLowerCase().includes("ram")) ||
+              (c.code && c.code.toLowerCase().includes("ram"))
+            );
+
+            if (!ramCharacteristic || !ramCharacteristic.propertyList || !ramCharacteristic.propertyList.propertyValue) {
+              // If no characteristic found, try the product name
+              return filters.ram.some(ram =>
+                product.nume && product.nume.toLowerCase().includes(`${ram}gb ram`)
+              );
+            }
+
+            const ramValue = ramCharacteristic.propertyList.propertyValue[0]?.simpleValue;
+            return ramValue && filters.ram.some(ram =>
+              ramValue.toLowerCase().includes(`${ram}gb`) ||
+              ramValue.toLowerCase().includes(`${ram} gb`)
+            );
+          });
+        }
       }
 
       // Filter by price range
@@ -445,25 +570,9 @@ export default function CatalogContent({
 
   // Helper function to update the URL with current filters and page
   const updateURL = (filters: FilterOptions, page: number) => {
-    // Reset pagination on filter change
-    setCurrentPage(page);
-
-    // Build URL parameters
     const currentParams = new URLSearchParams(searchParams.toString());
 
-    // Update filter parameters
-    if (filters.categories.length > 0) {
-      currentParams.set("category", filters.categories.join(','));
-    } else {
-      currentParams.delete("category");
-    }
-
-    if (filters.subcategories.length > 0) {
-      currentParams.set("subcategory", filters.subcategories.join(','));
-    } else {
-      currentParams.delete("subcategory");
-    }
-
+    // Update or remove URL parameters based on filter values
     if (filters.priceRange[0] > 0) {
       currentParams.set("minPrice", filters.priceRange[0].toString());
     } else {
@@ -476,13 +585,25 @@ export default function CatalogContent({
       currentParams.delete("maxPrice");
     }
 
+    if (filters.categories.length > 0) {
+      currentParams.set("category", filters.categories.join(","));
+    } else {
+      currentParams.delete("category");
+    }
+
+    if (filters.subcategories.length > 0) {
+      currentParams.set("subcategory", filters.subcategories.join(","));
+    } else {
+      currentParams.delete("subcategory");
+    }
+
     if (filters.brands.length > 0) {
-      currentParams.set("brand", filters.brands.join(','));
+      currentParams.set("brand", filters.brands.join(","));
     } else {
       currentParams.delete("brand");
     }
 
-    if (filters.sortOption) {
+    if (filters.sortOption && filters.sortOption !== "featured") {
       currentParams.set("sort", filters.sortOption);
     } else {
       currentParams.delete("sort");
@@ -494,11 +615,48 @@ export default function CatalogContent({
       currentParams.delete("inStock");
     }
 
-    // Set page
-    currentParams.set("page", page.toString());
+    // Update nomenclature type parameter
+    if (filters.nomenclatureType) {
+      currentParams.set("nomenclatureType", filters.nomenclatureType);
+    } else {
+      currentParams.delete("nomenclatureType");
+    }
 
-    // Update URL without full page navigation
-    router.replace(`/catalog?${currentParams.toString()}`, { scroll: false });
+    // Update smartphone-specific parameters
+    if (filters.operatingSystem && filters.operatingSystem.length > 0) {
+      currentParams.set("os", filters.operatingSystem.join(","));
+    } else {
+      currentParams.delete("os");
+    }
+
+    if (filters.storage && filters.storage.length > 0) {
+      currentParams.set("storage", filters.storage.join(","));
+    } else {
+      currentParams.delete("storage");
+    }
+
+    if (filters.ram && filters.ram.length > 0) {
+      currentParams.set("ram", filters.ram.join(","));
+    } else {
+      currentParams.delete("ram");
+    }
+
+    if (filters.source) {
+      currentParams.set("source", filters.source);
+    } else {
+      currentParams.delete("source");
+    }
+
+    // Always include page parameter (except for page 1)
+    if (page > 1) {
+      currentParams.set("page", page.toString());
+    } else {
+      currentParams.delete("page");
+    }
+
+    // Avoid page reloads for client-side filtering
+    const newUrl = `?${currentParams.toString()}`;
+    router.push(newUrl, { scroll: false });
   };
 
   return (

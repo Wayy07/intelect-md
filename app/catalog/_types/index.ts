@@ -26,6 +26,14 @@ export interface FilterOptions {
   brands: string[];
   sortOption: string;
   inStock: boolean;
+  nomenclatureType?: string;
+  // Smartphone specific filters
+  operatingSystem?: string[];
+  storage?: string[];
+  ram?: string[];
+  cameraMP?: number;
+  screenSize?: [number, number];
+  source?: string; // For tracking which API source the product came from
 }
 
 export interface CatalogContentProps {

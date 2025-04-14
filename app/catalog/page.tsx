@@ -3,7 +3,8 @@ import {
   getSpecificProducts,
   getSpecificProductIds,
   getProductsByNomenclatureType,
-  getSmartphoneProducts
+  getSmartphoneProducts,
+  getSmartphoneProductsFromMultipleSources
 } from "@/lib/product-api";
 import { Product } from "@/lib/product-api";
 import CatalogContent from "./CatalogContent";
@@ -30,6 +31,12 @@ const NOMENCLATURE_TYPES = {
   SMARTPHONE: "d66ca3b3-4e6d-11ea-b816-00155d1de702"
 };
 
+// Category mappings for easy identification
+const CATEGORY_MAPPINGS = {
+  SMARTPHONE_CATEGORIES: ["smartphone-uri-si-gadget-uri", "telefoane", "smartphones"],
+  SMARTPHONE_SUBCATEGORIES: ["smartphone-uri", "smartphones", "mobile", "telefoane"]
+};
+
 // This is the server component
 export default async function CatalogPage({
   searchParams,
@@ -44,6 +51,35 @@ export default async function CatalogPage({
   const subcategoryParam = getParameterValue(params.subcategory);
   const brandParam = getParameterValue(params.brand);
   const nomenclatureTypeParam = getParameterValue(params.nomenclatureType);
+  const sourceParam = getParameterValue(params.source);
+
+  // Auto-detect smartphone category/subcategory and set nomenclature type
+  let effectiveNomenclatureType = nomenclatureTypeParam;
+  if (!effectiveNomenclatureType && categoryParam) {
+    const lowerCategory = categoryParam.toLowerCase();
+    const lowerSubcategory = subcategoryParam ? subcategoryParam.toLowerCase() : '';
+
+    // Check if this is a smartphone category or subcategory
+    const isSmartphoneCategory = CATEGORY_MAPPINGS.SMARTPHONE_CATEGORIES.some(
+      cat => lowerCategory.includes(cat)
+    );
+
+    const isSmartphoneSubcategory = CATEGORY_MAPPINGS.SMARTPHONE_SUBCATEGORIES.some(
+      subcat => lowerSubcategory.includes(subcat)
+    );
+
+    if (isSmartphoneCategory || isSmartphoneSubcategory) {
+      console.log('Auto-detected smartphone category - setting nomenclature type');
+      effectiveNomenclatureType = NOMENCLATURE_TYPES.SMARTPHONE;
+    }
+  }
+
+  // Check for the "only in stock" parameter with a default of true for smartphones
+  const inStockParam = getParameterValue(params.inStock);
+  // For smartphones, default to showing only in-stock items unless explicitly set to false
+  const effectiveInStock = effectiveNomenclatureType === NOMENCLATURE_TYPES.SMARTPHONE
+    ? inStockParam !== "false"  // Default to true for smartphones unless explicitly false
+    : inStockParam === "true";  // Regular behavior for other products
 
   // Parse comma-separated values for multiple categories/subcategories/brands
   const categories = categoryParam ? categoryParam.split(',') : [];
@@ -54,8 +90,17 @@ export default async function CatalogPage({
   const maxPriceParam = getParameterValue(params.maxPrice);
   const searchQuery = getParameterValue(params.q);
   const sortParam = getParameterValue(params.sort);
-  const inStockParam = getParameterValue(params.inStock);
   const pageParam = getParameterValue(params.page) || '1';
+
+  // Get smartphone-specific filters
+  const operatingSystemParam = getParameterValue(params.os);
+  const storageParam = getParameterValue(params.storage);
+  const ramParam = getParameterValue(params.ram);
+
+  // Parse these into arrays if they exist
+  const operatingSystems = operatingSystemParam ? operatingSystemParam.split(',') : [];
+  const storage = storageParam ? storageParam.split(',') : [];
+  const ram = ramParam ? ramParam.split(',') : [];
 
   // Parse the initial page
   const initialPage = parseInt(pageParam, 10) || 1;
@@ -74,16 +119,74 @@ export default async function CatalogPage({
 
   try {
     console.log("Fetching products for catalog with filters");
+    console.log(`NomenclatureType: ${effectiveNomenclatureType}`);
+    console.log(`InStock: ${effectiveInStock}`);
 
     // Check if we need to filter by nomenclatureType (for smartphones)
-    if (nomenclatureTypeParam === NOMENCLATURE_TYPES.SMARTPHONE) {
-      console.log("Fetching smartphone products");
-      initialProducts = await getSmartphoneProducts();
+    if (effectiveNomenclatureType === NOMENCLATURE_TYPES.SMARTPHONE) {
+      console.log("Fetching smartphone products from multiple sources");
+      // Use the new function that fetches from multiple sources
+      initialProducts = await getSmartphoneProductsFromMultipleSources();
+
+      console.log(`Initial smartphone products count: ${initialProducts.length}`);
+
+      // Filter by source if specified
+      if (sourceParam) {
+        initialProducts = initialProducts.filter(product =>
+          (product as any).source === sourceParam
+        );
+        console.log(`Filtered to ${initialProducts.length} smartphone products from source: ${sourceParam}`);
+      }
+
+      // Apply smartphone-specific filters
+      if (operatingSystems.length > 0) {
+        initialProducts = initialProducts.filter(product => {
+          // Look for OS in product.characteristics or any other relevant field
+          const productOS = (product as any).characteristics?.find((c: any) =>
+            c.name?.toLowerCase().includes("operating system") ||
+            c.name?.toLowerCase().includes("os")
+          )?.propertyList?.propertyValue?.[0]?.simpleValue?.toLowerCase();
+
+          return productOS && operatingSystems.some(os =>
+            productOS.includes(os.toLowerCase())
+          );
+        });
+        console.log(`Filtered to ${initialProducts.length} smartphone products by OS`);
+      }
+
+      if (storage.length > 0) {
+        initialProducts = initialProducts.filter(product => {
+          // Look for storage capacity in product characteristics
+          const productStorage = (product as any).characteristics?.find((c: any) =>
+            c.name?.toLowerCase().includes("storage") ||
+            c.name?.toLowerCase().includes("memory")
+          )?.propertyList?.propertyValue?.[0]?.simpleValue?.toLowerCase();
+
+          return productStorage && storage.some(size =>
+            productStorage.includes(size.toLowerCase())
+          );
+        });
+        console.log(`Filtered to ${initialProducts.length} smartphone products by storage`);
+      }
+
+      if (ram.length > 0) {
+        initialProducts = initialProducts.filter(product => {
+          // Look for RAM in product characteristics
+          const productRam = (product as any).characteristics?.find((c: any) =>
+            c.name?.toLowerCase().includes("ram")
+          )?.propertyList?.propertyValue?.[0]?.simpleValue?.toLowerCase();
+
+          return productRam && ram.some(size =>
+            productRam.includes(size.toLowerCase())
+          );
+        });
+        console.log(`Filtered to ${initialProducts.length} smartphone products by RAM`);
+      }
     }
     // If specific nomenclatureType is provided but not a known constant
-    else if (nomenclatureTypeParam) {
-      console.log(`Fetching products with nomenclatureType: ${nomenclatureTypeParam}`);
-      initialProducts = await getProductsByNomenclatureType(nomenclatureTypeParam);
+    else if (effectiveNomenclatureType) {
+      console.log(`Fetching products with nomenclatureType: ${effectiveNomenclatureType}`);
+      initialProducts = await getProductsByNomenclatureType(effectiveNomenclatureType);
     }
     // Default to specific products if no nomenclatureType filter
     else {
@@ -100,12 +203,12 @@ export default async function CatalogPage({
       console.log(`Using price filter: ${minPrice} - ${maxPrice} MDL`);
 
       initialProducts = initialProducts.filter(product => {
-        const regularPrice = typeof product.price === 'number' ?
-          product.price : parseFloat(String(product.price)) || 0;
+        const regularPrice = typeof (product as any).price === 'number' ?
+          (product as any).price : parseFloat(String((product as any).price)) || 0;
 
-        const reducedPrice = product.reduced_price ?
-          (typeof product.reduced_price === 'number' ?
-            product.reduced_price : parseFloat(String(product.reduced_price))) : null;
+        const reducedPrice = (product as any).reduced_price ?
+          (typeof (product as any).reduced_price === 'number' ?
+            (product as any).reduced_price : parseFloat(String((product as any).reduced_price))) : null;
 
         const finalPrice = reducedPrice !== null ? reducedPrice : regularPrice;
         return finalPrice >= priceRange[0] && finalPrice <= priceRange[1];
@@ -133,8 +236,12 @@ export default async function CatalogPage({
     subcategories: subcategories,
     brands: brands,
     sortOption: sortParam || "price-asc",
-    inStock: inStockParam === "true" ? true : false,
-    nomenclatureType: nomenclatureTypeParam || "",
+    inStock: effectiveInStock,
+    nomenclatureType: effectiveNomenclatureType || "",
+    operatingSystem: operatingSystems,
+    storage: storage,
+    ram: ram,
+    source: sourceParam || "",
   };
 
   return (

@@ -224,7 +224,7 @@ export default function ChildrensToys() {
 
   return (
     <>
-      <section className="container mx-auto py-12 px-2 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
+      <section className="container mx-auto py-12 px-2 sm:px-6 xl:px-6 xl:max-w-[1250px] 3xl:px-16 3xl:max-w-[60%]">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl flex items-center gap-2">
@@ -261,7 +261,7 @@ export default function ChildrensToys() {
               {extendedProducts.map((product, index) => (
                 <CarouselItem
                   key={`${product.id}-${index}`}
-                  className={isMobile ? "basis-1/1 pl-2" : "basis-1/1 md:basis-1/3 lg:basis-1/4 pl-2 md:pl-3 lg:pl-4"}
+                  className={isMobile ? "basis-1/2 pl-2 sm:basis-1/2" : "basis-1/1 md:basis-1/3 lg:basis-1/4 pl-2 md:pl-3 lg:pl-4"}
                 >
                   <Link href={`/produs/${product.id}`} className="block h-full">
                     {isMobile ? (

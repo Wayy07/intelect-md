@@ -116,6 +116,14 @@ export interface FilterOptions {
   brands: string[];
   sortOption: string;
   inStock: boolean;
+  nomenclatureType?: string;
+  // Smartphone specific filters
+  operatingSystem?: string[];
+  storage?: string[];
+  ram?: string[];
+  cameraMP?: number;
+  screenSize?: [number, number];
+  source?: string; // For tracking which API source the product came from
 }
 
 const defaultPriceRange: [number, number] = [0, 10000];
@@ -124,6 +132,38 @@ const sortOptions = [
   { value: "price-asc", label: "price_low_to_high" },
   { value: "price-desc", label: "price_high_to_low" },
 
+];
+
+// Add these smartphone-specific constants
+const SMARTPHONE_OPERATING_SYSTEMS = [
+  { id: "android", name: "Android" },
+  { id: "ios", name: "iOS" },
+  { id: "harmonyos", name: "HarmonyOS" }
+];
+
+const SMARTPHONE_STORAGE_OPTIONS = [
+  { id: "16", name: "16GB" },
+  { id: "32", name: "32GB" },
+  { id: "64", name: "64GB" },
+  { id: "128", name: "128GB" },
+  { id: "256", name: "256GB" },
+  { id: "512", name: "512GB" },
+  { id: "1tb", name: "1TB" }
+];
+
+const SMARTPHONE_RAM_OPTIONS = [
+  { id: "2", name: "2GB" },
+  { id: "3", name: "3GB" },
+  { id: "4", name: "4GB" },
+  { id: "6", name: "6GB" },
+  { id: "8", name: "8GB" },
+  { id: "12", name: "12GB" },
+  { id: "16", name: "16GB" }
+];
+
+const SMARTPHONE_API_SOURCES = [
+  { id: "ultra", name: "Ultra API" },
+  { id: "legacy", name: "Legacy API" }
 ];
 
 // Add this custom SliderWrapper component
@@ -757,6 +797,152 @@ const MemoizedFilterContent = memo(function MemoizedFilterContent({
           ))}
         </div>
       </div>
+
+      {/* Smartphone filters */}
+      {filters.nomenclatureType === "d66ca3b3-4e6d-11ea-b816-00155d1de702" && (
+        <>
+          <AccordionItem value="operating-system" className="border-slate-200">
+            <AccordionTrigger className="text-base hover:no-underline hover:text-primary py-3">
+              {t("operating_system")}
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 px-1">
+              <div className="space-y-2">
+                {SMARTPHONE_OPERATING_SYSTEMS.map((os) => (
+                  <div key={os.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`os-${os.id}`}
+                      checked={filters.operatingSystem?.includes(os.id)}
+                      onCheckedChange={(checked) => {
+                        const osFilters = [...(filters.operatingSystem || [])];
+                        if (checked) {
+                          osFilters.push(os.id);
+                        } else {
+                          const index = osFilters.indexOf(os.id);
+                          if (index !== -1) osFilters.splice(index, 1);
+                        }
+                        setFilters({ ...filters, operatingSystem: osFilters });
+                        applyFilters({ ...filters, operatingSystem: osFilters });
+                      }}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    />
+                    <Label
+                      htmlFor={`os-${os.id}`}
+                      className="cursor-pointer text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {os.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="storage" className="border-slate-200">
+            <AccordionTrigger className="text-base hover:no-underline hover:text-primary py-3">
+              {t("storage")}
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 px-1">
+              <div className="space-y-2">
+                {SMARTPHONE_STORAGE_OPTIONS.map((storage) => (
+                  <div key={storage.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`storage-${storage.id}`}
+                      checked={filters.storage?.includes(storage.id)}
+                      onCheckedChange={(checked) => {
+                        const storageFilters = [...(filters.storage || [])];
+                        if (checked) {
+                          storageFilters.push(storage.id);
+                        } else {
+                          const index = storageFilters.indexOf(storage.id);
+                          if (index !== -1) storageFilters.splice(index, 1);
+                        }
+                        setFilters({ ...filters, storage: storageFilters });
+                        applyFilters({ ...filters, storage: storageFilters });
+                      }}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    />
+                    <Label
+                      htmlFor={`storage-${storage.id}`}
+                      className="cursor-pointer text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {storage.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="ram" className="border-slate-200">
+            <AccordionTrigger className="text-base hover:no-underline hover:text-primary py-3">
+              {t("ram")}
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 px-1">
+              <div className="space-y-2">
+                {SMARTPHONE_RAM_OPTIONS.map((ram) => (
+                  <div key={ram.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`ram-${ram.id}`}
+                      checked={filters.ram?.includes(ram.id)}
+                      onCheckedChange={(checked) => {
+                        const ramFilters = [...(filters.ram || [])];
+                        if (checked) {
+                          ramFilters.push(ram.id);
+                        } else {
+                          const index = ramFilters.indexOf(ram.id);
+                          if (index !== -1) ramFilters.splice(index, 1);
+                        }
+                        setFilters({ ...filters, ram: ramFilters });
+                        applyFilters({ ...filters, ram: ramFilters });
+                      }}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    />
+                    <Label
+                      htmlFor={`ram-${ram.id}`}
+                      className="cursor-pointer text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {ram.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Only show API source filter in development environment */}
+          {process.env.NODE_ENV === 'development' && (
+            <AccordionItem value="source" className="border-slate-200">
+              <AccordionTrigger className="text-base hover:no-underline hover:text-primary py-3">
+                {t("api_source")}
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 px-1">
+                <div className="space-y-2">
+                  {SMARTPHONE_API_SOURCES.map((source) => (
+                    <div key={source.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`source-${source.id}`}
+                        checked={filters.source === source.id}
+                        onCheckedChange={(checked) => {
+                          const newSource = checked ? source.id : '';
+                          setFilters({ ...filters, source: newSource });
+                          applyFilters({ ...filters, source: newSource });
+                        }}
+                        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                      />
+                      <Label
+                        htmlFor={`source-${source.id}`}
+                        className="cursor-pointer text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {source.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+        </>
+      )}
 
       {/* Clear filters button */}
       <Button

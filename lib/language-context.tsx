@@ -17,6 +17,10 @@ export const translations: Translations = {
     ro: "Luni - Vineri: 9:00 - 18:00",
     ru: "Понедельник - Пятница: 9:00 - 18:00",
     },
+    product_count: {
+        ro: "Produse",
+        ru: "товары",
+    },
     product_count_singular: {
         ro: "Produs",
         ru: "товар",
@@ -815,12 +819,12 @@ checkout_success: {
     ru: "О нас магазине",
   },
   weeklyOffers: {
-    ro: "Oferta săptămânală",
-    ru: "Недельное предложение",
+    ro: "Oferta lunară",
+    ru: "Месячное предложение",
     },
   untilEndOfWeek: {
-      ro: "Până la sfârșitul săptămânzii",
-      ru: "До конца недели",
+      ro: "Până la sfârșitul lunii",
+      ru: "До конца месяца",
     },
   childrenToys: {
     ro: "Jucării pentru copii",

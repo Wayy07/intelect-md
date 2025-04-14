@@ -59,6 +59,8 @@ export default function SpecialOffers() {
   const [isMobile, setIsMobile] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const carouselApiRef = useRef<CarouselApi | null>(null);
+  // Add state to track products with failed images
+  const [failedProductIds, setFailedProductIds] = useState<Set<string>>(new Set());
 
   // Check if we're on mobile
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function SpecialOffers() {
         console.log('Fetching special offers from:', `${API_URL}/special-offers`);
 
         // Use the dedicated special-offers endpoint with cache disabled
-        const response = await fetch(`${API_URL}/special-offers?limit=12`, {
+        const response = await fetch(`${API_URL}/special-offers?limit=18`, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -188,6 +190,16 @@ export default function SpecialOffers() {
     };
   }, []);
 
+  // Handle failed image loading
+  const handleImageError = useCallback((productId: string) => {
+    console.log(`Product ${productId} has a broken image, removing from carousel`);
+    setFailedProductIds(prev => {
+      const updated = new Set(prev);
+      updated.add(productId);
+      return updated;
+    });
+  }, []);
+
   const handleAddToCart = (product: any) => {
     // TODO: Implement cart functionality
     console.log("Add to cart:", product);
@@ -206,8 +218,11 @@ export default function SpecialOffers() {
     });
   };
 
+  // Filter out products with failed images
+  const validProducts = products.filter(product => !failedProductIds.has(product.id));
+
   // Create duplicate products for continuous scrolling effect
-  const extendedProducts = [...products, ...products];
+  const extendedProducts = [...validProducts, ...validProducts];
 
   // Loading skeleton
   if (isLoading) {
@@ -234,7 +249,7 @@ export default function SpecialOffers() {
   }
 
   // No offers available
-  if (products.length === 0) {
+  if (validProducts.length === 0) {
     return (
       <section className="container mx-auto py-12 px-4 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
         <div className="mb-8">
@@ -249,7 +264,7 @@ export default function SpecialOffers() {
 
   return (
     <>
-      <section className="container mx-auto py-12 px-2 sm:px-6 xl:px-6 xl:max-w-[65%] 3xl:px-16 3xl:max-w-[60%]">
+      <section className="container mx-auto py-12 px-2 sm:px-6 xl:px-6 xl:max-w-[1250px] 3xl:px-16 3xl:max-w-[60%]">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl flex items-center gap-2">
@@ -286,7 +301,7 @@ export default function SpecialOffers() {
               {extendedProducts.map((product, index) => (
                 <CarouselItem
                   key={`${product.id}-${index}`}
-                  className={isMobile ? "basis-1/1 pl-2" : "basis-1/1 md:basis-1/3 lg:basis-1/4 pl-2 md:pl-3 lg:pl-4"}
+                  className={isMobile ? "basis-1/2 pl-2 sm:basis-1/2" : "basis-1/1 md:basis-1/3 lg:basis-1/4 pl-2 md:pl-3 lg:pl-4"}
                 >
                   <Link href={`/produs/${product.id}`} className="block h-full">
                     {isMobile ? (
@@ -295,6 +310,7 @@ export default function SpecialOffers() {
                         onAddToFavorites={handleAddToFavorites}
                         disableLink={true}
                         hideDiscount={true}
+                        onImageError={handleImageError}
                       />
                     ) : (
                       <ProductCard
@@ -302,6 +318,7 @@ export default function SpecialOffers() {
                         onAddToFavorites={handleAddToFavorites}
                         disableLink={true}
                         hideDiscount={true}
+                        onImageError={handleImageError}
                       />
                     )}
                   </Link>

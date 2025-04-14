@@ -47,7 +47,18 @@ interface UltraProduct extends BaseProduct {
 }
 
 // Product type that can be either format
-export type Product = LegacyProduct | UltraProduct;
+export type Product = LegacyProduct | UltraProduct | (UltraProduct & {
+  source?: string;
+  characteristics?: Array<{
+    name: string;
+    code: string;
+    propertyList?: {
+      propertyValue: Array<{
+        simpleValue: string;
+      }>
+    }
+  }>;
+});
 
 // Type guards to check which format a product is in
 export async function isLegacyProduct(product: Product): Promise<boolean> {
@@ -683,4 +694,261 @@ export async function getUnifiedProducts(options: {
   }
 
   return products.slice(0, limit);
+}
+
+/**
+ * Fetches Samsung products for monthly offers
+ *
+ * @param category Optional category to filter by (smartphones, tvs, tablets)
+ * @param limit Number of products to fetch per category
+ * @returns Object with product arrays by category, or just one category array
+ */
+export async function getMonthlyOffers(
+  category?: 'smartphones' | 'tvs' | 'tablets',
+  limit: number = 16
+): Promise<{
+  smartphones?: any[],
+  tvs?: any[],
+  tablets?: any[]
+}> {
+  try {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+    // Fix: Remove /api from the base URL since we add it explicitly
+    const baseUrl = API_BASE_URL.endsWith('/api')
+      ? API_BASE_URL
+      : `${API_BASE_URL}/api`;
+
+    let url = `${baseUrl}/monthly-offers`;
+
+    // Add query parameters if provided
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (limit) params.append('limit', limit.toString());
+
+    // Append params to URL if any exist
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    console.log(`Fetching monthly offers from: ${url}`);
+
+    const response = await fetch(url, {
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch monthly offers: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // If success is false, throw error
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to fetch monthly offers');
+    }
+
+    // Return either the specific category products or the result object with all categories
+    if (category && data.products) {
+      // Return single category result
+      return { [category]: data.products };
+    } else {
+      // Return all categories
+      return data.result || { smartphones: [], tvs: [], tablets: [] };
+    }
+  } catch (error) {
+    console.error('Error fetching monthly offers:', error);
+    // Return empty result on error
+    return { smartphones: [], tvs: [], tablets: [] };
+  }
+}
+
+/**
+ * Normalizes smartphones from any source to a consistent format
+ * This ensures all smartphone products have the necessary properties
+ * regardless of their source
+ */
+export async function normalizeSmartphoneProduct(product: any): Promise<Product> {
+  // First determine if it's a legacy or ultra product
+  const isLegacy = _isLegacyProduct(product);
+  const isUltra = _isUltraProduct(product);
+
+  // Convert legacy products to Ultra format first
+  let normalizedProduct = isLegacy
+    ? await convertLegacyToUltraProduct(product)
+    : { ...product };
+
+  // Verify this is actually a smartphone by checking name
+  const nameToCheck = normalizedProduct.name ||
+    (isLegacy ? product.titleRO : '') ||
+    normalizedProduct.description || '';
+
+  const isSmartphone =
+    nameToCheck.toLowerCase().includes('smartphone') ||
+    nameToCheck.toLowerCase().includes('iphone') ||
+    nameToCheck.toLowerCase().includes('samsung galaxy s') ||
+    nameToCheck.toLowerCase().includes('huawei p') ||
+    nameToCheck.toLowerCase().includes('xiaomi mi') ||
+    nameToCheck.toLowerCase().includes('oneplus') ||
+    nameToCheck.toLowerCase().includes('pixel');
+
+  if (!isSmartphone) {
+    // Add a proper smartphone flag to help filter more accurately
+    normalizedProduct.isSmartphone = false;
+  } else {
+    normalizedProduct.isSmartphone = true;
+  }
+
+  // Ensure all required fields are present
+  normalizedProduct.source = isLegacy ? 'legacy' : 'ultra';
+
+  // Ensure nomenclatureType is set for smartphones
+  normalizedProduct.nomenclatureType = "d66ca3b3-4e6d-11ea-b816-00155d1de702";
+
+  // Ensure inStock status is correctly set
+  normalizedProduct.inStock = isLegacy
+    ? product.on_stock !== "0" && parseInt(product.on_stock, 10) > 0
+    : !!normalizedProduct.inStock;
+
+  // Extract characteristics from product name if not present
+  if (!normalizedProduct.characteristics || !Array.isArray(normalizedProduct.characteristics)) {
+    normalizedProduct.characteristics = [];
+
+    // Extract OS info
+    if (normalizedProduct.name) {
+      const name = normalizedProduct.name.toLowerCase();
+      let osMatch = '';
+
+      if (name.includes('android')) osMatch = 'android';
+      else if (name.includes('ios') || name.includes('iphone')) osMatch = 'ios';
+      else if (name.includes('harmony')) osMatch = 'harmonyos';
+
+      if (osMatch) {
+        normalizedProduct.characteristics.push({
+          name: 'Operating System',
+          code: 'OS',
+          propertyList: {
+            propertyValue: [{ simpleValue: osMatch }]
+          }
+        });
+      }
+
+      // Extract storage info from name (common patterns like 128GB, 64 GB, etc.)
+      const storageRegex = /\b(\d+)\s*gb\b/i;
+      const storageMatch = name.match(storageRegex);
+
+      if (storageMatch && storageMatch[1]) {
+        normalizedProduct.characteristics.push({
+          name: 'Storage',
+          code: 'STORAGE',
+          propertyList: {
+            propertyValue: [{ simpleValue: `${storageMatch[1]}GB` }]
+          }
+        });
+      }
+
+      // Extract RAM info from name (common patterns like 8GB RAM, 6 GB RAM)
+      const ramRegex = /\b(\d+)\s*gb\s*ram\b/i;
+      const ramMatch = name.match(ramRegex);
+
+      if (ramMatch && ramMatch[1]) {
+        normalizedProduct.characteristics.push({
+          name: 'RAM',
+          code: 'RAM',
+          propertyList: {
+            propertyValue: [{ simpleValue: `${ramMatch[1]}GB` }]
+          }
+        });
+      }
+    }
+  }
+
+  return normalizedProduct;
+}
+
+/**
+ * Gets smartphone products from multiple sources and combines them
+ * This function fetches from both the Ultra API and a secondary API,
+ * adds a source field to each product, and returns a combined dataset
+ */
+export async function getSmartphoneProductsFromMultipleSources(): Promise<Product[]> {
+  try {
+    const SMARTPHONE_TYPE_ID = "d66ca3b3-4e6d-11ea-b816-00155d1de702";
+    const products: Product[] = [];
+
+    // First try to get smartphones from the Ultra API
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_BASE_URL}/products?nomenclatureType=${SMARTPHONE_TYPE_ID}&limit=100`, {
+        next: { revalidate: 3600 } // Cache for 1 hour
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.products && data.products.length > 0) {
+          // Normalize each product
+          const ultraProducts = await Promise.all(
+            data.products.map(async (product: any) => {
+              const normalized = await normalizeSmartphoneProduct(product);
+              return normalized;
+            })
+          );
+
+          // Filter to ensure we only get actual smartphones that are in stock
+          const validUltraProducts = ultraProducts.filter(product =>
+            (product as any).isSmartphone === true && (product as any).inStock === true
+          );
+
+          if (validUltraProducts.length > 0) {
+            products.push(...validUltraProducts);
+            console.log(`Fetched ${validUltraProducts.length} valid smartphone products from Ultra API`);
+          } else {
+            console.log(`No valid smartphone products found in Ultra API data`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching smartphones from Ultra API:", error);
+    }
+
+    // Then get smartphones from mock/legacy data as a secondary source
+    try {
+      const legacyProducts = await getSmartphoneProducts();
+      if (legacyProducts && legacyProducts.length > 0) {
+        // Normalize each product
+        const enhancedLegacyProducts = await Promise.all(
+          legacyProducts.map(async (product) => {
+            const normalized = await normalizeSmartphoneProduct(product);
+            return normalized;
+          })
+        );
+
+        // Filter to ensure we only get actual smartphones that are in stock
+        const validLegacyProducts = enhancedLegacyProducts.filter(product =>
+          (product as any).isSmartphone === true && (product as any).inStock === true
+        );
+
+        if (validLegacyProducts.length > 0) {
+          products.push(...validLegacyProducts);
+          console.log(`Fetched ${validLegacyProducts.length} valid smartphone products from legacy source`);
+        } else {
+          console.log(`No valid smartphone products found in legacy data`);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching smartphones from legacy source:", error);
+    }
+
+    // Deduplicate products by ID
+    const uniqueProducts = Array.from(
+      new Map(products.map(product => [product.id, product])).values()
+    );
+
+    console.log(`Returning ${uniqueProducts.length} combined smartphone products`);
+    return uniqueProducts;
+  } catch (error) {
+    console.error("Error in getSmartphoneProductsFromMultipleSources:", error);
+    // Return empty array as fallback
+    return [];
+  }
 }

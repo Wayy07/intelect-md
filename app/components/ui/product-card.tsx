@@ -47,6 +47,7 @@ interface ProductCardProps {
   isFavorite?: boolean;
   onFavoriteToggle?: () => void;
   hideDiscount?: boolean;
+  onImageError?: (productId: string) => void;
 }
 
 // Modern Desktop Product Card
@@ -57,6 +58,7 @@ function ProductCard({
   isFavorite: propIsFavorite,
   onFavoriteToggle,
   hideDiscount = false,
+  onImageError,
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -187,6 +189,14 @@ function ProductCard({
               )}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority
+              onError={(e) => {
+                console.log(`Image failed to load: ${product.imagini[0]}`);
+                const imgElement = e.currentTarget as HTMLImageElement;
+                imgElement.src = "https://placehold.co/400x400/eee/999?text=Image+Unavailable";
+                if (onImageError) {
+                  onImageError(product.id);
+                }
+              }}
             />
 
             {/* Quick View Button */}
@@ -323,9 +333,7 @@ function ProductCard({
     content
   ) : (
     <Link
-      href={`/catalog/${
-        product.subcategorie?.categoriePrincipala?.id || "all"
-      }/${product.subcategorie?.id || "all"}/${product.id}`}
+      href={`/produs/${product.id}`}
       className="block h-full"
     >
       {content}
@@ -341,6 +349,7 @@ function ProductCardCompact({
   isFavorite: propIsFavorite,
   onFavoriteToggle,
   hideDiscount = false,
+  onImageError,
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -417,15 +426,15 @@ function ProductCardCompact({
   const content = (
     <div className="group relative flex flex-col h-full rounded-xl overflow-hidden border border-gray-100 bg-white/90 backdrop-blur-sm hover:shadow-sm hover:border-primary/10 transition-all">
       {/* Top ribbon - moved both discount and credit badges */}
-      <div className="absolute left-0 top-3 z-10 flex flex-col gap-1">
+      <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1">
         {!hideDiscount && discount > 0 && (
-          <div className="transform-gpu rounded-r-md bg-gradient-to-r from-red-600 to-red-500 pl-2 pr-2.5 py-0.5 text-[11px] font-semibold text-white shadow-md inline-flex items-center justify-center">
+          <div className="transform-gpu rounded-md bg-gradient-to-r from-red-600 to-red-500 pl-2 pr-2.5 py-0.5 text-[11px] font-semibold text-white shadow-md inline-flex items-center justify-center">
             <span>-{discount}%</span>
           </div>
         )}
         {/* Only show credit badge for products with price above 1000 lei */}
         {(product.pret !== undefined && product.pret !== null && product.pret >= 1000) && (
-          <div className="transform-gpu rounded-r-md bg-gradient-to-r from-primary to-primary/80 pl-1 pr-2.5 py-0.5 text-[11px] font-semibold text-white shadow-md flex items-center gap-1">
+          <div className="transform-gpu rounded-md bg-gradient-to-r from-primary to-primary/80 pl-1 pr-2.5 py-0.5 text-[11px] font-semibold text-white shadow-md flex items-center gap-1">
             <span className="inline-flex items-center justify-center bg-white text-primary rounded-full h-4 w-4 text-[8px] font-bold">
               0%
             </span>
@@ -435,10 +444,10 @@ function ProductCardCompact({
       </div>
 
       {/* Favorite button - moved to top-right with larger touch area */}
-      <div className="absolute right-1 top-1 z-10">
+      <div className="absolute right-2 top-2 z-10">
         <button
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-full transition-all shadow-sm active:scale-90",
+            "flex h-8 w-8 items-center justify-center rounded-full transition-all shadow-sm active:scale-90",
             isProductFavorite
               ? "bg-primary/10 text-primary"
               : "bg-white/80 backdrop-blur-sm text-gray-500"
@@ -449,14 +458,14 @@ function ProductCardCompact({
           }
         >
           <Heart
-            className="h-4.5 w-4.5"
+            className="h-4 w-4"
             fill={isProductFavorite ? "currentColor" : "none"}
           />
         </button>
       </div>
 
-      {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-white/80">
+      {/* Image Container - fixed aspect-[4/3] to match desktop cards */}
+      <div className="relative pt-[80%] overflow-hidden bg-white/80">
         {product.imagini?.[0] ? (
           <Image
             src={product.imagini[0]}
@@ -468,6 +477,14 @@ function ProductCardCompact({
             )}
             sizes="(max-width: 768px) 50vw, 33vw"
             priority
+            onError={(e) => {
+              console.log(`Image failed to load: ${product.imagini[0]}`);
+              const imgElement = e.currentTarget as HTMLImageElement;
+              imgElement.src = "https://placehold.co/400x400/eee/999?text=Image+Unavailable";
+              if (onImageError) {
+                onImageError(product.id);
+              }
+            }}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -479,55 +496,55 @@ function ProductCardCompact({
       {/* Divider line */}
       <div className="h-px w-full bg-gray-100"></div>
 
-      {/* Details Container - optimized for mobile */}
-      <div className="flex flex-1 flex-col p-2.5">
+      {/* Details Container - optimized for mobile - match padding with desktop */}
+      <div className="flex flex-1 flex-col p-4">
         {/* Category & Title */}
-        <div className="mb-1.5">
-          <div className="text-[10px] text-gray-500 font-medium mb-0.5 truncate">
+        <div className="mb-1">
+          <div className="text-xs text-gray-500 font-medium mb-1 truncate">
             {(product.subcategorie?.categoriePrincipala?.nume && product.subcategorie?.categoriePrincipala?.nume !== "")
               ? product.subcategorie.categoriePrincipala.nume
               : (product.subcategorie?.nume && product.subcategorie?.nume !== "")
                 ? product.subcategorie.nume
                 : t?.("category_unknown") || "Unknown category"}
           </div>
-          <h3 className="line-clamp-2 text-sm font-medium text-gray-800 min-h-[2.5rem]">
+          <h3 className="line-clamp-2 text-sm font-medium text-gray-800 min-h-[2.5rem] group-hover:text-primary transition-colors duration-300">
             {product.nume || t?.("product_unknown") || "Unknown product"}
           </h3>
         </div>
 
-        {/* Price display format update */}
-        <div className="px-2 pb-2 pt-1">
-          <div className="flex flex-col">
-            {!hideDiscount && (product.pretRedus !== undefined && product.pretRedus !== null) && product.pretRedus < product.pret ? (
-              <>
-                <span className="text-sm font-semibold text-primary">
-                  {(product.pretRedus !== undefined && product.pretRedus !== null)
-                    ? product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
-                    : "Price unavailable"}
-                </span>
-                <span className="text-xs text-muted-foreground line-through">
+        {/* Price display format update - match with desktop layout */}
+        <div className="mt-auto">
+          {!hideDiscount && (product.pretRedus !== undefined && product.pretRedus !== null) && product.pretRedus < product.pret ? (
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-primary">
+                {(product.pretRedus !== undefined && product.pretRedus !== null)
+                  ? product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
+                  : "Price unavailable"}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-400 line-through">
                   {(product.pret !== undefined && product.pret !== null)
                     ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
                     : ""}
                 </span>
-                {discount > 0 && (
-                  <span className="absolute right-2 top-2 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                    -{discount}%
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="text-sm font-semibold text-primary">
+                <span className="text-xs font-medium text-red-500">
+                  -{discount}%
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-primary">
                 {(product.pret !== undefined && product.pret !== null)
                   ? product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " lei"
                   : "Price unavailable"}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Add to Cart Button - optimized for touch */}
-        <div className="mt-2">
+        <div className="mt-3">
           <ShimmerButton
             onClick={(e) => {
               e.preventDefault();
@@ -547,8 +564,8 @@ function ProductCardCompact({
               product.stoc === 0 ? "rgba(0, 0, 0, 0.5)" : "rgba(0, 0, 0, 0.9)"
             }
           >
-            <span className="whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white flex items-center justify-center gap-3">
-              <ShoppingCart className="h-3.5 w-3.5" />
+            <span className="whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white flex items-center justify-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
               {isAddingToCart
                 ? t?.("adding_to_cart") || "Adding..."
                 : product.stoc === 0
