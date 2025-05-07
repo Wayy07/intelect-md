@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
 
     // Create the order in the database
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx: any) => {
       // Create customer info
       const customerInfo = await tx.customerInfo.create({
         data: {
@@ -106,6 +106,16 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Log the order that we're returning
+      console.log("Order created in transaction:", JSON.stringify({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        hasCustomer: !!order.customer,
+        customerDetails: order.customer
+          ? `${order.customer.firstName} ${order.customer.lastName}`
+          : 'missing'
+      }));
+
       return order;
     });
 
@@ -116,8 +126,20 @@ export async function POST(request: NextRequest) {
       day: 'numeric',
     });
 
+    // Debug the order object to identify the issue
+    console.log("Order object after transaction:", JSON.stringify({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      hasCustomer: !!order.customer,
+      customerData: order.customer ? {
+        firstName: order.customer.firstName,
+        lastName: order.customer.lastName,
+        email: order.customer.email
+      } : 'Missing customer data'
+    }, null, 2));
+
     // Format customer name
-    const customerName = `${order.customer.firstName} ${order.customer.lastName}`;
+    const customerName = `${order.customer?.firstName || 'Customer'} ${order.customer?.lastName || ''}`;
 
     // Format payment method for display
     let displayPaymentMethod;
@@ -148,18 +170,18 @@ export async function POST(request: NextRequest) {
           date: formattedDate,
           total: order.total,
           shippingFee: 0,
-          items: order.items.map(item => ({
+          items: Array.isArray(order.items) ? order.items.map((item: any) => ({
             name: item.name,
             quantity: item.quantity,
             price: item.price,
             total: item.price * item.quantity
-          })),
+          })) : [],
           customer: {
             name: customerName,
-            email: order.customer.email,
-            phone: order.customer.phone,
-            address: order.customer.address || '',
-            city: order.customer.city || ''
+            email: order.customer?.email || customer.email,
+            phone: order.customer?.phone || customer.phone,
+            address: order.customer?.address || customer.address || '',
+            city: order.customer?.city || customer.city || ''
           },
           paymentMethod: displayPaymentMethod,
           paymentMethodType: order.paymentMethod,
@@ -180,18 +202,18 @@ export async function POST(request: NextRequest) {
           orderNumber: order.orderNumber,
           date: formattedDate,
           total: order.total,
-          items: order.items.map(item => ({
+          items: Array.isArray(order.items) ? order.items.map((item: any) => ({
             name: item.name,
             quantity: item.quantity,
             price: item.price,
             total: item.price * item.quantity
-          })),
+          })) : [],
           customer: {
             name: customerName,
-            email: order.customer.email,
-            phone: order.customer.phone,
-            address: order.customer.address || '',
-            city: order.customer.city || ''
+            email: order.customer?.email || customer.email,
+            phone: order.customer?.phone || customer.phone,
+            address: order.customer?.address || customer.address || '',
+            city: order.customer?.city || customer.city || ''
           },
           paymentMethod: displayPaymentMethod,
           paymentMethodType: order.paymentMethod,

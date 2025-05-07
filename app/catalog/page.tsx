@@ -1,263 +1,235 @@
-import { Suspense } from "react";
-import {
-  getSpecificProducts,
-  getSpecificProductIds,
-  getProductsByNomenclatureType,
-  getSmartphoneProducts,
-  getSmartphoneProductsFromMultipleSources
-} from "@/lib/product-api";
-import { Product } from "@/lib/product-api";
-import CatalogContent from "./CatalogContent";
-import CatalogLoading from "./CatalogLoading";
-import { FilterOptions } from "./_types";
-import ClientWrapper from "./ClientWrapper";
+"use client";
 
-// Use appropriate rendering strategy
-// This allows using searchParams while still working with revalidation
-export const dynamic = 'auto';
-export const revalidate = 3600; // Revalidate this page at most once per hour
+import { useLanguage } from "@/lib/language-context";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import { ChevronRight, Laptop, Smartphone, Tv, ShoppingBag, Thermometer, Scissors, Home, Printer, Gamepad2, Baby, ChevronRightCircle } from "lucide-react";
+import { ALL_CATEGORIES, getCategoryName } from "@/lib/categories";
+import { Separator } from "@/components/ui/separator";
 
-// Pagination settings
-const PRODUCTS_PER_PAGE = 12;
+export default function CatalogPage() {
+  const { t, language } = useLanguage();
 
-// Helper function to safely extract parameters
-function getParameterValue(param: string | string[] | undefined): string {
-  if (!param) return '';
-  return typeof param === 'string' ? param : param[0] || '';
-}
+  // Get specific subcategories for popular categories (first 3 with nomenclature IDs)
+  const popularCategories = ALL_CATEGORIES.flatMap(category =>
+    category.subcategoryGroups.flatMap(group =>
+      group.subcategories.filter(sub => sub.nomenclatureId)
+    )
+  ).slice(0, 3);
 
-// Nomenclature type constants
-const NOMENCLATURE_TYPES = {
-  SMARTPHONE: "d66ca3b3-4e6d-11ea-b816-00155d1de702"
-};
+  // Category images for popular categories - using exactly 3 images
+  const categoryImages = [
+    "https://images.unsplash.com/photo-1592919933511-ea9d487c85e4?q=80&w=3948&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",  // Smartphones
+    "https://images.unsplash.com/photo-1627372129933-9abc19b91f21?q=80&w=3738&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",  // Smartphones
+    "https://images.unsplash.com/photo-1627405452946-31ce7c7ff785?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  ];
 
-// Category mappings for easy identification
-const CATEGORY_MAPPINGS = {
-  SMARTPHONE_CATEGORIES: ["smartphone-uri-si-gadget-uri", "telefoane", "smartphones"],
-  SMARTPHONE_SUBCATEGORIES: ["smartphone-uri", "smartphones", "mobile", "telefoane"]
-};
-
-// This is the server component
-export default async function CatalogPage({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined }
-}) {
-  // await searchParams before accessing properties (required in Next.js 15+)
-  const params = await searchParams || {};
-
-  // Extract parameters directly
-  const categoryParam = getParameterValue(params.category);
-  const subcategoryParam = getParameterValue(params.subcategory);
-  const brandParam = getParameterValue(params.brand);
-  const nomenclatureTypeParam = getParameterValue(params.nomenclatureType);
-  const sourceParam = getParameterValue(params.source);
-
-  // Auto-detect smartphone category/subcategory and set nomenclature type
-  let effectiveNomenclatureType = nomenclatureTypeParam;
-  if (!effectiveNomenclatureType && categoryParam) {
-    const lowerCategory = categoryParam.toLowerCase();
-    const lowerSubcategory = subcategoryParam ? subcategoryParam.toLowerCase() : '';
-
-    // Check if this is a smartphone category or subcategory
-    const isSmartphoneCategory = CATEGORY_MAPPINGS.SMARTPHONE_CATEGORIES.some(
-      cat => lowerCategory.includes(cat)
-    );
-
-    const isSmartphoneSubcategory = CATEGORY_MAPPINGS.SMARTPHONE_SUBCATEGORIES.some(
-      subcat => lowerSubcategory.includes(subcat)
-    );
-
-    if (isSmartphoneCategory || isSmartphoneSubcategory) {
-      console.log('Auto-detected smartphone category - setting nomenclature type');
-      effectiveNomenclatureType = NOMENCLATURE_TYPES.SMARTPHONE;
-    }
-  }
-
-  // Check for the "only in stock" parameter with a default of true for smartphones
-  const inStockParam = getParameterValue(params.inStock);
-  // For smartphones, default to showing only in-stock items unless explicitly set to false
-  const effectiveInStock = effectiveNomenclatureType === NOMENCLATURE_TYPES.SMARTPHONE
-    ? inStockParam !== "false"  // Default to true for smartphones unless explicitly false
-    : inStockParam === "true";  // Regular behavior for other products
-
-  // Parse comma-separated values for multiple categories/subcategories/brands
-  const categories = categoryParam ? categoryParam.split(',') : [];
-  const subcategories = subcategoryParam ? subcategoryParam.split(',') : [];
-  const brands = brandParam ? brandParam.split(',') : [];
-
-  const minPriceParam = getParameterValue(params.minPrice);
-  const maxPriceParam = getParameterValue(params.maxPrice);
-  const searchQuery = getParameterValue(params.q);
-  const sortParam = getParameterValue(params.sort);
-  const pageParam = getParameterValue(params.page) || '1';
-
-  // Get smartphone-specific filters
-  const operatingSystemParam = getParameterValue(params.os);
-  const storageParam = getParameterValue(params.storage);
-  const ramParam = getParameterValue(params.ram);
-
-  // Parse these into arrays if they exist
-  const operatingSystems = operatingSystemParam ? operatingSystemParam.split(',') : [];
-  const storage = storageParam ? storageParam.split(',') : [];
-  const ram = ramParam ? ramParam.split(',') : [];
-
-  // Parse the initial page
-  const initialPage = parseInt(pageParam, 10) || 1;
-
-  // Parse price range
-  const minPrice = minPriceParam ? parseFloat(minPriceParam) : 0;
-  const maxPrice = maxPriceParam ? parseFloat(maxPriceParam) : 9999;
-  const hasPriceFilter = (minPrice > 0 || maxPrice < 9999);
-
-  // Set price range for filtering
-  const priceRange: [number, number] = [minPrice, maxPrice];
-
-  // Fetch specific products instead of category-based products
-  let initialProducts: Product[] = [];
-  let estimatedTotal = 0;
-
-  try {
-    console.log("Fetching products for catalog with filters");
-    console.log(`NomenclatureType: ${effectiveNomenclatureType}`);
-    console.log(`InStock: ${effectiveInStock}`);
-
-    // Check if we need to filter by nomenclatureType (for smartphones)
-    if (effectiveNomenclatureType === NOMENCLATURE_TYPES.SMARTPHONE) {
-      console.log("Fetching smartphone products from multiple sources");
-      // Use the new function that fetches from multiple sources
-      initialProducts = await getSmartphoneProductsFromMultipleSources();
-
-      console.log(`Initial smartphone products count: ${initialProducts.length}`);
-
-      // Filter by source if specified
-      if (sourceParam) {
-        initialProducts = initialProducts.filter(product =>
-          (product as any).source === sourceParam
-        );
-        console.log(`Filtered to ${initialProducts.length} smartphone products from source: ${sourceParam}`);
-      }
-
-      // Apply smartphone-specific filters
-      if (operatingSystems.length > 0) {
-        initialProducts = initialProducts.filter(product => {
-          // Look for OS in product.characteristics or any other relevant field
-          const productOS = (product as any).characteristics?.find((c: any) =>
-            c.name?.toLowerCase().includes("operating system") ||
-            c.name?.toLowerCase().includes("os")
-          )?.propertyList?.propertyValue?.[0]?.simpleValue?.toLowerCase();
-
-          return productOS && operatingSystems.some(os =>
-            productOS.includes(os.toLowerCase())
-          );
-        });
-        console.log(`Filtered to ${initialProducts.length} smartphone products by OS`);
-      }
-
-      if (storage.length > 0) {
-        initialProducts = initialProducts.filter(product => {
-          // Look for storage capacity in product characteristics
-          const productStorage = (product as any).characteristics?.find((c: any) =>
-            c.name?.toLowerCase().includes("storage") ||
-            c.name?.toLowerCase().includes("memory")
-          )?.propertyList?.propertyValue?.[0]?.simpleValue?.toLowerCase();
-
-          return productStorage && storage.some(size =>
-            productStorage.includes(size.toLowerCase())
-          );
-        });
-        console.log(`Filtered to ${initialProducts.length} smartphone products by storage`);
-      }
-
-      if (ram.length > 0) {
-        initialProducts = initialProducts.filter(product => {
-          // Look for RAM in product characteristics
-          const productRam = (product as any).characteristics?.find((c: any) =>
-            c.name?.toLowerCase().includes("ram")
-          )?.propertyList?.propertyValue?.[0]?.simpleValue?.toLowerCase();
-
-          return productRam && ram.some(size =>
-            productRam.includes(size.toLowerCase())
-          );
-        });
-        console.log(`Filtered to ${initialProducts.length} smartphone products by RAM`);
-      }
-    }
-    // If specific nomenclatureType is provided but not a known constant
-    else if (effectiveNomenclatureType) {
-      console.log(`Fetching products with nomenclatureType: ${effectiveNomenclatureType}`);
-      initialProducts = await getProductsByNomenclatureType(effectiveNomenclatureType);
-    }
-    // Default to specific products if no nomenclatureType filter
-    else {
-      initialProducts = await getSpecificProducts();
-    }
-
-    console.log(`Fetched ${initialProducts.length} products`);
-
-    // Set the estimated total to the actual count
-    estimatedTotal = initialProducts.length;
-
-    // Apply price filtering if needed
-    if (hasPriceFilter) {
-      console.log(`Using price filter: ${minPrice} - ${maxPrice} MDL`);
-
-      initialProducts = initialProducts.filter(product => {
-        const regularPrice = typeof (product as any).price === 'number' ?
-          (product as any).price : parseFloat(String((product as any).price)) || 0;
-
-        const reducedPrice = (product as any).reduced_price ?
-          (typeof (product as any).reduced_price === 'number' ?
-            (product as any).reduced_price : parseFloat(String((product as any).reduced_price))) : null;
-
-        const finalPrice = reducedPrice !== null ? reducedPrice : regularPrice;
-        return finalPrice >= priceRange[0] && finalPrice <= priceRange[1];
-      });
-
-      // Update estimated total after filtering
-      estimatedTotal = initialProducts.length;
-    }
-
-    // Apply pagination
-    const startIndex = (initialPage - 1) * PRODUCTS_PER_PAGE;
-    const endIndex = startIndex + PRODUCTS_PER_PAGE;
-    initialProducts = initialProducts.slice(startIndex, endIndex);
-
-  } catch (error) {
-    console.error("Error loading products for catalog:", error);
-    initialProducts = [];
-    estimatedTotal = 0;
-  }
-
-  // Set initial filters based on URL parameters
-  const initialFilters: FilterOptions = {
-    priceRange: priceRange,
-    categories: categories,
-    subcategories: subcategories,
-    brands: brands,
-    sortOption: sortParam || "price-asc",
-    inStock: effectiveInStock,
-    nomenclatureType: effectiveNomenclatureType || "",
-    operatingSystem: operatingSystems,
-    storage: storage,
-    ram: ram,
-    source: sourceParam || "",
-  };
+  // Map category IDs to respective images
+  const categoryMapping = [
+    { id: "laptop-uri", image: categoryImages[0] },
+    { id: "tablete", image: categoryImages[1] },
+    { id: "smartphone-uri", image: categoryImages[2] },
+  ];
 
   return (
-    <Suspense fallback={<CatalogLoading />}>
-      <ClientWrapper>
-        <CatalogContent
-          initialProducts={initialProducts}
-          initialFilters={initialFilters}
-          initialPage={initialPage}
-          searchQuery={searchQuery}
-          totalProducts={estimatedTotal}
-          productsPerPage={PRODUCTS_PER_PAGE}
-          serverPagination={true}
-          randomSampling={false} // Don't use random sampling with specific products
-        />
-      </ClientWrapper>
-    </Suspense>
+    <div className="container max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-16">
+      {/* Enhanced centered hero section */}
+      {/* <div className="relative mb-10 sm:mb-16 pb-6 sm:pb-8 text-center">
+        <div className="absolute -inset-x-4 -inset-y-6 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-3xl blur-2xl opacity-70 -z-10" />
+        <div className="max-w-3xl mx-auto">
+
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70 pb-1">
+            {t?.("catalog") || "Catalog"}
+          </h1>
+
+          <div className="h-1 w-16 sm:w-20 bg-primary/30 mx-auto mt-6 sm:mt-8 rounded-full" />
+        </div>
+      </div> */}
+
+      {/* Main Categories - List Layout */}
+      <div className="mb-10 sm:mb-16">
+        {/* <h2 className="text-2xl sm:text-3xl font-bold mb-8 flex items-center">
+          <span className="mr-3 h-8 w-1 bg-primary rounded-full" />
+          {t?.("main_categories") || "Main Categories"}
+        </h2> */}
+   <div className="mb-10 sm:mb-16">
+        {/* <h2 className="text-2xl sm:text-3xl font-bold mb-8 flex items-center">
+          <span className="mr-3 h-8 w-1 bg-primary rounded-full" />
+          {t?.("popular_categories") || "Popular Categories"}
+        </h2> */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          {/* Laptops */}
+          <Link
+            href={`/catalog/subcategory/e42c51cb-4e62-11ea-b816-00155d1de702`}
+            className="relative group overflow-hidden rounded-xl h-48 sm:h-56 md:h-64 lg:h-72 shadow-md hover:shadow-xl transition-all"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/30 group-hover:opacity-60 transition-all z-10" />
+            <div className="absolute inset-0">
+              <Image
+                src={categoryImages[0]}
+                alt="Laptops"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 33vw"
+                priority
+              />
+            </div>
+            <div className="relative z-20 flex flex-col h-full p-4 sm:p-5 md:p-6 lg:p-8 text-white">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 group-hover:text-white/90 transition-colors">
+                {language === 'ru' ? 'Ноутбуки' : 'Laptop-uri'}
+              </h3>
+              <div className="mt-auto flex items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-white border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white group-hover:translate-x-1 transition-all text-xs sm:text-sm h-8 sm:h-9"
+                >
+                  {t?.("view_products") || "View Products"}
+                  <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </div>
+            </div>
+          </Link>
+
+          {/* Tablets */}
+          <Link
+            href={`/catalog/subcategory/f0295da0-4e62-11ea-b816-00155d1de702`}
+            className="relative group overflow-hidden rounded-xl h-48 sm:h-56 md:h-64 lg:h-72 shadow-md hover:shadow-xl transition-all"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/30 group-hover:opacity-60 transition-all z-10" />
+            <div className="absolute inset-0">
+              <Image
+                src={categoryImages[1]}
+                alt="Tablets"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 33vw"
+                priority
+              />
+            </div>
+            <div className="relative z-20 flex flex-col h-full p-4 sm:p-5 md:p-6 lg:p-8 text-white">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 group-hover:text-white/90 transition-colors">
+                {language === 'ru' ? 'Планшеты' : 'Tablete'}
+              </h3>
+              <div className="mt-auto flex items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-white border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white group-hover:translate-x-1 transition-all text-xs sm:text-sm h-8 sm:h-9"
+                >
+                  {t?.("view_products") || "View Products"}
+                  <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </div>
+            </div>
+          </Link>
+
+          {/* Smartphones */}
+          <Link
+            href={`/catalog/subcategory/d66ca3b3-4e6d-11ea-b816-00155d1de702`}
+            className="relative group overflow-hidden rounded-xl h-48 sm:h-56 md:h-64 lg:h-72 shadow-md hover:shadow-xl transition-all sm:col-span-2 md:col-span-1"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/30 group-hover:opacity-60 transition-all z-10" />
+            <div className="absolute inset-0">
+              <Image
+                src={categoryImages[2]}
+                alt="Smartphones"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 33vw, 33vw"
+                priority
+              />
+            </div>
+            <div className="relative z-20 flex flex-col h-full p-4 sm:p-5 md:p-6 lg:p-8 text-white">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 group-hover:text-white/90 transition-colors">
+                {language === 'ru' ? 'Смартфоны' : 'Smartphone-uri'}
+              </h3>
+              <div className="mt-auto flex items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-white border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:text-white group-hover:translate-x-1 transition-all text-xs sm:text-sm h-8 sm:h-9"
+                >
+                  {t?.("view_products") || "View Products"}
+                  <ChevronRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
+        <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/40 overflow-hidden shadow-sm">
+          <div className="divide-y divide-border/40">
+            {ALL_CATEGORIES.map(category => (
+              <Link
+                key={category.id}
+                href={`/catalog/${category.id}`}
+                className="group"
+              >
+                <div className="flex items-center justify-between p-3 sm:p-5 hover:bg-primary/5 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-9 h-9 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <span className="text-primary">{getIconForCategory(category.icon, "small")}</span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-base sm:text-lg font-medium group-hover:text-primary transition-colors">
+                        {getCategoryName(category, language || 'ro')}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
+                        <span className="inline-block h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-primary/60 mr-1.5 sm:mr-2"></span>
+                        {category.subcategoryGroups.reduce((count, group) => count + group.subcategories.length, 0)} {t?.("subcategories") || "subcategories"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <span className="text-xs sm:text-sm font-medium text-primary mr-1.5 sm:mr-2 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-block">
+                      {t?.("browse") || "Browse"}
+                    </span>
+                    <ChevronRightCircle className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Popular Categories - Improved tablet layout */}
+
+    </div>
   );
+}
+
+// Helper function to render icon based on name
+function getIconForCategory(iconName: string, size = "regular"): React.ReactNode {
+  const iconSize = size === "small" ? "h-4 w-4 sm:h-6 sm:w-6" : "h-6 w-6";
+
+  switch (iconName) {
+    case 'Smartphone':
+      return <Smartphone className={iconSize} />;
+    case 'Tv':
+      return <Tv className={iconSize} />;
+    case 'Laptop':
+      return <Laptop className={iconSize} />;
+    case 'Thermometer':
+      return <Thermometer className={iconSize} />;
+    case 'Scissors':
+      return <Scissors className={iconSize} />;
+    case 'Home':
+      return <Home className={iconSize} />;
+    case 'Printer':
+      return <Printer className={iconSize} />;
+    case 'Gamepad2':
+      return <Gamepad2 className={iconSize} />;
+    case 'Baby':
+      return <Baby className={iconSize} />;
+    case 'WashingMachine':
+      return <ShoppingBag className={iconSize} />; // Fallback since WashingMachine isn't in lucide-react
+    default:
+      return <ShoppingBag className={iconSize} />;
+  }
 }

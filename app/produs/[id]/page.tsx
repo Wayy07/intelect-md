@@ -1007,20 +1007,8 @@ export default function ProductPage() {
           {t("product_breadcrumb_home")}
         </Link>
         <span className="text-muted-foreground">/</span>
-        <Link
-          href={`/catalog?category=${product.subcategorie.categoriePrincipala.id}`}
-          className="text-muted-foreground hover:text-primary whitespace-nowrap"
-        >
-          {product.subcategorie.categoriePrincipala.nume}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <Link
-          href={`/catalog?subcategory=${product.subcategorie.id}`}
-          className="text-muted-foreground hover:text-primary whitespace-nowrap"
-        >
-          {product.subcategorie.nume}
-        </Link>
-        <span className="text-muted-foreground">/</span>
+
+
         <span className="font-medium truncate">{product.nume}</span>
       </nav>
 
@@ -1066,7 +1054,7 @@ export default function ProductPage() {
           <div className="flex flex-col justify-start items-start mt-5 w-full">
             {product.pretRedus ? (
               <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-primary-500">
+                <span className="text-3xl font-bold text-[#111D4A]">
                   {product.pretRedus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Lei
                 </span>
                 <span className="text-lg line-through text-gray-400">
@@ -1074,7 +1062,7 @@ export default function ProductPage() {
                 </span>
               </div>
             ) : (
-              <span className="text-3xl font-bold text-primary-500">
+              <span className="text-3xl font-bold text-[#111D4A]">
                 {product.pret.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Lei
               </span>
             )}
@@ -1092,7 +1080,7 @@ export default function ProductPage() {
                 <>
                   <Badge
                     variant="outline"
-                    className="bg-green-50/80 backdrop-blur-sm text-green-700 hover:bg-green-50/80 border-green-200 transition-all duration-300 hover:shadow"
+                    className="bg-[#111D4A]/10 backdrop-blur-sm text-[#111D4A] hover:bg-[#111D4A]/20 border-[#111D4A]/30 transition-all duration-300 hover:shadow"
                   >
                     <Check className="mr-1 h-3.5 w-3.5" />
                     {t("product_in_stock")}
@@ -1117,7 +1105,7 @@ export default function ProductPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.3 }}
             >
-              <Truck className="h-4 w-4 text-primary" />
+              <Truck className="h-4 w-4 text-[#111D4A]" />
               <span>{t("product_delivery_time")}</span>
             </motion.div>
           </div>
@@ -1128,10 +1116,10 @@ export default function ProductPage() {
               onClick={handleAddToCart}
               disabled={product.stoc <= 0}
               className="h-10 sm:h-11 flex-1 min-w-0 text-sm sm:text-base flex items-center justify-center"
-              shimmerColor={product.stoc > 0 ? "#2DD4FF" : "#ccc"}
+              shimmerColor={product.stoc > 0 ? "#3D4A7A" : "#ccc"}
               shimmerSize="0.05em"
               shimmerDuration="2s"
-              background="#00A3FF"
+              background="#111D4A"
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
               {t("product_add_to_cart")}
@@ -1151,8 +1139,8 @@ export default function ProductPage() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header with decorative badge and background */}
-                <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 p-4 sm:p-6 pb-6 sm:pb-8">
-                  <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs font-bold py-1 px-3 rounded-full">
+                <div className="relative bg-gradient-to-r from-[#111D4A]/10 to-[#111D4A]/5 p-4 sm:p-6 pb-6 sm:pb-8">
+                  <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-[#111D4A] text-white text-xs font-bold py-1 px-3 rounded-full">
                     {t("product_zero_interest")}
                   </div>
                   <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-primary/5 rounded-full -mr-6 -mt-6 sm:-mr-10 sm:-mt-10"></div>
@@ -1194,7 +1182,7 @@ export default function ProductPage() {
                             <div>
                               <p
                                 className={`font-medium text-sm sm:text-base ${
-                                  isRecommended ? "text-primary" : ""
+                                  isRecommended ? "text-[#111D4A]" : ""
                                 }`}
                               >
                                 {months} {t("product_months")}
@@ -1210,7 +1198,7 @@ export default function ProductPage() {
                               </p>
                               <p
                                 className={`font-bold text-sm sm:text-base ${
-                                  isRecommended ? "text-primary" : ""
+                                  isRecommended ? "text-[#111D4A]" : ""
                                 }`}
                               >
                                 {payment.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Lei
@@ -1221,7 +1209,7 @@ export default function ProductPage() {
                           {/* Progress bar to visually represent monthly payment amount */}
                           <div className="w-full bg-gray-100 h-0.5 sm:h-1">
                             <div
-                              className="bg-primary h-full"
+                              className="bg-[#111D4A] h-full"
                               style={{
                                 width: `${
                                   100 -
@@ -1268,7 +1256,7 @@ export default function ProductPage() {
                           handleShareProduct();
                         }}
                         className="w-full text-sm py-1.5"
-                        shimmerColor="#00BFFF"
+                        shimmerColor="#111D4A"
                         shimmerSize="0.03em"
                         shimmerDuration="1.5s"
                       >
@@ -1282,7 +1270,7 @@ export default function ProductPage() {
                           handleShareProduct();
                         }}
                         className="w-full text-sm py-1.5"
-                        shimmerColor="#00BFFF"
+                        shimmerColor="#111D4A"
                         shimmerSize="0.03em"
                         shimmerDuration="1.5s"
                       >
@@ -1314,10 +1302,10 @@ export default function ProductPage() {
       {/* Product specifications - Enhanced Desktop UI */}
       <div className="mt-12">
         <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <Info className="h-5 w-5 mr-2 text-primary" />
+          <Info className="h-5 w-5 mr-2 text-[#111D4A]" />
           {t("product_specifications")}
         </h2>
-        <div className="bg-white/70 backdrop-blur-md rounded-xl border border-white/20 shadow-sm p-4 sm:p-6">
+        {/* <div className="bg-white/70 backdrop-blur-md rounded-xl border border-white/20 shadow-sm p-4 sm:p-6">
           {product.specificatii &&
           Object.keys(product.specificatii).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
@@ -1342,7 +1330,7 @@ export default function ProductPage() {
               {t("product_no_specifications")}
             </p>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Similar Products - using the new component */}

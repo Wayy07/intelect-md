@@ -227,69 +227,7 @@ export function CustomerManagement() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Registration trends chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Tendința înregistrărilor</CardTitle>
-              <CardDescription>
-                Utilizatori noi înregistrați în ultimele 12 luni
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={data?.registrationByDate?.slice().reverse() || []}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(value) => {
-                        const [year, month] = value.split('-');
-                        const date = new Date(parseInt(year), parseInt(month) - 1);
-                        return format(date, 'MMM yyyy', { locale: ro });
-                      }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(value) => `${value}`}
-                    />
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                    <Tooltip
-                      formatter={(value) => [`${value} utilizatori`, 'Înregistrări']}
-                      labelFormatter={(label) => {
-                        const [year, month] = label.split('-');
-                        const date = new Date(parseInt(year), parseInt(month) - 1);
-                        return `Perioada: ${format(date, 'MMMM yyyy', { locale: ro })}`;
-                      }}
-                      contentStyle={{
-                        backgroundColor: 'white',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                        border: 'none'
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="count"
-                      stroke="#8884d8"
-                      fillOpacity={1}
-                      fill="url(#colorUsers)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* User distribution charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

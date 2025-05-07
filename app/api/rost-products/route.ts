@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const productId = searchParams.get("productId");
 
     // API Base URL from environment variable
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://95.65.79.156:3001/api';
 
     if (productId) {
       // If productId is provided, fetch a specific product

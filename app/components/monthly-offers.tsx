@@ -28,7 +28,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
-import { ProductCard, ProductCardCompact } from "@/app/components/ui/product-card";
+import { ProductCard, ProductCardCompact, MobileProductCard } from "@/app/components/ui/product-card";
 
 // Define the category variants with focus only on TVs
 const VARIANTS = [
@@ -43,9 +43,9 @@ const VARIANTS = [
       ru: "Samsung TV"
     },
     icon: Laptop,
-    color: "#034694", // Samsung dark blue
-    accent: "bg-blue-800",
-    bgClassName: "bg-gradient-to-br from-[#034694] via-[#1E5AA3] to-[#0A2A5E]", // Enhanced gradient
+    color: "#111D4A", // Dark navy blue
+    accent: "bg-indigo-900",
+    bgClassName: "bg-gradient-to-br from-[#111D4A] via-[#1E2A4D] to-[#0A1133]", // Enhanced gradient with navy
     products: [] as MockProduct[] // Will be populated with API data
   }
 ];
@@ -271,62 +271,65 @@ export default function MonthlyOffers() {
       </div>
 
       <div className="relative z-10">
-        <div className="mb-6 md:mb-10 text-center">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 shadow-sm mb-3">
-            <Flame className="h-4 w-4 mr-2 text-blue-600" />
-            <span className="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              {language === 'ru' ? 'Предложения месяца' : 'Ofertele lunii'}
-            </span>
-          </div>
 
-          <h2 className="text-2xl md:text-3xl font-bold mt-3 text-gray-800 drop-shadow-sm">
-            {language === 'ru' ? `Предложения ${getCurrentMonthName()}` : `Ofertele lunii ${getCurrentMonthName()}`}
-          </h2>
-        </div>
 
         {/* MacBook Mockup (desktop and tablet only) */}
         <MacbookMockUp>
           <div className={`w-full rounded-t-[10px] border-2 border-[rgb(18,18,18)] border-solid bg-white p-6 flex flex-col ${activeVariant.bgClassName} bg-opacity-90 relative overflow-hidden`}>
-            {/* Background decorative elements */}
-            <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl"></div>
-            <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-white/5 blur-3xl"></div>
-            <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-black/20 to-transparent"></div>
+            {/* Enhanced background decorative elements */}
+            <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl"></div>
+            <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-white/10 blur-3xl"></div>
+            <div className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full bg-indigo-300/10 blur-3xl"></div>
+            <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-black/30 to-transparent"></div>
 
-            {/* Enhanced header with modern design */}
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center border-b pb-5 mb-6" style={{ borderColor: `${activeVariant.color}30` }}>
-              <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                <div className="p-2 rounded-lg bg-white/10 backdrop-blur-md border border-white/20">
-                  <Calendar className="h-5 w-5 text-white" />
+            {/* Modern 3D-style header with depth */}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center border-b pb-6 mb-6" style={{ borderColor: `${activeVariant.color}30` }}>
+              <div className="flex items-center space-x-4 mb-4 md:mb-0 relative">
+                <div className="p-3 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                  <Calendar className="h-6 w-6 text-white drop-shadow-md" />
                 </div>
-                <div>
-                  <h2 className="font-bold text-3xl text-white drop-shadow-md">
+                <div className="relative">
+                  <span className="absolute -left-1 -top-1 w-12 h-8 bg-indigo-500/20 rounded-lg blur-md"></span>
+                  <h2 className="font-extrabold text-4xl text-white drop-shadow-xl relative">
                     {language === 'ru' ? `Акция месяца` : `Oferta lunii`}
                   </h2>
-                  <p className="text-sm text-white/90 mt-1 max-w-md">
-                    {language === 'ru' ? 'Успейте приобрести товары со скидкой до конца недели!' : 'Profită de reduceri substanțiale până la sfârșitul săptămânii!'}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="px-2 py-0.5 rounded-md bg-white/20 text-xs font-medium text-white/90">
+                      {getCurrentMonthName()}
+                    </span>
+                    <span className="h-1 w-1 rounded-full bg-white/40"></span>
+                    <p className="text-sm text-white/90 max-w-md">
+                      {language === 'ru' ? 'Эксклюзивные предложения' : 'Oferte exclusive'}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Enhanced countdown timer */}
-              <div className="flex items-center p-3 rounded-xl bg-white/20 backdrop-blur-md shadow-lg border border-white/20">
+              {/* 3D effect countdown timer */}
+              <div className="flex flex-col items-center p-4 rounded-xl bg-white/10 backdrop-blur-lg shadow-xl border border-white/20 transform hover:scale-[1.02] transition-all duration-300">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="h-4 w-4 text-white/80" />
+                  <span className="text-xs uppercase tracking-wider font-medium text-white/80">
+                    {language === 'ru' ? 'До конца предложения:' : 'Timp rămas:'}
+                  </span>
+                </div>
                 <div className="flex items-center space-x-2">
-                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-md border-b-2" style={{ borderColor: activeVariant.color }}>
+                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-lg border-b-4 transform hover:-translate-y-1 transition-transform" style={{ borderColor: activeVariant.color }}>
                     <div className="text-xl font-bold" style={{ color: activeVariant.color }}>{formatNumber(days)}</div>
                     <div className="text-[9px] uppercase text-gray-500 font-semibold tracking-wider">{t("days")}</div>
                   </div>
                   <div className="text-white font-bold text-lg">:</div>
-                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-md border-b-2" style={{ borderColor: activeVariant.color }}>
+                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-lg border-b-4 transform hover:-translate-y-1 transition-transform" style={{ borderColor: activeVariant.color }}>
                     <div className="text-xl font-bold" style={{ color: activeVariant.color }}>{formatNumber(hours)}</div>
                     <div className="text-[9px] uppercase text-gray-500 font-semibold tracking-wider">{t("hours")}</div>
                   </div>
                   <div className="text-white font-bold text-lg">:</div>
-                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-md border-b-2" style={{ borderColor: activeVariant.color }}>
+                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-lg border-b-4 transform hover:-translate-y-1 transition-transform" style={{ borderColor: activeVariant.color }}>
                     <div className="text-xl font-bold" style={{ color: activeVariant.color }}>{formatNumber(minutes)}</div>
                     <div className="text-[9px] uppercase text-gray-500 font-semibold tracking-wider">{t("minutes")}</div>
                   </div>
                   <div className="text-white font-bold text-lg">:</div>
-                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-md border-b-2" style={{ borderColor: activeVariant.color }}>
+                  <div className="bg-white/90 rounded-lg p-2 text-center w-14 shadow-lg border-b-4 transform hover:-translate-y-1 transition-transform" style={{ borderColor: activeVariant.color }}>
                     <div className="text-xl font-bold" style={{ color: activeVariant.color }}>{formatNumber(seconds)}</div>
                     <div className="text-[9px] uppercase text-gray-500 font-semibold tracking-wider">{t("seconds")}</div>
                   </div>
@@ -334,8 +337,13 @@ export default function MonthlyOffers() {
               </div>
             </div>
 
-            {/* Featured products carousel with ProductCard component */}
+
+
+            {/* Enhanced featured products carousel similar to special-offers.tsx */}
             <div className="flex-1 mb-6 relative">
+              {/* Add subtle highlight line above carousel */}
+              <div className="absolute -top-2 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+
               <Carousel
                 className="w-full cursor-grab active:cursor-grabbing"
                 setApi={setCarouselApi}
@@ -347,28 +355,52 @@ export default function MonthlyOffers() {
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
               >
-                <CarouselContent>
+                <CarouselContent className="py-4">
                   {products.map((product, productIndex) => (
                     <CarouselItem key={`${product.id}-${productIndex}`} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                      <ProductCard product={adaptProduct(product)} />
+                      <motion.div
+                        whileHover={{ scale: 1.03 }}
+                        transition={{ duration: 0.2 }}
+                        className="h-full rounded-xl overflow-hidden border border-white/30 bg-gradient-to-b from-white to-white/90 relative group shadow-md hover:shadow-lg"
+                      >
+                        {/* Card top highlight */}
+                        <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-[#111D4A]/50 via-[#111D4A] to-[#111D4A]/50 opacity-70 z-20"></div>
+
+                        {/* Enhanced hover effects */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-[#111D4A]/10 via-[#111D4A]/5 to-transparent transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 border border-[#111D4A]/30 rounded-xl transition-opacity duration-300 pointer-events-none"></div>
+
+                        {/* Add subtle corner accent */}
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-[#111D4A]/20 to-transparent rounded-bl-xl"></div>
+                        <div className="absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr from-[#111D4A]/10 to-transparent rounded-tr-xl"></div>
+
+                        <ProductCard product={adaptProduct(product)} disableLink={false} />
+                      </motion.div>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
 
-                <CarouselPrevious className="left-1 border-none bg-white/90 hover:bg-white/100 text-gray-800 shadow-md hover:scale-105 transition-transform" />
-                <CarouselNext className="right-1 border-none bg-white/90 hover:bg-white/100 text-gray-800 shadow-md hover:scale-105 transition-transform" />
+                <CarouselPrevious className="left-0 bg-white border-[#111D4A]/30 border-2 text-[#111D4A] shadow-sm hover:bg-[#111D4A]/10 hover:text-[#0A1133] hover:border-[#111D4A]/50 transition-all duration-200 opacity-90 hover:opacity-100" />
+                <CarouselNext className="right-0 bg-white border-[#111D4A]/30 border-2 text-[#111D4A] shadow-sm hover:bg-[#111D4A]/10 hover:text-[#0A1133] hover:border-[#111D4A]/50 transition-all duration-200 opacity-90 hover:opacity-100" />
               </Carousel>
 
-              {/* Carousel indicators */}
+              {/* Add subtle highlight line below carousel */}
+              <div className="absolute -bottom-2 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+
+              {/* Enhanced carousel indicators */}
               <div className="flex justify-center gap-1.5 mt-4">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div
+                  <motion.div
                     key={i}
-                    className="rounded-full transition-all duration-300"
-                    style={{
-                      height: '4px',
+                    initial={{ opacity: 0.5, scale: 0.9 }}
+                    animate={{
+                      opacity: i === 0 ? 1 : 0.5,
                       width: i === 0 ? '20px' : '4px',
-                      backgroundColor: i === 0 ? 'white' : 'rgba(255, 255, 255, 0.3)',
+                     }}
+                    whileHover={{ opacity: 0.8 }}
+                    className="h-1.5 rounded-full bg-white transition-all duration-300"
+                    style={{
+                      width: i === 0 ? '20px' : '4px',
                     }}
                   />
                 ))}
@@ -380,22 +412,30 @@ export default function MonthlyOffers() {
         {/* Mobile version - visible only on small screens */}
         <MobileContent>
           <div className={`p-4 ${activeVariant.bgClassName} relative overflow-hidden`}>
-            {/* Enhanced decorative elements */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
-            <div className="absolute -bottom-32 -left-32 w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
+            {/* Improved background elements */}
+            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#111D4A]/40 blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-[#0A1133]/40 blur-3xl"></div>
             <div className="absolute bottom-0 right-0 w-full h-24 bg-gradient-to-t from-black/20 to-transparent"></div>
 
             {/* Enhanced mobile header with modern design */}
             <div className="mb-6 relative z-10">
-              {/* Main title with gradient effect */}
+              {/* Main title with enhanced design */}
               <div className="relative mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-lg blur-xl"></div>
-                <div className="relative bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20 overflow-hidden">
-                  {/* Decorative corner accent */}
-                  <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full" style={{ background: `radial-gradient(circle, ${activeVariant.color}80 0%, transparent 70%)` }}></div>
+                <div className="relative bg-white/15 backdrop-blur-md p-4 rounded-lg border border-white/20 overflow-hidden">
+                  {/* Dynamic glowing accent */}
+                  <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full animate-pulse" style={{ background: `radial-gradient(circle, ${activeVariant.color}60 0%, transparent 70%)` }}></div>
+
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/20">
+                      <Calendar className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md bg-indigo-500/30 backdrop-blur-sm text-xs font-medium text-white inline-flex items-center gap-1">
+                      <Flame className="h-3 w-3" />
+                      {getCurrentMonthName()}
+                    </span>
+                  </div>
 
                   <h2 className="font-bold text-2xl text-white mb-1 flex items-center">
-                    <activeVariant.icon className="h-6 w-6 mr-2 text-white/90" />
                     {language === 'ru' ? `Акция месяца` : `Oferta lunii`}
                   </h2>
                   <p className="text-sm text-white/90 max-w-[90%] leading-relaxed">
@@ -404,9 +444,9 @@ export default function MonthlyOffers() {
                 </div>
               </div>
 
-              {/* Enhanced countdown section */}
-              <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 p-3 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white/5"></div>
+              {/* Solid countdown section */}
+              <div className="bg-[#1E2B54] rounded-lg border border-[#3D4A7A] p-3 overflow-hidden relative shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#111D4A]/80"></div>
 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
@@ -417,7 +457,7 @@ export default function MonthlyOffers() {
                       {language === 'ru' ? 'Осталось времени' : 'Timp rămas'}
                     </span>
                   </div>
-                  <Badge variant="outline" className="bg-white/20 text-white border-white/30 animate-pulse">
+                  <Badge variant="outline" className="bg-indigo-500/30 text-white border-indigo-400/30 animate-pulse">
                     <Flame className="h-3.5 w-3.5 mr-1" />
                     {t("weeklyOffers") || "Oferte Săptămânale"}
                   </Badge>
@@ -449,14 +489,17 @@ export default function MonthlyOffers() {
 
             {/* Best deal badge */}
             <div className="relative z-10 mb-4 flex justify-center">
-              <div className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center animate-pulse">
+              <div className="bg-gradient-to-r from-indigo-800 to-[#111D4A] text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center animate-pulse">
                 <Award className="h-4 w-4 mr-1.5" />
                 {language === 'ru' ? 'Лучшие предложения месяца' : 'Cele mai bune oferte ale lunii'}
               </div>
             </div>
 
-            {/* Enhanced mobile carousel - two items display */}
-            <div className="relative">
+            {/* Enhanced mobile carousel similar to special-offers */}
+            <div className="relative max-w-full">
+              {/* Add subtle highlight line above carousel */}
+              <div className="absolute -top-2 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+
               <Carousel
                 className="w-full cursor-grab active:cursor-grabbing"
                 setApi={setCarouselApi}
@@ -468,45 +511,65 @@ export default function MonthlyOffers() {
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
               >
-                <CarouselContent>
+                <CarouselContent className="py-4">
                   {products.map((product, productIndex) => (
                     <CarouselItem key={`${product.id}-${productIndex}`} className="basis-full pl-2 sm:basis-1/2">
-                      <ProductCardCompact product={adaptProduct(product)} />
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.2 }}
+                        className="rounded-xl overflow-hidden border border-[#3D4A7A] bg-white relative group shadow-md"
+                      >
+                        {/* Card top highlight */}
+                        <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-[#111D4A]/50 via-[#111D4A] to-[#111D4A]/50 opacity-70 z-20"></div>
+
+                        {/* Enhanced hover effects */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-[#111D4A]/5 to-transparent transition-opacity duration-300"></div>
+
+                        <MobileProductCard product={adaptProduct(product)} />
+                      </motion.div>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
 
-                <CarouselPrevious className="left-0 border-none bg-white/90 hover:bg-white shadow-md text-gray-800 h-8 w-8" />
-                <CarouselNext className="right-0 border-none bg-white/90 hover:bg-white shadow-md text-gray-800 h-8 w-8" />
+                <CarouselPrevious className="left-0 bg-white border-[#111D4A]/30 border text-[#111D4A] shadow-sm hover:bg-[#111D4A]/10 hover:text-[#0A1133] transition-all duration-200 h-8 w-8" />
+                <CarouselNext className="right-0 bg-white border-[#111D4A]/30 border text-[#111D4A] shadow-sm hover:bg-[#111D4A]/10 hover:text-[#0A1133] transition-all duration-200 h-8 w-8" />
               </Carousel>
 
-              {/* Improved carousel indicators */}
-              <div className="flex justify-center gap-1.5 mt-4 mb-1">
+              {/* Add subtle highlight line below carousel */}
+              <div className="absolute -bottom-2 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+
+              {/* Enhanced carousel indicators */}
+              <div className="flex justify-center gap-1.5 mt-4">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div
+                  <motion.div
                     key={i}
-                    className="rounded-full transition-all duration-300"
+                    initial={{ opacity: 0.5, scale: 0.9 }}
+                    animate={{
+                      opacity: i === 0 ? 1 : 0.5,
+                      width: i === 0 ? '20px' : '4px',
+                     }}
+                    whileHover={{ opacity: 0.8 }}
+                    className="h-1.5 rounded-full bg-white transition-all duration-300"
                     style={{
-                      height: '6px',
-                      width: i === 0 ? '24px' : '6px',
-                      backgroundColor: i === 0 ? activeVariant.color : 'rgba(255, 255, 255, 0.4)',
+                      width: i === 0 ? '20px' : '4px',
                     }}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Enhanced call to action */}
+            {/* Improved call to action */}
             <div className="mt-6 relative z-10">
-              <ShimmerButton
-                className="w-full py-3.5 rounded-lg font-medium text-white shadow-lg flex items-center justify-center"
-                style={{ backgroundColor: activeVariant.color }}
-              >
-                <Link href={`/catalog?category=${activeVariantId}`} className="flex items-center">
+              <Link href={`/catalog?category=${activeVariantId}`} className="w-full block">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-[#111D4A] hover:bg-[#0A1133] w-full py-3.5 rounded-lg font-medium text-white shadow-lg flex items-center justify-center gap-2 transition-all duration-300"
+                >
                   {t("shopNow") || "Shop Now"}
-                  <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Link>
-              </ShimmerButton>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
+              </Link>
 
               <div className="mt-3 text-center">
                 <span className="text-white/80 text-xs bg-white/10 px-3 py-1 rounded-full">

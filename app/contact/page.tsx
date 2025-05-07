@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   Phone,
@@ -11,6 +11,12 @@ import {
   MapIcon,
   Send,
   Calendar,
+  Truck,
+  Package,
+  Calculator,
+  Info,
+  ShieldCheck,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +33,70 @@ import { useLanguage } from "@/lib/language-context";
 import { HyperText } from "@/components/magicui/hyper-text";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import { GridPattern } from "@/components/magicui/grid-pattern";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs";
 
 export default function ContactPage() {
   const { t } = useLanguage();
+  const [cartTotal, setCartTotal] = useState<number>(3000);
+  const [selectedRegion, setSelectedRegion] = useState<string>("Chișinău");
+
+  const shippingRegions = [
+    {
+      name: "Chișinău",
+      standard: "1-2 zile",
+      express: "În aceeași zi*",
+      price: 50,
+      expressPrice: 100,
+    },
+    {
+      name: "Bălți",
+      standard: "1-3 zile",
+      express: "A doua zi",
+      price: 70,
+      expressPrice: 150,
+    },
+    {
+      name: "Cahul",
+      standard: "2-3 zile",
+      express: "A doua zi",
+      price: 80,
+      expressPrice: 160,
+    },
+    {
+      name: "Alte localități urbane",
+      standard: "2-4 zile",
+      express: "2-3 zile",
+      price: 100,
+      expressPrice: 180,
+    },
+    {
+      name: "Zone rurale",
+      standard: "3-5 zile",
+      express: "2-4 zile",
+      price: 120,
+      expressPrice: 200,
+    },
+  ];
+
+  const calculateShippingCost = () => {
+    return 0;
+  };
+
+  const getTotalPrice = () => {
+    return cartTotal + calculateShippingCost();
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden pb-20">
@@ -270,109 +337,234 @@ export default function ContactPage() {
           </div>
         </div>
 
-        {/* Resources section
-        <div className="mb-16">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              {t("contact_resources_title")}
-            </h2>
-            <p className="text-muted-foreground max-w-3xl mx-auto">
-              {t("contact_resources_description")}
-            </p>
+        {/* Delivery Information Section - New section from Livrare page */}
+        <section className="py-16 relative" id="delivery">
+          <div className="max-w-5xl mx-auto">
+            {/* Section Title */}
+            <div className="text-center mb-10">
+              <Badge className="mb-3 bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                {t("livrare_badge") || "Livrare"}
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+                {t("livrare_page_title") || "Informații despre livrare"}
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {t("livrare_page_description") || "Vă oferim livrare gratuită în toată țara. Află detalii despre modalitățile de livrare și timpul estimat de livrare."}
+              </p>
+            </div>
+
+            {/* Standard Delivery Card */}
+            <div className="max-w-2xl mx-auto mb-12">
+              <Card className="bg-white/80 backdrop-blur-sm border border-primary/10 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden relative group">
+                <div className="absolute inset-0 border-2 border-primary/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none"></div>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                        <Truck className="h-5 w-5 text-primary group-hover:text-white transition-colors" />
+                      </div>
+                      <CardTitle>{t("livrare_standard_delivery") || "Livrare standard"}</CardTitle>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200 transition-colors">
+                      {t("livrare_free") || "Gratuită"}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-semibold mb-1">
+                        {t("livrare_delivery_time") || "Timp de livrare"}
+                      </h4>
+                      <ul className="pl-5 space-y-1 text-sm list-disc">
+                        <li className="group/item hover:text-primary transition-colors">
+                          {t("livrare_chisinau") || "Chișinău: 1-2 zile lucrătoare"}
+                        </li>
+                        <li className="group/item hover:text-primary transition-colors">
+                          {t("livrare_urban_areas") || "Localități urbane: 2-4 zile lucrătoare"}
+                        </li>
+                        <li className="group/item hover:text-primary transition-colors">
+                          {t("livrare_rural_areas") || "Zone rurale: 3-5 zile lucrătoare"}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Shipping Calculator */}
+            <div id="calculator" className="max-w-4xl mx-auto mb-12 bg-white/80 backdrop-blur-sm p-6 rounded-xl border border-primary/10 shadow-md">
+              <h3 className="text-xl font-bold mb-4 text-center">
+                {t("livrare_calculator_title") || "Calculator de livrare"}
+              </h3>
+              <p className="text-center text-muted-foreground mb-6">
+                {t("livrare_calculator_description") || "Calculează costul și timpul estimat de livrare pentru comanda ta"}
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-5">
+                  <div>
+                    <label
+                      htmlFor="region"
+                      className="block mb-2 text-sm font-medium"
+                    >
+                      {t("livrare_select_location") || "Selectează locația"}
+                    </label>
+                    <select
+                      id="region"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
+                      value={selectedRegion}
+                      onChange={(e) => setSelectedRegion(e.target.value)}
+                    >
+                      {shippingRegions.map((region) => (
+                        <option key={region.name} value={region.name}>
+                          {region.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="cartValue"
+                      className="block mb-2 text-sm font-medium"
+                    >
+                      {t("livrare_cart_value") || "Valoarea coșului"}
+                    </label>
+                    <input
+                      type="number"
+                      id="cartValue"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
+                      value={cartTotal}
+                      onChange={(e) => setCartTotal(Number(e.target.value))}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
+                    <h4 className="font-medium mb-2">
+                      {t("livrare_estimated_delivery_time") || "Timp estimat de livrare"}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {selectedRegion === "Chișinău"
+                        ? "1-2 zile lucrătoare"
+                        : selectedRegion === "Zone rurale"
+                        ? "3-5 zile lucrătoare"
+                        : "2-4 zile lucrătoare"}
+                    </p>
+                    <div className="text-xs text-muted-foreground">
+                      {t("livrare_processing_time") || "Procesarea comenzii poate dura 1-2 zile lucrătoare adiționale"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-lg border border-primary/10 shadow-sm">
+                  <h3 className="text-lg font-medium mb-4">
+                    {t("livrare_order_summary") || "Sumar comandă"}
+                  </h3>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between pb-2 border-b border-dashed border-gray-200">
+                      <span>{t("livrare_subtotal") || "Subtotal"}:</span>
+                      <span>{cartTotal.toLocaleString("ro-RO")} MDL</span>
+                    </div>
+                    <div className="flex justify-between pb-2 border-b border-dashed border-gray-200">
+                      <span>{t("livrare_delivery_cost") || "Cost livrare"}:</span>
+                      <span className="text-green-600 font-medium">
+                        {t("livrare_free") || "Gratuită"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-lg">
+                      <span>{t("livrare_total") || "Total"}:</span>
+                      <span>{getTotalPrice().toLocaleString("ro-RO")} MDL</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <ShimmerButton
+                      className="w-full"
+                      shimmerColor="#00BFFF"
+                      shimmerSize="0.05em"
+                      shimmerDuration="3s"
+                      borderRadius="8px"
+                      background="rgba(0, 0, 0, 0.9)"
+                      onClick={() => (window.location.href = "/catalog")}
+                    >
+                      {t("livrare_buy_now") || "Cumpără acum"}
+                    </ShimmerButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery FAQs */}
+            <div className="max-w-3xl mx-auto">
+              <h3 className="text-xl font-bold mb-4 text-center">
+                {t("livrare_faq_title") || "Întrebări frecvente despre livrare"}
+              </h3>
+
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full bg-white/80 backdrop-blur-sm rounded-xl border border-primary/10 shadow-md overflow-hidden mb-10"
+              >
+                <AccordionItem
+                  value="item-1"
+                  className="border-b border-primary/10 px-4"
+                >
+                  <AccordionTrigger className="text-base text-left hover:text-primary transition-colors py-4">
+                    {t("livrare_faq_question_1") || "Cât durează livrarea?"}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm pb-4">
+                    {t("livrare_faq_answer_1") || "Timpul de livrare depinde de locația ta. Pentru Chișinău: 1-2 zile, zone urbane: 2-4 zile, zone rurale: 3-5 zile lucrătoare."}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem
+                  value="item-2"
+                  className="border-b border-primary/10 px-4"
+                >
+                  <AccordionTrigger className="text-base text-left hover:text-primary transition-colors py-4">
+                    {t("livrare_faq_question_2") || "Cât costă livrarea?"}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm pb-4">
+                    {t("livrare_faq_answer_2") || "Livrarea este gratuită pentru toate comenzile în Moldova, indiferent de valoarea comenzii."}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem
+                  value="item-3"
+                  className="border-b border-primary/10 px-4"
+                >
+                  <AccordionTrigger className="text-base text-left hover:text-primary transition-colors py-4">
+                    {t("livrare_faq_question_3") || "Pot urmări comanda mea?"}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm pb-4">
+                    {t("livrare_faq_answer_3") || "Da, după plasarea comenzii vei primi un email cu un link de urmărire pentru a verifica statusul comenzii tale."}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem
+                  value="item-4"
+                  className="px-4"
+                >
+                  <AccordionTrigger className="text-base text-left hover:text-primary transition-colors py-4">
+                    {t("livrare_faq_question_6") || "Ce se întâmplă dacă nu sunt acasă la livrare?"}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm pb-4">
+                    {t("livrare_faq_answer_6") || "Curierul va încerca să te contacteze pentru a stabili un nou interval orar de livrare. Dacă nu te poate contacta, va lăsa un aviz și va reîncerca livrarea în următoarea zi lucrătoare."}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <Card className="h-full shadow-md hover:shadow-lg border-t-4 border-t-primary/70 transition-all duration-300 group">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-                  <CardTitle className="text-primary group-hover:translate-x-1 transition-transform">
-                    {t("contact_delivery_title")}
-                  </CardTitle>
-                </div>
-                <CardDescription>
-                  {t("contact_delivery_subtitle")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  {t("contact_delivery_description")}
-                </p>
-              </CardContent>
-              <CardFooter className="pt-4">
-                <ShimmerButton
-                  className="w-full group-hover:scale-[1.02] transition-transform"
-                  shimmerColor="#00BFFF"
-                  onClick={() => (window.location.href = "/livrare")}
-                >
-                  {t("learn_more")}
-                </ShimmerButton>
-              </CardFooter>
-            </Card>
 
-            <Card className="h-full shadow-md hover:shadow-lg border-t-4 border-t-primary/70 transition-all duration-300 group">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <CardTitle className="text-primary group-hover:translate-x-1 transition-transform">
-                    {t("contact_warranty_title")}
-                  </CardTitle>
-                </div>
-                <CardDescription>
-                  {t("contact_warranty_subtitle")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  {t("contact_warranty_description")}
-                </p>
-              </CardContent>
-              <CardFooter className="pt-4">
-                <ShimmerButton
-                  className="w-full group-hover:scale-[1.02] transition-transform"
-                  shimmerColor="#00BFFF"
-                  onClick={() => (window.location.href = "/garantie")}
-                >
-                  {t("learn_more")}
-                </ShimmerButton>
-              </CardFooter>
-            </Card>
 
-            <Card className="h-full shadow-md hover:shadow-lg border-t-4 border-t-primary/70 transition-all duration-300 group">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                    <Send className="h-5 w-5" />
-                  </div>
-                  <CardTitle className="text-primary group-hover:translate-x-1 transition-transform">
-                    {t("contact_return_title")}
-                  </CardTitle>
-                </div>
-                <CardDescription>
-                  {t("contact_return_subtitle")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  {t("contact_return_description")}
-                </p>
-              </CardContent>
-              <CardFooter className="pt-4">
-                <ShimmerButton
-                  className="w-full group-hover:scale-[1.02] transition-transform"
-                  shimmerColor="#00BFFF"
-                  onClick={() => (window.location.href = "/returnare")}
-                >
-                  {t("learn_more")}
-                </ShimmerButton>
-              </CardFooter>
-            </Card>
-          </div>
-        </div> */}
+        {/* Support section */}
+        {/* ... existing support section ... */}
       </div>
     </div>
   );

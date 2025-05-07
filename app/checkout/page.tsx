@@ -273,20 +273,7 @@ export default function CheckoutPage() {
 
         {/* Main content */}
         <div className="relative z-10 container max-w-7xl py-10 md:py-16">
-          {/* Breadcrumbs */}
-          <nav className="flex items-center gap-1 text-muted-foreground text-[10px] mb-8 md:mb-12">
-            <Link href="/" className="hover:text-primary transition-colors ">
-              {t("home")}
-            </Link>
-            <ChevronRight className="h-3 w-3" />
-            <Link href="/cart" className="hover:text-primary transition-colors ">
-              {t("cart_title")}
-            </Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground font-medium ">
-              {t("checkout_title")}
-            </span>
-          </nav>
+
 
           {/* Page title */}
           <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12">
@@ -457,9 +444,22 @@ export default function CheckoutPage() {
             data.order.financingTerm = financingTerm;
           }
 
-          // Ensure customer name is properly formatted
-          if (!data.order.customer.name) {
+          // Ensure customer data exists and has proper formatting
+          if (!data.order.customer) {
+            data.order.customer = {
+              name: `${formData.firstName} ${formData.lastName}`,
+              email: formData.email,
+              phone: formData.phone,
+              address: formData.address || '',
+              city: formData.city || ''
+            };
+          } else if (!data.order.customer.name) {
             data.order.customer.name = `${formData.firstName} ${formData.lastName}`;
+          }
+
+          // Ensure items is always an array
+          if (!data.order.items || !Array.isArray(data.order.items)) {
+            data.order.items = [];
           }
 
           setOrderDetails(data.order);
@@ -556,20 +556,6 @@ export default function CheckoutPage() {
 
         {/* Main content */}
         <div className="relative z-10 container max-w-3xl px-4 py-10 md:py-16">
-          {/* Breadcrumbs */}
-          <nav className="flex items-center gap-1 text-[10px] text-muted-foreground mb-8 md:mb-12">
-            <Link href="/" className="hover:text-primary transition-colors">
-              {t("home")}
-            </Link>
-            <ChevronRight className="h-3 w-3" />
-            <Link href="/cart" className="hover:text-primary transition-colors">
-              {t("cart_title")}
-            </Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground font-medium">
-              {t("checkout_success")}
-            </span>
-          </nav>
 
           {/* Page title */}
           <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12">
@@ -722,10 +708,10 @@ export default function CheckoutPage() {
                       <h3 className="font-medium mb-2 text-sm flex items-center">
                         <Package className="h-3.5 w-3.5 mr-1.5 text-primary" />
                         {t('confirmation_ordered_products')}
-                        <span className="text-xs text-muted-foreground ml-1.5">({orderDetails.items.length})</span>
+                        <span className="text-xs text-muted-foreground ml-1.5">({orderDetails.items?.length || 0})</span>
                       </h3>
                       <div className="space-y-3 max-h-60 overflow-auto pr-2 -mr-2 mb-3">
-                        {orderDetails.items.map((item, index) => (
+                        {Array.isArray(orderDetails.items) ? orderDetails.items.map((item, index) => (
                           <div key={index} className="flex items-center gap-3 border-b border-gray-100 pb-3 group hover:bg-primary/5 rounded-lg p-2 transition-colors">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate text-sm group-hover:text-primary transition-colors">{item.name}</p>
@@ -735,7 +721,11 @@ export default function CheckoutPage() {
                               </div>
                             </div>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="text-center p-4 text-sm text-muted-foreground">
+                            {t('confirmation_no_items')}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex justify-between items-center pt-1 border-t border-gray-100">
@@ -1086,20 +1076,6 @@ export default function CheckoutPage() {
 
       {/* Main content */}
       <div className="relative z-10 container py-10 md:py-12">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1 text-[10px] text-muted-foreground mb-8">
-          <Link href="/" className="hover:text-primary transition-colors">
-            {t("home")}
-          </Link>
-          <ChevronRight className="h-3 w-3" />
-          <Link href="/cart" className="hover:text-primary transition-colors">
-            {t("cart_title")}
-          </Link>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium">
-            {t("checkout_title")}
-          </span>
-        </nav>
 
         {/* Page title */}
         <div className="mb-8 md:mb-10">

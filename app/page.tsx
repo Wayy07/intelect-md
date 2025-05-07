@@ -46,14 +46,14 @@ export default function Home() {
         <Suspense fallback={<div>Loading monthly offers...</div>}>
           <MonthlyOffers />
         </Suspense>
-
+        <Suspense fallback={<div>Loading childrens toys...</div>}>
+          <ChildrensToys />
+        </Suspense>
 
         <Suspense fallback={<div>Loading special offers...</div>}>
           <SpecialOffers />
         </Suspense>
-        <Suspense fallback={<div>Loading childrens toys...</div>}>
-          <ChildrensToys />
-        </Suspense>
+
         <Suspense fallback={<div>Loading popular categories...</div>}>
           <PopularCategories />
         </Suspense>

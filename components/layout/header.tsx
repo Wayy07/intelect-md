@@ -37,7 +37,8 @@ import {
   Dog,
   Printer,
   Laptop,
-  LucideIcon
+  LucideIcon,
+  ChevronRightCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,7 +61,7 @@ import { Calendar } from "lucide-react";
 import { PopoverContent } from "@/components/ui/popover";
 import { useProtectedSession } from "@/lib/hooks/use-protected-session";
 import { useCatalog } from "@/app/components/ui/catalog-provider";
-import { getCategoryName } from "@/lib/categories";
+import { getCategoryName, ALL_CATEGORIES, MainCategory, SubcategoryGroup, Subcategory } from "@/lib/categories";
 
 // A map of icon names to their components
 const iconMap: Record<string, LucideIcon> = {
@@ -395,7 +396,7 @@ export default function Header() {
   const handleSubcategoryClick = (
     e: React.MouseEvent,
     categoryId: string,
-    subcategoryId: string
+    subcategoryId: string | undefined
   ) => {
     e.preventDefault();
 
@@ -403,11 +404,34 @@ export default function Header() {
     setIsDesktopCatalogOpen(false);
     setCatalogOpenedByClick(false);
 
+    // If subcategoryId is undefined, handle the error gracefully
+    if (!subcategoryId) {
+      console.error("Missing subcategory ID");
+      return;
+    }
+
+    // Check if this subcategory belongs to LUMEA_COPIILOR category
+    const isChildCategory = categoryId === "lumea-copiilor";
+
+    // Get subcategory ID from the children's category
+    const childSubcategoryID = isChildCategory
+      ? ALL_CATEGORIES
+          .find(cat => cat.id === "lumea-copiilor")
+          ?.subcategoryGroups
+          .flatMap(group => group.subcategories)
+          .find(sub => sub.nomenclatureId === subcategoryId)
+          ?.id
+      : null;
+
     // Navigate after a short delay
     setTimeout(() => {
-      router.push(
-        `/catalog?category=${encodeURIComponent(categoryId)}&subcategory=${encodeURIComponent(subcategoryId)}`
-      );
+      if (isChildCategory && childSubcategoryID) {
+        // For ROST API children's categories, use the by-category endpoint with type=rost
+        router.push(`/catalog/subcategory/${childSubcategoryID}?type=rost`);
+      } else {
+        // For all other subcategories, use the standard route
+        router.push(`/catalog/subcategory/${subcategoryId}`);
+      }
     }, 50);
   };
 
@@ -442,12 +466,7 @@ export default function Header() {
                   >
                     {t("credit")}
                   </Link>
-                  <Link
-                    href="/livrare"
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {t("delivery")}
-                  </Link>
+
                 </nav>
                 <div className="flex items-center gap-1 lg:gap-2 border-l pl-3 lg:pl-4">
                   <button
@@ -879,14 +898,7 @@ export default function Header() {
                                 <span>{t("myOrders")}</span>
                                 <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 text-muted-foreground" />
                               </Link>
-                              <Link
-                                href="/favorite"
-                                className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent hover:text-primary transition-colors w-full"
-                                onClick={() => setIsDesktopUserMenuOpen(false)}
-                              >
-                                <span>{t("favorites")}</span>
-                                <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 text-muted-foreground" />
-                              </Link>
+
                               <Link
                                 href="/credit"
                                 className="flex items-center justify-between rounded-lg px-3 py-1.5 lg:py-2 text-xs lg:text-sm hover:bg-accent hover:text-primary transition-colors w-full"
@@ -979,10 +991,10 @@ export default function Header() {
                           <li key={category.id}>
                             <button
                               className={cn(
-                                "flex w-full items-center justify-between rounded-xl px-3 lg:px-4 py-2 lg:py-2.5 text-base font-medium transition-all duration-300",
+                                "flex w-full items-center justify-between rounded-xl px-3 lg:px-4 py-2 lg:py-2.5 text-base font-medium transition-all duration-300 hover:text-white ",
                                 hoveredCategory === category.id
-                                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 translate-x-1"
-                                  : "text-foreground hover:bg-accent hover:text-primary hover:translate-x-1 hover:shadow-sm"
+                                  ? "bg-primary text-white shadow-md shadow-primary/30 translate-x-1"
+                                  : "text-foreground hover:bg-accent hover:text-primary hover:translate-x-1 hover:shadow-sm "
                               )}
                               onMouseEnter={isTablet ? undefined : () => setHoveredCategory(category.id)}
                               onClick={() => handleCategoryClick(category.id)}
@@ -1010,12 +1022,14 @@ export default function Header() {
                       </ul>
                     </div>
 
-                    {/* Subcategories */}
+                    {/* Subcategories - Compact Layout */}
                     <div className="px-6 lg:px-8">
                       {hoveredCategory && (
-                        <div className="space-y-4 lg:space-y-5">
-                          <div className="flex items-center justify-between">
-
+                        <div className="space-y-5">
+                          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                            <h3 className="text-sm font-medium text-primary">
+                              {categories.find((cat) => cat.id === hoveredCategory)?.name?.[language || 'ro'] || ''}
+                            </h3>
                             <Link
                               href={`/catalog?category=${hoveredCategory}`}
                               className="text-xs font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
@@ -1023,7 +1037,6 @@ export default function Header() {
                                 e.preventDefault();
                                 setIsDesktopCatalogOpen(false);
                                 setCatalogOpenedByClick(false);
-                                // Add a small delay for smoother transition
                                 setTimeout(() => {
                                   router.push(`/catalog?category=${encodeURIComponent(hoveredCategory)}`);
                                 }, 50);
@@ -1034,32 +1047,29 @@ export default function Header() {
                             </Link>
                           </div>
 
-                          {/* Subcategory Groups */}
-                          <div className="grid grid-cols-1 gap-y-4 lg:gap-y-6">
+                          {/* Subcategory Groups in Columns */}
+                          <div className="grid grid-cols-3 gap-x-6 gap-y-1">
                             {categories
                               .find((cat) => cat.id === hoveredCategory)
                               ?.subcategoryGroups.map((group) => (
-                                <div key={group.id} className="space-y-3">
-                                  <h4 className="text-base font-medium text-gray-600 mb-1 px-1">
+                                <div key={group.id} className="space-y-2 mb-6">
+                                  <h4 className="text-base font-medium text-foreground ">
                                     {getCategoryName(group, language)}
                                   </h4>
-                                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 lg:gap-x-5 gap-y-2 lg:gap-y-3">
+
+                                  <ul className="space-y-1.5">
                                     {group.subcategories.map((subcategory) => (
-                                      <Link
-                                        key={subcategory.id}
-                                        href={`/catalog?category=${encodeURIComponent(hoveredCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
-                                        className="group flex items-center p-2 lg:p-2.5 rounded-xl border border-gray-100 bg-white hover:bg-accent/20 hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5"
-                                        onClick={(e) => handleSubcategoryClick(e, hoveredCategory, subcategory.id)}
-                                      >
-                                        <div className="flex-1 min-w-0">
-                                          <p className="font-medium text-xs lg:text-sm truncate group-hover:text-primary transition-colors">
-                                            {getCategoryName(subcategory, language)}
-                                          </p>
-                                        </div>
-                                        <ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground group-hover:text-primary ml-1.5 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-0.5 duration-200" />
-                                      </Link>
+                                      <li key={subcategory.id}>
+                                        <Link
+                                          href={`/catalog/subcategory/${subcategory.nomenclatureId}`}
+                                          className="group flex items-center text-sm hover:text-primary transition-colors"
+                                          onClick={(e) => handleSubcategoryClick(e, hoveredCategory, subcategory.nomenclatureId)}
+                                        >
+                                          {getCategoryName(subcategory, language)}
+                                        </Link>
+                                      </li>
                                     ))}
-                                  </div>
+                                  </ul>
                                 </div>
                               ))}
                           </div>
@@ -1295,14 +1305,14 @@ export default function Header() {
                                   {group.subcategories.map((subcategory) => (
                                     <Link
                                       key={subcategory.id}
-                                      href={`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`}
+                                      href={`/catalog/subcategory/${subcategory.nomenclatureId}`}
                                       className="group relative flex flex-col overflow-hidden rounded-xl bg-gradient-to-b from-gray-50 to-white border shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 hover:border-primary/20"
                                       onClick={(e) => {
                                         e.preventDefault();
                                         setIsMobileMenuOpen(false);
                                         // Add a small delay for smoother transition
                                         setTimeout(() => {
-                                          router.push(`/catalog?category=${encodeURIComponent(activeMobileCategory)}&subcategory=${encodeURIComponent(subcategory.id)}`);
+                                          router.push(`/catalog/subcategory/${subcategory.nomenclatureId}`);
                                         }, 50);
                                       }}
                                     >
@@ -1385,14 +1395,7 @@ export default function Header() {
                             <span>{t("credit")}</span>
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           </Link>
-                          <Link
-                            href="/livrare"
-                            className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            <span>{t("delivery")}</span>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          </Link>
+
                           <Link
                             href="/contact"
                             className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent"
@@ -1686,14 +1689,7 @@ export default function Header() {
                             <span>{t("myOrders")}</span>
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           </Link>
-                          <Link
-                            href="/favorite"
-                            className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent hover:text-primary transition-colors w-full"
-                            onClick={() => setIsMobileUserMenuOpen(false)}
-                          >
-                            <span>{t("favorites")}</span>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          </Link>
+
                           <Link
                             href="/credit"
                             className="flex items-center justify-between rounded-lg px-4 py-2 text-sm hover:bg-accent hover:text-primary transition-colors w-full"

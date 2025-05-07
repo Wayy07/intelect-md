@@ -21,7 +21,7 @@ import { ShimmerButton } from "@/components/magicui/shimmer-button";
 
 // Support links
 const getSupportLinks = (t: (key: string) => string) => [
-  { name: t("deliveryHeader") || "Delivery", href: "/livrare" },
+
   { name: t("installmentPurchase") || "Installment Purchase", href: "/credit" },
   { name: t("contact") || "Contact", href: "/contact" },
 ];
@@ -108,45 +108,42 @@ export default function Footer() {
 
           {/* Newsletter section - 5 columns on large screens */}
           <div className="lg:col-span-4 lg:col-start-9">
-            <h4 className="font-semibold text-gray-900 mb-4 text-base">
-              {t("subscribeToNewsletter") || "Newsletter"}
-            </h4>
-            <p className="text-gray-600 mb-4 text-sm">
-              {t("receiveOffersAndNews") ||
-                "Subscribe to receive updates, access to exclusive deals, and more."}
-            </p>
-            <form onSubmit={handleSubscribe} className="space-y-2.5">
-              <div className="relative">
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("yourEmail") || "Your email"}
-                  className="pr-10 bg-gray-50 border-gray-200 focus:bg-white"
-                  required
-                />
+            <div className="bg-gradient-to-br from-[#111D4A]/5 to-[#1E3A8A]/10 p-5 rounded-xl border border-[#111D4A]/10 shadow-sm">
+              <h4 className="font-semibold text-[#111D4A] mb-3 text-lg">
+                Abonează-te la newsletter
+              </h4>
+              <p className="text-gray-600 mb-4 text-sm">
+                Primește oferte și noutăți direct pe email.
+              </p>
+              <form onSubmit={handleSubscribe} className="space-y-3">
+                <div className="relative">
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Adresa ta de email"
+                    className="pr-10 bg-white/80 backdrop-blur-sm border-gray-200 focus:border-[#111D4A]/30 focus:bg-white"
+                    required
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    variant="ghost"
+                    className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-[#111D4A]"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button
                   type="submit"
-                  size="sm"
-                  variant="ghost"
-                  className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-primary"
+                  className="w-full py-1.5 bg-[#111D4A] hover:bg-[#1E3A8A] text-white transition-colors"
                 >
-                  <Send className="h-4 w-4" />
+                  <span className="text-md font-medium">
+                    Abonează-mă
+                  </span>
                 </Button>
-              </div>
-              <ShimmerButton
-                type="submit"
-                className="w-full py-1 font-medium text-md"
-                shimmerColor="#00BFFF"
-                shimmerSize="0.1em"
-                shimmerDuration="2s"
-                background="rgba(0, 191, 255, 0.9)"
-              >
-                <span className="text-md font-medium">
-                  {t("subscribe") || "Subscribe"}
-                </span>
-              </ShimmerButton>
-            </form>
+              </form>
+            </div>
 
             <div className="mt-6">
               <h4 className="font-semibold text-gray-900 mb-3 text-base">

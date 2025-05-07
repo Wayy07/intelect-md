@@ -12,48 +12,57 @@ interface Translations {
 }
 
 export const translations: Translations = {
+  // Pagination
+  pagination_next: {
+    ro: "Înainte",
+    ru: "Следующая",
+  },
+  pagination_previous: {
+    ro: "Înapoi",
+    ru: "Предыдущая",
+  },
   // Header - Top bar
   workingHours: {
     ro: "Luni - Vineri: 9:00 - 18:00",
     ru: "Понедельник - Пятница: 9:00 - 18:00",
-    },
-    product_count: {
-        ro: "Produse",
-        ru: "товары",
-    },
-    product_count_singular: {
-        ro: "Produs",
-        ru: "товар",
-    },
-    checkout_intro:{
-        ro: "Introduceți informațiile de mai jos pentru a finaliza comanda",
-        ru: "Введите информацию ниже для завершения заказа",
-    },
+  },
+  product_count: {
+    ro: "Produse",
+    ru: "товары",
+  },
+  product_count_singular: {
+    ro: "Produs",
+    ru: "товар",
+  },
+  checkout_intro:{
+    ro: "Introduceți informațiile de mai jos pentru a finaliza comanda",
+    ru: "Введите информацию ниже для завершения заказа",
+  },
   credit: {
     ro: "Intelect Credit",
     ru: "Intelect Кредит",
-    },
+  },
   checkout_required_fields:{
     ro: "Câmpuri obligatorii",
     ru: "Обязательные поля",
   },
-    checkout_payment: {
-        ro: "Metoda de plată",
-        ru: "Метод оплаты",
-    },
-    checkout_payment_description: {
-        ro: "Plată online",
-        ru: "Оплата онлайн",
-    },
-    confirmation_order_summary: {
-        ro: "Sumarul comenzii",
-        ru: "Сводка заказа",
-    },
+  checkout_payment: {
+    ro: "Metoda de plată",
+    ru: "Метод оплаты",
+  },
+  checkout_payment_description: {
+    ro: "Plată online",
+    ru: "Оплата онлайн",
+  },
+  confirmation_order_summary: {
+    ro: "Sumarul comenzii",
+    ru: "Сводка заказа",
+  },
 
   deliveryHeader: {
     ro: "Livrare",
     ru: "Доставка",
-    },
+  },
   checkout_select_payment: {
     ro: "Selectează metoda de plată",
     ru: "Выберите метод оплаты",
@@ -74,33 +83,33 @@ export const translations: Translations = {
   techStoreHeader: {
     ro: "Magazin de tehnică",
     ru: "Магазин техники",
-    },
+  },
   checkout_payment_credit: {
-    ro: "Credit",
-    ru: "Кредит",
-    },
+    ro: "Solicitați credit",
+    ru: "Запросить кредит",
+  },
 
   checkout_payment_pickup: {
-    ro: "Pickup",
-    ru: "Самовывоз",
-    },
+    ro: "Ridicare la magazin",
+    ru: "Самовывоз в магазине",
+  },
   checkout_payment_credit_description: {
     ro: "Credit",
     ru: "Кредит",
-    },
+  },
 
   garantie_faq: {
     ro: "FAQ",
     ru: "FAQ",
-    },
+  },
   checkout_delivery_cash_description: {
     ro: "Livrare la domiciliu",
     ru: "Доставка на дом",
-    },
+  },
   checkout_delivery_cash: {
     ro: "Livrare la domiciliu",
     ru: "Доставка на дом",
-    },
+  },
 
   garantie_coverage: {
     ro: "Garantie",
@@ -109,92 +118,92 @@ export const translations: Translations = {
   returnare_faq: {
     ro: "FAQ",
     ru: "FAQ",
-    },
+  },
 
   cart_subtotal: {
     ro: "Subtotal",
     ru: "Сумма заказа",
-    },
+  },
 
   checkout_first_name_placeholder: {
     ro: "Numele tău",
     ru: "Ваше имя",
-    },
+  },
   checkout_last_name_placeholder: {
     ro: "Numele tău",
     ru: "Ваше имя",
-    },
+  },
 
   checkout_email_placeholder: {
     ro: "Adresa ta de email",
     ru: "Ваш email",
-    },
+  },
   checkout_phone_placeholder: {
     ro: "Numărul tău de telefon",
     ru: "Ваш номер телефона",
-    },
+  },
 
   your_shopping_cart: {
     ro: "Cosul tău de cumpărături",
     ru: "Ваш корзина покупок",
-    },
+  },
 
   review_your_items: {
     ro: "Revizieți articolele",
     ru: "Просмотр ваших товаров",
-    },
-checkout_success: {
+  },
+  checkout_success: {
     ro: "Comanda a fost finalizată cu succes",
     ru: "Заказ успешно завершен",
-    },
+  },
 
   checkout_term: {
     ro: "Luni",
     ru: "Понедельник",
-    },
+  },
 
   checkout_order_summary: {
     ro: "Sumarul comenzii",
     ru: "Сводка заказа",
-    },
+  },
 
   cart_description: {
     ro: "Descriere",
     ru: "Описание",
-    },
+  },
 
   checkout_monthly_payment: {
     ro: "Plată lunară",
     ru: "Ежемесячный платеж",
-    },
+  },
   thank_you_for_order: {
     ro: "Vă mulțumim pentru comanda",
     ru: "Спасибо за заказ",
-    },
+  },
 
   checkout_complete_order: {
     ro: "Finalizează comanda",
     ru: "Завершить заказ",
-    },
+  },
 
   checkout_place_order: {
     ro: "Plasează comanda",
     ru: "Разместить заказ",
-    },
+  },
 
   checkout_total_credit: {
     ro: "Total credit",
     ru: "Общая сумма кредита",
-    },
+  },
 
   checkout_credit_more_info: {
     ro: "Mai multe informații despre credit",
     ru: "Больше информации о кредите",
-    },
+  },
   checkout_credit_learn_more: {
     ro: "Aflați mai multe",
     ru: "Узнать больше",
-    },
+  },
   checkout_credit_apply: {
     ro: "Aplică",
     ru: "Применить",
@@ -206,26 +215,26 @@ checkout_success: {
   checkout_notes_optional: {
     ro: "Notițe suplimentare (opționale)",
     ru: "Дополнительные заметки (необязательно)",
-    },
+  },
 
   checkout_support_hours: {
     ro: "Luni - Vineri: 9:00 - 18:00",
     ru: "Понедельник - Пятница: 9:00 - 18:00",
-    },
+  },
 
   checkout_help: {
     ro: "Ajutor",
     ru: "Помощь",
-    },
+  },
 
   checkout_additional_notes: {
     ro: "Notițe suplimentare",
     ru: "Дополнительные заметки",
-    },
+  },
   checkout_address_placeholder: {
     ro: "Adresa",
     ru: "Адрес",
-    },
+  },
   checkout_city_placeholder: {
     ro: "Oras",
     ru: "Город",
@@ -253,7 +262,7 @@ checkout_success: {
   },
   product_view_credit_options: {
     ro: "Credit",
-    ru: "Кредиты",
+    ru: "Кредит",
   },
   livrare_calculate_shipping: {
     ro: "Calculează costul livrării",
@@ -290,10 +299,14 @@ checkout_success: {
   month: {
     ro: "luna",
     ru: "месяц",
+    },
+  browse_products: {
+    ro: "Vezi toate produsele",
+    ru: "Посмотреть все товары",
   },
   product_similar_description: {
-    ro: "Produse similare",
-    ru: "Похожие товары",
+    ro: "Produse care ar putea fi de interes pentru tine",
+    ru: "Похожие товары, которые могут вам понравиться",
   },
   backToTop: {
     ro: "Înapoi sus",
@@ -768,36 +781,72 @@ checkout_success: {
   productAddedToFavorites: {
     ro: "Produsul a fost adăugat în lista ta de favorite",
     ru: "Товар был добавлен в ваш список избранного",
-    },
+  },
   clearCart: {
     ro: "Golire Coș",
     ru: "Очистка корзины",
-    },
-    browse_catalog: {
-      ro: "Explorează catalogul",
-      ru: "Перейти в каталог",
-    },
+  },
+  browse_catalog: {
+    ro: "Explorează catalogul",
+    ru: "Перейти в каталог",
+  },
 
   noResults: {
     ro: "Nu au fost găsite rezultate",
     ru: "Ничего не найдено",
-    },
+  },
   tryDifferentSearch: {
     ro: "Încercați o altă căutare",
     ru: "Попробуйте другой поиск",
+  },
+  featuredToys: {
+    ro: "Jucării populare",
+    ru: "Популярные игрушки",
+  },
+  viewAllToys: {
+    ro: "Vezi toate jucăriile",
+    ru: "Посмотреть все игрушки",
+  },
+  kidsSpecial: {
+    ro: "Speciale pentru copii",
+    ru: "Специальные предложения для детей",
+  },
+  explore_our_catalog: {
+    ro: "Explorează catalogul nostru",
+    ru: "Исследуйте наш каталог",
+  },
+  browse: {
+    ro: "Explorează",
+    ru: "Исследуйте",
+  },
+  loading_more_products: {
+    ro: "Se încarcă mai multe produse",
+    ru: "Посмотреть больше товаров",
+  },
+  back_to_catalog: {
+    ro: "Înapoi la catalog",
+    ru: "Назад в каталог",
+  },
+  view_products: {
+    ro: "Vezi produse",
+    ru: "Посмотреть товары",
   },
   contactUs: {
     ro: "Contactează-ne",
     ru: "Свяжитесь с нами",
   },
+  main_categories: {
+    ro: "CATEGORII PRINCIPALE",
+    ru: "ОСНОВНЫЕ КАТЕГОРИИ",
+  },
   monthlyDeals: {
     ro: "Oferta lunară",
     ru: "Месячное предложение",
-    },
+  },
   add_to_cart_mobile: {
     ro: "În coș",
     ru: "В корзину",
-    },
+  },
   checkout_financing_term: {
     ro: "Perioada de finanțare",
     ru: "Период финансирования",
@@ -805,39 +854,43 @@ checkout_success: {
   contact_about_us: {
     ro: "Intelect MD este liderul din Moldova în domeniul comerțului cu tehnologii, specializat în smartphone-uri,laptopuri și dispozitive smart pentru casă. Combinăm tehnologii de ultimă generație cu un serviciu excepțional pentru clienți pentru a oferi o experiență de cumpărare incomparabilă.",
     ru: "Intelect MD — лидер в Молдове в сфере торговли технологиями, специализирующийся на смартфонах,ноутбуки и устройства для умного дома. Мы объединяем передовые технологии с сервисом исключительная возможность предоставить клиентам ни с чем не сравнимый опыт покупок.",
-    },
-    contact_about_us_1: {
-        ro: "Echipa noastră de experți este dedicată să vă ajute să găsiți soluțiile tehnologice perfecte pentrunevoile dumneavoastră, cu sfaturi profesionale, livrare rapidă în toată țara și servicii de garanție de încredere. Vizitați-ne astăzi și experimentați inovația direct!",
-        ru: "Наша команда экспертов готова помочь вам найти идеальные технологические решения для ваши потребности, профессиональные консультации, быстрая доставка по всей стране и гарантийное обслуживание надежный. Посетите нас сегодня и испытайте инновации на собственном опыте!",
+  },
+  contact_about_us_1: {
+    ro: "Echipa noastră de experți este dedicată să vă ajute să găsiți soluțiile tehnologice perfecte pentrunevoile dumneavoastră, cu sfaturi profesionale, livrare rapidă în toată țara și servicii de garanție de încredere. Vizitați-ne astăzi și experimentați inovația direct!",
+    ru: "Наша команда экспертов готова помочь вам найти идеальные технологические решения для ваши потребности, профессиональные консультации, быстрая доставка по всей стране и гарантийное обслуживание надежный. Посетите нас сегодня и испытайте инновации на собственном опыте!",
   },
   limitedTimeOffer: {
     ro: "Oferta limitată",
     ru: "Ограниченное предложение",
-    },
+  },
   contact_about_us_title: {
     ro: "Despre Magazinul Nostru",
     ru: "О нас магазине",
   },
+  explore_subcategories: {
+    ro: "Explorează subcategorii",
+    ru: "Исследуйте подкатегории",
+  },
   weeklyOffers: {
     ro: "Oferta lunară",
     ru: "Месячное предложение",
-    },
+  },
   untilEndOfWeek: {
-      ro: "Până la sfârșitul lunii",
-      ru: "До конца месяца",
-    },
+    ro: "Până la sfârșitul lunii",
+    ru: "До конца месяца",
+  },
   childrenToys: {
     ro: "Jucării pentru copii",
     ru: "Игрушки для детей",
-    },
-    discoverChildrenToys: {
-      ro: "Descoperă cele mai populare jucării pentru copii",
-      ru: "Откройте для себя самые популярные игрушки для детей",
-    },
-    seeAllToys: {
-      ro: "Vezi toate jucăriile",
-      ru: "Посмотреть все игрушки",
-    },
+  },
+  discoverChildrenToys: {
+    ro: "Descoperă cele mai populare jucării pentru copii",
+    ru: "Откройте для себя самые популярные игрушки для детей",
+  },
+  seeAllToys: {
+    ro: "Vezi toate jucăriile",
+    ru: "Посмотреть все игрушки",
+  },
 
   endOfMonth: {
     ro: "Sfârșitul lunii",
@@ -845,12 +898,12 @@ checkout_success: {
   },
   // Special Offers section
   specialOffers: {
-    ro: "Oferte Speciale",
-    ru: "Специальные предложения",
+    ro: "Cele mai bune oferte la telefoane",
+    ru: "Специальные предложения на телефоны",
   },
   specialOffer: {
-      ro: "Oferta specială",
-      ru: "Специальное предложение"
+    ro: "Oferta specială",
+    ru: "Специальное предложение"
   },
   discoverDiscountedProducts: {
     ro: "Descoperă produsele noastre cu cele mai mari reduceri",
@@ -2140,7 +2193,7 @@ checkout_success: {
   catalog_on_sale: {
     ro: "Produse cu reducere",
     ru: "Товары со скидкой",
-    },
+  },
   catalog_smartphones: {
     ro: "Смартфоны",
     ru: "Смартфоны",
@@ -2604,7 +2657,7 @@ checkout_success: {
   checkout_error_email_invalid: {
     ro: "Adresa de email nu este validă",
     ru: "Неверный формат электронной почты",
-    },
+  },
   showing: {
     ro: "Afișând",
     ru: "Показываем",
@@ -3088,14 +3141,7 @@ checkout_success: {
     ro: "Verticale",
     ru: "Вертикальные",
   },
-  pagination_previous: {
-    ro: "Precedent",
-    ru: "Предыдущий",
-  },
-  pagination_next: {
-    ro: "Următor",
-    ru: "Следующий",
-  },
+
 
   // Monthly Offers Component
   offersOfTheMonth: {
@@ -3105,6 +3151,22 @@ checkout_success: {
   days: {
     ro: "zile",
     ru: "дни",
+    },
+  loading_more: {
+    ro: "Se încarcă mai multe produse...",
+    ru: "Загружаются дополнительные товары...",
+  },
+  default: {
+    ro: "Toate",
+    ru: "Все",
+  },
+  no_brands_found: {
+    ro: "Nu există marcă",
+    ru: "Нет брендов",
+  },
+  loading_brands: {
+    ro: "Se încarcă...",
+    ru: "Загрузка...",
   },
   hours: {
     ro: "ore",

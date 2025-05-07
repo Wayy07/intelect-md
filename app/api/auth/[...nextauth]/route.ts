@@ -3,10 +3,11 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import { NextAuthOptions } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 
 // Define authOptions but don't export it directly from this file
 const authOptions: NextAuthOptions = {
-  // No adapter - use JWT strategy only
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -22,7 +23,7 @@ const authOptions: NextAuthOptions = {
     error: "/auth/error",
   },
   session: {
-    strategy: "jwt",
+    strategy: "database",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   cookies: {
@@ -62,8 +63,11 @@ const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
-      if (token) {
+    async session({ session, token, user }) {
+      if (user) {
+        session.user.id = user.id;
+        session.user.role = user.role || "USER";
+      } else if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string || "USER";
       }
